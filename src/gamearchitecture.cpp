@@ -20,7 +20,21 @@ public:
 class Renderable
 {
 public:
-	virtual void draw(const ShaderProgram& sp) {}
+	virtual void draw(const ShaderProgram& sp) = 0;
+};
+
+class VertexBuffer : public Renderable
+{
+public:
+	VertexBuffer()
+	{
+		// Do some opengl specific stuff for creating a vertex buffer
+		// on GPU, probably using some arguments passed in constructor
+	}
+	void draw(const ShaderProgram& sp)
+	{
+		// Do opengl specific stuff to use this vertexbuffer id
+	}
 };
 
 class RenderTarget
@@ -58,15 +72,14 @@ class Plane : public Renderable
 {
 private:
 	Object object;
-	Renderable renderable;
+	VertexBuffer vb;
 	vec3 pos;
 	quat q;
 public:
 	Plane(size_t size)
 	// construct object with renderable which holds a Plane
-	: object(renderable, pos, q)
+	: object(vb, pos, q)
 	{
-		
 	}
 	void draw(const ShaderProgram& sp)
 	{
@@ -77,10 +90,10 @@ public:
 int main()
 {
 	RenderTarget deferredtarget;
-	Renderable renderable;
+	VertexBuffer vb;
 	vec3 pos;
 	quat q;
-	Object object(renderable, pos, q);
+	Object object(vb, pos, q);
 	Plane p(3);
 	ShaderProgram shaderprogram;
 
