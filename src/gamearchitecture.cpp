@@ -85,15 +85,29 @@ public:
 	}
 };
 
+class RenderPass
+{
+private:
+	RenderTarget deferredtarget;
+	Object object;
+	RenderView renderview;
+	ShaderProgram sp;
+public:
+	RenderPass()
+	: object(Model::Square(), vec3(), quat())
+	{
+	}
+	void run()
+	{
+		deferredtarget.use();
+		renderview.set(sp);
+		object.draw(sp);
+	}
+};
+
 int main()
 {
-	RenderTarget deferredtarget;
-	RenderView renderview;
-	Object object(Model::Square(), vec3(), quat());
-	ShaderProgram sp;
-
-	deferredtarget.use();
-	renderview.set(sp);
-	object.draw(sp);
+	RenderPass pass;
+	pass.run();
 }
 
