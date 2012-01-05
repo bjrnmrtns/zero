@@ -10,6 +10,11 @@ struct quat
 	float x, y, z, w;
 };
 
+struct mat4x4
+{
+	float m[16];
+};
+
 class ShaderProgram
 {
 public:
@@ -20,20 +25,21 @@ public:
 class Renderable
 {
 public:
-	virtual void draw(const ShaderProgram& sp) = 0;
+	virtual void draw(ShaderProgram& sp) = 0;
 };
 
-class VertexBuffer : public Renderable
+class RenderView
 {
+private:
+	mat4x4 projection;
 public:
-	VertexBuffer()
+	// Let some keyboard handler access position and orientation to make
+	// make a moving camera
+	vec3 position;
+	quat orientation;
+	void set(ShaderProgram& sp)
 	{
-		// Do some opengl specific stuff for creating a vertex buffer
-		// on GPU, probably using some arguments passed in constructor
-	}
-	void draw(const ShaderProgram& sp)
-	{
-		// Do opengl specific stuff to use this vertexbuffer id
+		// set position orientation and projection onto shaderprogram.
 	}
 };
 
@@ -43,62 +49,51 @@ public:
 	void use() {}
 };
 
+class Model : public Renderable
+{
+public:
+	static Model& Square()
+	{
+		static Model model;
+		return model;
+	}
+	void draw(ShaderProgram& sp)
+	{
+		// Probably draw VertexBuffer here.
+	}
+};
+
+// A Object is a renderable entity in a world.
 class Object : public Renderable
 {
 private:
 	Renderable& renderable;
-	vec3& position;
-	quat& orientation;
+	// following two accessed via physics engine callback
+	vec3 position;
+	quat orientation;
 public:
-	Object(Renderable& renderable, vec3& position, quat& orientation)
+	Object(Renderable& renderable, vec3 position, quat orientation)
 	: renderable(renderable)
 	, position(position)
 	, orientation(orientation)
 	{
 	}
-	void update()
-	{
-		// do something with position and orientation
-		position.x += 1;
-	}
-	void draw(const ShaderProgram& sp)
+	void draw(ShaderProgram& sp)
 	{
 		sp.set(position, orientation);
 		renderable.draw(sp);
 	}
 };
 
-class Plane : public Renderable
-{
-private:
-	Object object;
-	VertexBuffer vb;
-	vec3 pos;
-	quat q;
-public:
-	Plane(size_t size)
-	// construct object with renderable which holds a Plane
-	: object(vb, pos, q)
-	{
-	}
-	void draw(const ShaderProgram& sp)
-	{
-		object.draw(sp);
-	}
-};
-
 int main()
 {
 	RenderTarget deferredtarget;
-	VertexBuffer vb;
-	vec3 pos;
-	quat q;
-	Object object(vb, pos, q);
-	Plane p(3);
-	ShaderProgram shaderprogram;
+	RenderView renderview;
+	Object object(Model::Square(), vec3(), quat());
+	ShaderProgram sp;
 
 	deferredtarget.use();
-	object.draw(shaderprogram);
-	p.draw(shaderprogram);
+	renderview.set(sp);
+	object.draw(sp);
 }
 
