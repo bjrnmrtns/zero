@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <vector>
 
 struct vec3
 {
@@ -85,29 +86,50 @@ public:
 	}
 };
 
+class Scene : public Renderable
+{
+private:
+	std::vector<Object*> objects;
+public:
+	void draw(ShaderProgram& sp)
+	{
+		for(int i = 0; objects.size(); ++i)
+		{
+			objects[i]->draw(sp);
+		}
+	}
+	void add(Object* object)
+	{
+		objects.push_back(object);
+	}
+};
+
 class RenderPass
 {
 private:
 	RenderTarget deferredtarget;
-	Object object;
+	Scene& scene;
 	RenderView renderview;
 	ShaderProgram sp;
 public:
-	RenderPass()
-	: object(Model::Square(), vec3(), quat())
+	RenderPass(Scene& scene)
+	: scene(scene)
 	{
 	}
 	void run()
 	{
 		deferredtarget.use();
 		renderview.set(sp);
-		object.draw(sp);
+		scene.draw(sp);
 	}
 };
 
 int main()
 {
-	RenderPass pass;
+	Scene scene;
+	Object object(Model::Square(), vec3(), quat());
+	scene.add(&object);
+	RenderPass pass(scene);
 	pass.run();
 }
 
