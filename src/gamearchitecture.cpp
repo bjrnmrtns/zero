@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <vector>
+#include <memory>
 
 struct vec3
 {
@@ -79,6 +80,13 @@ public:
 	, orientation(orientation)
 	{
 	}
+	Object& operator=(const Object& object)
+	{
+		renderable = object.renderable;
+		position = position;
+		orientation = orientation;
+		return *this;
+	}
 	void draw(ShaderProgram& sp)
 	{
 		sp.set(position, orientation);
@@ -89,7 +97,7 @@ public:
 class Scene : public Renderable
 {
 private:
-	std::vector<Object*> objects;
+	std::vector<std::unique_ptr<Object>> objects;
 public:
 	void draw(ShaderProgram& sp)
 	{
@@ -98,9 +106,9 @@ public:
 			objects[i]->draw(sp);
 		}
 	}
-	void add(Object* object)
+	void add(std::unique_ptr<Object> object)
 	{
-		objects.push_back(object);
+		objects.push_back(std::move(object));
 	}
 };
 
@@ -127,8 +135,7 @@ public:
 int main()
 {
 	Scene scene;
-	Object object(Model::Square(), vec3(), quat());
-	scene.add(&object);
+	scene.add(std::unique_ptr<Object>(new Object(Model::Square(), vec3(), quat())));
 	RenderPass pass(scene);
 	pass.run();
 }
