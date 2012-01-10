@@ -22,8 +22,16 @@ public:
 			return it->second;
 		}
 	}
+	static std::shared_ptr<Buffer> alias(std::string alias, std::string original)
+	{
+		std::shared_ptr<Buffer> aliasedBuffer(Buffer::get(original));
+		// if it is already in the std::map, the std::map is not updated
+		// this is a property of a std::map which we use so we can safely
+		// insert it here.
+		buffers.insert(std::make_pair(alias, aliasedBuffer));
+		return aliasedBuffer;
+	}
 };
-
 std::map<std::string, std::shared_ptr<Buffer>> Buffer::buffers;
 
 class RenderStep
