@@ -2,6 +2,7 @@
 #include <memory>
 #include <map>
 #include <string>
+#include <iostream>
 
 class Buffer
 {
@@ -36,7 +37,7 @@ std::map<std::string, std::shared_ptr<Buffer>> Buffer::buffers;
 
 class RenderStep
 {
-private:
+public:
 	static std::map<std::string, std::shared_ptr<RenderStep>> pipeline;
 	std::map<std::string, std::shared_ptr<Buffer>> input;
 	std::map<std::string, std::shared_ptr<Buffer>> output;
@@ -113,23 +114,15 @@ public:
 	}
 };
 
-class RenderPipeline
-{
-private:
-	std::vector<std::unique_ptr<RenderStep>> steps;
-public:
-	void Register(std::unique_ptr<RenderStep> step)
-	{
-		steps.push_back(std::move(step));
-	}
-};
-
 int main()
 {
-	RenderPipeline rp;
-	rp.Register(std::unique_ptr<DeferredRenderStep>(new DeferredRenderStep()));
-	rp.Register(std::unique_ptr<AmbientRenderStep>(new AmbientRenderStep()));
-	rp.Register(std::unique_ptr<FinalRenderStep>(new FinalRenderStep()));
+	DeferredRenderStep* df = new DeferredRenderStep();
+	AmbientRenderStep* as = new AmbientRenderStep();
+	FinalRenderStep* fs = new FinalRenderStep();
+	for(auto it = RenderStep::pipeline.begin(); it != RenderStep::pipeline.end(); ++it)
+	{
+		std::cout << it->first << std::endl;
+	}
 	return 0;
 }
 
