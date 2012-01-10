@@ -37,6 +37,7 @@ std::map<std::string, std::shared_ptr<Buffer>> Buffer::buffers;
 class RenderStep
 {
 private:
+	static std::map<std::string, std::shared_ptr<RenderStep>> pipeline;
 	std::map<std::string, std::shared_ptr<Buffer>> input;
 	std::map<std::string, std::shared_ptr<Buffer>> output;
 protected:
@@ -50,14 +51,16 @@ public:
 	{
 		input.insert(std::make_pair(name, Buffer::get(name)));
 	}
-	void addOutput(std::string name)
+	void addOutput(std::string name, std::shared_ptr<RenderStep> step)
 	{
+		pipeline.insert(std::make_pair(name, step));
 		output.insert(std::make_pair(name, Buffer::get(name)));
 	}
 	virtual void run()
 	{
 	}
 };
+std::map<std::string, std::shared_ptr<RenderStep>> RenderStep::pipeline;
 
 class DeferredRenderStep : public RenderStep
 {
@@ -65,9 +68,10 @@ public:
 	DeferredRenderStep()
 	: RenderStep("DeferredRenderStep")
 	{
-		addOutput("color");
-		addOutput("normal");
-		addOutput("depth");
+		std::shared_ptr<RenderStep> sharedThis(this);
+		addOutput("color", sharedThis);
+		addOutput("normal", sharedThis);
+		addOutput("depth", sharedThis);
 	}
 	void run()
 	{
@@ -80,7 +84,8 @@ public:
 	AmbientRenderStep()
 	: RenderStep("FinalRenderStep")
 	{
-		addOutput("occlusionmap");
+		std::shared_ptr<RenderStep> sharedThis(this);
+		addOutput("occlusionmap", sharedThis);
 		addInput("color");
 		addInput("normal");
 		addInput("depth");
@@ -96,7 +101,8 @@ public:
 	FinalRenderStep()
 	: RenderStep("FinalRenderStep")
 	{
-		addOutput("framebuffer");
+		std::shared_ptr<RenderStep> sharedThis(this);
+		addOutput("framebuffer", sharedThis);
 		addInput("color");
 		addInput("normal");
 		addInput("depth");
