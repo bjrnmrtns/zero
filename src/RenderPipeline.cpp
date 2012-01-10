@@ -116,9 +116,9 @@ public:
 
 int main()
 {
-	DeferredRenderStep* df = new DeferredRenderStep();
-	AmbientRenderStep* as = new AmbientRenderStep();
-	FinalRenderStep* fs = new FinalRenderStep();
+	new DeferredRenderStep();
+	new AmbientRenderStep();
+	new FinalRenderStep();
 	for(auto it = RenderStep::pipeline.begin(); it != RenderStep::pipeline.end(); ++it)
 	{
 		std::cout << it->first << std::endl;
