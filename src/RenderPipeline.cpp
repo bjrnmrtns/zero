@@ -3,6 +3,8 @@
 #include <map>
 #include <string>
 #include <iostream>
+#include <cassert>
+#include <algorithm>
 
 class Buffer
 {
@@ -37,8 +39,9 @@ std::map<std::string, std::shared_ptr<Buffer>> Buffer::buffers;
 
 class RenderStep
 {
-public:
+private:
 	static std::map<std::string, RenderStep*> pipeline;
+	static std::vector<RenderStep*> flatten;
 	std::map<std::string, std::shared_ptr<Buffer>> input;
 	std::map<std::string, std::shared_ptr<Buffer>> output;
 protected:
@@ -54,14 +57,36 @@ public:
 	}
 	void addOutput(std::string name)
 	{
+		assert(pipeline.find(name) == pipeline.end());
 		pipeline.insert(std::make_pair(name, this));
 		output.insert(std::make_pair(name, Buffer::get(name)));
+	}
+	static void CreatePipeline(RenderStep* renderStep)
+	{
+		CreateGraph(renderStep);
+		flatten.erase(std::unique(flatten.begin(), flatten.end()), flatten.end());
+	};
+	static void CreateGraph(RenderStep* currentStep)
+	{
+		for(auto it = currentStep->input.begin(); it != currentStep->input.end(); ++it)
+		{
+			CreateGraph(pipeline[it->first]);
+		}
+		flatten.push_back(currentStep);
+	}
+	static void PrintFlatten()
+	{
+		for(auto it = flatten.begin(); it != flatten.end(); ++it)
+		{
+			std::cout << (*it)->name << std::endl;
+		}
 	}
 	virtual void run()
 	{
 	}
 };
 std::map<std::string, RenderStep*> RenderStep::pipeline;
+std::vector<RenderStep*> RenderStep::flatten;
 
 class DeferredRenderStep : public RenderStep
 {
@@ -82,7 +107,7 @@ class AmbientRenderStep : public RenderStep
 {
 public:
 	AmbientRenderStep()
-	: RenderStep("FinalRenderStep")
+	: RenderStep("AmbientRenderStep")
 	{
 		addOutput("occlusionmap");
 		addInput("color");
@@ -116,10 +141,8 @@ int main()
 	DeferredRenderStep ds;
 	AmbientRenderStep as;
 	FinalRenderStep fs;
-	for(auto it = RenderStep::pipeline.begin(); it != RenderStep::pipeline.end(); ++it)
-	{
-		std::cout << it->first << std::endl;
-	}
+	RenderStep::CreatePipeline(&fs);
+	RenderStep::PrintFlatten();
 	return 0;
 }
 
