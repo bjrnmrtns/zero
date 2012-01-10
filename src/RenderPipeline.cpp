@@ -38,7 +38,7 @@ std::map<std::string, std::shared_ptr<Buffer>> Buffer::buffers;
 class RenderStep
 {
 public:
-	static std::map<std::string, std::shared_ptr<RenderStep>> pipeline;
+	static std::map<std::string, RenderStep*> pipeline;
 	std::map<std::string, std::shared_ptr<Buffer>> input;
 	std::map<std::string, std::shared_ptr<Buffer>> output;
 protected:
@@ -52,16 +52,16 @@ public:
 	{
 		input.insert(std::make_pair(name, Buffer::get(name)));
 	}
-	void addOutput(std::string name, std::shared_ptr<RenderStep> step)
+	void addOutput(std::string name)
 	{
-		pipeline.insert(std::make_pair(name, step));
+		pipeline.insert(std::make_pair(name, this));
 		output.insert(std::make_pair(name, Buffer::get(name)));
 	}
 	virtual void run()
 	{
 	}
 };
-std::map<std::string, std::shared_ptr<RenderStep>> RenderStep::pipeline;
+std::map<std::string, RenderStep*> RenderStep::pipeline;
 
 class DeferredRenderStep : public RenderStep
 {
@@ -69,10 +69,9 @@ public:
 	DeferredRenderStep()
 	: RenderStep("DeferredRenderStep")
 	{
-		std::shared_ptr<RenderStep> sharedThis(this);
-		addOutput("color", sharedThis);
-		addOutput("normal", sharedThis);
-		addOutput("depth", sharedThis);
+		addOutput("color");
+		addOutput("normal");
+		addOutput("depth");
 	}
 	void run()
 	{
@@ -85,8 +84,7 @@ public:
 	AmbientRenderStep()
 	: RenderStep("FinalRenderStep")
 	{
-		std::shared_ptr<RenderStep> sharedThis(this);
-		addOutput("occlusionmap", sharedThis);
+		addOutput("occlusionmap");
 		addInput("color");
 		addInput("normal");
 		addInput("depth");
@@ -102,8 +100,7 @@ public:
 	FinalRenderStep()
 	: RenderStep("FinalRenderStep")
 	{
-		std::shared_ptr<RenderStep> sharedThis(this);
-		addOutput("framebuffer", sharedThis);
+		addOutput("framebuffer");
 		addInput("color");
 		addInput("normal");
 		addInput("depth");
@@ -116,9 +113,9 @@ public:
 
 int main()
 {
-	new DeferredRenderStep();
-	new AmbientRenderStep();
-	new FinalRenderStep();
+	DeferredRenderStep ds;
+	AmbientRenderStep as;
+	FinalRenderStep fs;
 	for(auto it = RenderStep::pipeline.begin(); it != RenderStep::pipeline.end(); ++it)
 	{
 		std::cout << it->first << std::endl;
