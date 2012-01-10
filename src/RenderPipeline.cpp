@@ -39,7 +39,13 @@ class RenderStep
 private:
 	std::map<std::string, std::shared_ptr<Buffer>> input;
 	std::map<std::string, std::shared_ptr<Buffer>> output;
+protected:
+	const std::string name;
 public:
+	RenderStep(const std::string name)
+	: name(name)
+	{
+	}
 	void addInput(std::string name)
 	{
 		input.insert(std::make_pair(name, Buffer::get(name)));
@@ -57,6 +63,7 @@ class DeferredRenderStep : public RenderStep
 {
 public:
 	DeferredRenderStep()
+	: RenderStep("DeferredRenderStep")
 	{
 		addOutput("color");
 		addOutput("normal");
@@ -71,6 +78,7 @@ class AmbientRenderStep : public RenderStep
 {
 public:
 	AmbientRenderStep()
+	: RenderStep("FinalRenderStep")
 	{
 		addOutput("occlusionmap");
 		addInput("color");
@@ -86,6 +94,7 @@ class FinalRenderStep : public RenderStep
 {
 public:
 	FinalRenderStep()
+	: RenderStep("FinalRenderStep")
 	{
 		addOutput("framebuffer");
 		addInput("color");
