@@ -8,12 +8,11 @@ mkdir -p ${ZERO_EXTERNAL_DIR}
 
 # Get SDL
 cd ${BOOTSTRAP_DIR}
-wget http://www.libsdl.org/tmp/SDL-1.3.tar.gz
-tar xf SDL-1.3.tar.gz
-cd SDL-1.3.0-6050/
-./configure --prefix=${ZERO_EXTERNAL_DIR}
-make all
-make install
+wget http://sourceforge.net/projects/glfw/files/glfw/2.7.2/glfw-2.7.2.tar.bz2
+tar xfj glfw-2.7.2.tar.bz2
+cd glfw-2.7.2/
+make x11
+make PREFIX=${ZERO_EXTERNAL_DIR} x11-install 
 
 # Get glew
 cd ${BOOTSTRAP_DIR}
