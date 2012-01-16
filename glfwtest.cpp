@@ -102,6 +102,9 @@ int main()
 
 	glViewport(0, 0, 1024, 768);
 
+	float triangle[] = {0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f};
+
+	VertexBuffer vb(modelRefs, triangle, sizeof(triangle)/sizeof(float));
 	bool running = true;
 	while( running)
 	{
