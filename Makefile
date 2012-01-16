@@ -7,4 +7,4 @@ RenderPipeline: RenderPipeline.cpp
 RenderToTexture: RenderToTexture.cpp
 	g++ -std=c++0x -Wall -Wextra -pedantic -o RenderToTexture RenderToTexture.cpp 
 glfwtest: glfwtest.cpp
-	g++ -std=c++0x -Wall -Wextra -pedantic -o glfwtest glfwtest.cpp external/lib/libglfw.a -Iexternal/include -lX11 -lGL
+	g++ -std=c++0x -Wall -Wextra -pedantic -o glfwtest glfwtest.cpp external/lib/libglfw.a external/lib64/libGLEW.a -Iexternal/include -lX11 -lGL
