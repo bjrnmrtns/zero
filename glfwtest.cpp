@@ -22,16 +22,15 @@ private:
 	const std::string errors;
 };
 
-struct Vertex
-{
-	glm::vec3 position;
-	glm::vec3 normal;
-	glm::vec2 texcoord;
-};
-
 class VertexBuffer
 {
 public:
+	struct InputElementDescription
+	{
+		std::string name;
+		size_t size;
+	};
+
 	struct AttributeReference
 	{
 		std::string name;
@@ -102,6 +101,7 @@ int main()
 
 	glViewport(0, 0, 1024, 768);
 
+	static VertexBuffer::InputElementDescription elementDescription[] { {"position", sizeof(glm::vec3)} };
 	float triangle[] = {0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f};
 
 	VertexBuffer vb(modelRefs, triangle, sizeof(triangle)/sizeof(float));
