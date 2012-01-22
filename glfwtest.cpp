@@ -4,6 +4,29 @@
 #include <exception>
 #include <string>
 
+static const char *vs =
+"#version 150\n"
+"\n"
+"in vec3 in_Position;\n"
+"out vec3 pass_Position;\n"
+"\n"
+"void main()\n"
+"{\n"
+"  gl_Position = vec4(in_Position, 1.0);\n"
+"  pass_Position = gl_Position.xyz;\n"
+"}\n";
+
+static const char *fs =
+"#version 150\n"
+"\n"
+"in vec3 pass_Position;\n"
+"out vec3 outColor;\n"
+"\n"
+"void main(void)\n"
+"{\n"
+"  outColor = vec3(1.0, 1.0, 0.0);\n"
+"}\n";
+
 class GeneralException : public std::exception
 {
 public:
@@ -20,6 +43,97 @@ public:
 	}
 private:
 	const std::string errors;
+};
+
+class Shader
+{
+public:
+	Shader(const char* source, int type) : type(type)
+	{
+		id = glCreateShader(type);
+		glShaderSource(id, 1, &source, 0);
+		glCompileShader(id);
+		int ok = true;
+		glGetShaderiv(id, GL_COMPILE_STATUS, &ok);
+		if(!ok)
+		{
+			int length = 0;
+			glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+			char errors[length];
+			glGetShaderInfoLog(id, length, 0, errors);
+			throw GeneralException(std::string(errors));
+		}
+	}
+	virtual ~Shader()
+	{
+		glDeleteShader(id);
+	}
+	int GetId() { return id; }
+private:
+	int id;
+	int type;
+};
+
+class VertexShader : public Shader
+{
+public:
+	VertexShader(const char* source) : Shader(source, GL_VERTEX_SHADER) {}
+};
+
+class FragmentShader : public Shader
+{
+public:
+	FragmentShader(const char* source) : Shader(source, GL_FRAGMENT_SHADER) {}
+};
+
+class ShaderProgram
+{
+public:
+	ShaderProgram(VertexShader &vertexShader, FragmentShader &fragmentShader)
+	: vertexShader(vertexShader)
+	, fragmentShader(fragmentShader)
+	{
+		id = glCreateProgram();
+		glAttachShader(id, vertexShader.GetId());
+		glAttachShader(id, fragmentShader.GetId());
+		
+		glBindAttribLocation(id, 0, "in_Position");
+		glLinkProgram(id);
+	}
+	~ShaderProgram()
+	{
+		glDetachShader(id, fragmentShader.GetId());
+		glDetachShader(id, vertexShader.GetId());
+		glDeleteProgram(id);
+	}
+	void Set(const char *name, const float mat[16])
+	{
+		int uniform = glGetUniformLocation(id, name);
+		if (uniform == -1) return;
+		glUseProgram(id);
+		glUniformMatrix4fv(uniform, 1, GL_FALSE, mat);
+		int error = glGetError(); if (error) { printf("%d\n", error); abort(); }
+	}
+	bool SetTexture(const char *name, int value)
+	{
+		int error;
+		int uniform = glGetUniformLocation(id, name);
+		error = glGetError(); if (error) { printf("%d\n", error); abort(); }
+		if (uniform == -1) return false;
+
+		glUseProgram(id);
+		glUniform1i(uniform, value);
+		error = glGetError(); if (error) { printf("%d\n", error); abort(); }
+		return true;
+	}
+	void Use()
+	{
+		glUseProgram(id);
+	}
+private:
+	int id;
+	VertexShader& vertexShader;
+	FragmentShader& fragmentShader;
 };
 
 class VertexBuffer
@@ -82,14 +196,15 @@ static VertexBuffer::AttributeReference modelRefs[] =
 int main()
 {
 	if(!glfwInit()) throw new GeneralException("glfwInit failed");
-//	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
-//	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 2);
-//	glfwOpenWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
+	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 3);
+	glfwOpenWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	if(!glfwOpenWindow(1024, 768, 8, 8, 8, 0, 24, 8, GLFW_WINDOW))
 	{
 		glfwTerminate();
 		throw new GeneralException("glfwOpenWindow failed");
 	}
+	glewExperimental = GL_TRUE;
 	if(glewInit() != GLEW_OK) throw new GeneralException("glewInit failed");
 
 	glCullFace(GL_BACK);
@@ -101,20 +216,25 @@ int main()
 
 	glViewport(0, 0, 1024, 768);
 
+	VertexShader vertexShader(vs);
+	FragmentShader fragmentShader(fs);
+	ShaderProgram shaderProgram(vertexShader, fragmentShader);
+	shaderProgram.Use();
 	static VertexBuffer::InputElementDescription elementDescription[] { {"position", sizeof(glm::vec3)} };
-	float triangle[] = {0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f};
+	float triangle[] = {0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f};
 
 	VertexBuffer vb(modelRefs, triangle, sizeof(triangle)/sizeof(float));
 	bool running = true;
 	while( running)
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glColor3f(1.0f, 0.0f, 0.0f);
+		vb.Draw();
+/*		glColor3f(1.0f, 0.0f, 0.0f);
 		glBegin(GL_TRIANGLES);
 		glVertex3f(0.0f,-1.0f,0.0f);
 		glVertex3f(0.0f,1.0f,0.0f);
 		glVertex3f(1.0f,0.0f,0.0f);
-		glEnd();
+		glEnd();*/
 		glfwSwapBuffers();
 		running = !glfwGetKey(GLFW_KEY_ESC) && 
 		          glfwGetWindowParam(GLFW_OPENED);
