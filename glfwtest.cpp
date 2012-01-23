@@ -192,31 +192,44 @@ private:
 	size_t count;
 };
 
+class Window_
+{
+public:
+	Window_(size_t width, size_t height)
+	{
+		if(!glfwInit()) throw new GeneralException("glfwInit failed");
+		glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
+		glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 3);
+		glfwOpenWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		if(!glfwOpenWindow(width, height, 8, 8, 8, 0, 24, 8, GLFW_WINDOW))
+		{
+			glfwTerminate();
+			throw new GeneralException("glfwOpenWindow failed");
+		}
+		glewExperimental = GL_TRUE;
+		if(glewInit() != GLEW_OK) throw new GeneralException("glewInit failed");
 
+		glCullFace(GL_BACK);
+		glFrontFace(GL_CW);
+		glEnable(GL_CULL_FACE);
+		glClearDepth(1.0f);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+		glViewport(0, 0, width, height);
+	}
+	void Swap()
+	{
+		glfwSwapBuffers();
+	}
+	~Window_()
+	{
+		glfwTerminate();
+	}
+};
 
 int main()
 {
-	if(!glfwInit()) throw new GeneralException("glfwInit failed");
-	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
-	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 3);
-	glfwOpenWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	if(!glfwOpenWindow(1024, 768, 8, 8, 8, 0, 24, 8, GLFW_WINDOW))
-	{
-		glfwTerminate();
-		throw new GeneralException("glfwOpenWindow failed");
-	}
-	glewExperimental = GL_TRUE;
-	if(glewInit() != GLEW_OK) throw new GeneralException("glewInit failed");
-
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CW);
-	glEnable(GL_CULL_FACE);
-	glClearDepth(1.0f);
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
-
-	glViewport(0, 0, 1024, 768);
-
+	Window_ window(1024, 768);
 	VertexShader vertexShader(vs);
 	FragmentShader fragmentShader(fs);
 	ShaderProgram shaderProgram(vertexShader, fragmentShader);
@@ -226,17 +239,15 @@ int main()
 		{ "", 0, 0 }
 	};
 	float triangle[] = {-1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f};
-
 	VertexBuffer vb(description, triangle, sizeof(triangle)/sizeof(float));
 	bool running = true;
-	while( running)
+	while(running)
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		vb.Draw();
-		glfwSwapBuffers();
+		window.Swap();
 		running = !glfwGetKey(GLFW_KEY_ESC) && 
 		          glfwGetWindowParam(GLFW_OPENED);
 
 	}
-	glfwTerminate();
 }
