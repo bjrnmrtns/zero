@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <exception>
 #include <string>
+#include <memory>
 
 static const char *vs =
 "#version 150\n"
@@ -59,9 +60,9 @@ public:
 		{
 			int length = 0;
 			glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-			char errors[length];
-			glGetShaderInfoLog(id, length, 0, errors);
-			throw GeneralException(std::string(errors));
+			std::unique_ptr<char> errors(new char[length]);
+			glGetShaderInfoLog(id, length, 0, errors.get());
+			throw GeneralException(std::string(errors.get()));
 		}
 	}
 	virtual ~Shader()
@@ -99,6 +100,17 @@ public:
 		
 		glBindAttribLocation(id, 0, "in_Position");
 		glLinkProgram(id);
+		
+		int ok = true;
+		glGetShaderiv(id, GL_LINK_STATUS, &ok);
+		if(!ok)
+		{
+			int length = 0;
+			glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+			std::unique_ptr<char> errors(new char[length]);
+			glGetProgramInfoLog(id, length, 0, errors.get());
+			throw GeneralException(std::string(errors.get()));
+		}
 	}
 	~ShaderProgram()
 	{
@@ -142,29 +154,24 @@ public:
 	struct InputElementDescription
 	{
 		std::string name;
-		size_t size;
-	};
-
-	struct AttributeReference
-	{
-		std::string name;
-		int offset;
-		int count;
+		size_t numberofelements;
+		size_t elementsize;
 	};
 	template <typename T>
-	VertexBuffer(AttributeReference *refs, const T *vertexData, size_t count)
+	VertexBuffer(InputElementDescription *description, const T *vertexData, size_t count)
 	: stride(sizeof(T))
 	, count(count)
-	, refs(refs)
 	{
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 		glGenBuffers(1, &id);
 		glBindBuffer(GL_ARRAY_BUFFER, id);
-		for(int i = 0; refs[i].count; ++i)
+		size_t offset = 0;
+		for(int i = 0; description[i].elementsize; ++i)
 		{
 			glEnableVertexAttribArray(i);
-			glVertexAttribPointer(i, refs[i].count, GL_FLOAT, GL_FALSE, stride, (void *)refs[i].offset);
+			glVertexAttribPointer(i, description[i].numberofelements, GL_FLOAT, GL_FALSE, stride, (void *)offset);
+			offset += description[i].numberofelements * description[i].elementsize;
 		}
 		glBufferData(GL_ARRAY_BUFFER, stride * count, vertexData, GL_STATIC_DRAW);
 	}
@@ -183,14 +190,8 @@ private:
 	unsigned int vao;
 	unsigned int stride;
 	size_t count;
-	AttributeReference *refs;
 };
 
-static VertexBuffer::AttributeReference modelRefs[] =
-{
-        { "in_vertex", 0, 3  },
-        { "", 0, 0  }
-};
 
 
 int main()
@@ -220,21 +221,18 @@ int main()
 	FragmentShader fragmentShader(fs);
 	ShaderProgram shaderProgram(vertexShader, fragmentShader);
 	shaderProgram.Use();
-	static VertexBuffer::InputElementDescription elementDescription[] { {"position", sizeof(glm::vec3)} };
-	float triangle[] = {0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f};
+	static VertexBuffer::InputElementDescription description[] = {
+		{ "in_position", 3, sizeof(glm::vec3) },
+		{ "", 0, 0 }
+	};
+	float triangle[] = {-1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f};
 
-	VertexBuffer vb(modelRefs, triangle, sizeof(triangle)/sizeof(float));
+	VertexBuffer vb(description, triangle, sizeof(triangle)/sizeof(float));
 	bool running = true;
 	while( running)
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		vb.Draw();
-/*		glColor3f(1.0f, 0.0f, 0.0f);
-		glBegin(GL_TRIANGLES);
-		glVertex3f(0.0f,-1.0f,0.0f);
-		glVertex3f(0.0f,1.0f,0.0f);
-		glVertex3f(1.0f,0.0f,0.0f);
-		glEnd();*/
 		glfwSwapBuffers();
 		running = !glfwGetKey(GLFW_KEY_ESC) && 
 		          glfwGetWindowParam(GLFW_OPENED);
