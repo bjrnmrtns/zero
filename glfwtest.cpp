@@ -8,12 +8,12 @@
 static const char *vs =
 "#version 150\n"
 "\n"
-"in vec3 in_Position;\n"
+"in vec3 in_position;\n"
 "out vec3 pass_Position;\n"
 "\n"
 "void main()\n"
 "{\n"
-"  gl_Position = vec4(in_Position, 1.0);\n"
+"  gl_Position = vec4(in_position, 1.0);\n"
 "  pass_Position = gl_Position.xyz;\n"
 "}\n";
 
@@ -44,6 +44,50 @@ public:
 	}
 private:
 	const std::string errors;
+};
+
+class VertexBuffer
+{
+public:
+	struct InputElementDescription
+	{
+		std::string name;
+		size_t numberofelements;
+		size_t elementsize;
+	};
+	template <typename T>
+	VertexBuffer(InputElementDescription *description, const T *vertexData, size_t count)
+	: stride(sizeof(T))
+	, count(count)
+	{
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+		glGenBuffers(1, &id);
+		glBindBuffer(GL_ARRAY_BUFFER, id);
+		size_t offset = 0;
+		for(int i = 0; description[i].elementsize; ++i)
+		{
+			glEnableVertexAttribArray(i);
+			glVertexAttribPointer(i, description[i].numberofelements, GL_FLOAT, GL_FALSE, stride, (void *)offset);
+			offset += description[i].numberofelements * description[i].elementsize;
+		}
+		glBufferData(GL_ARRAY_BUFFER, stride * count, vertexData, GL_STATIC_DRAW);
+	}
+	void Draw()
+	{
+		glBindVertexArray(vao);
+		glDrawArrays(GL_TRIANGLES, 0, count);
+	}
+	~VertexBuffer()
+	{
+		glDeleteBuffers(1, &id);
+		glDeleteVertexArrays(1, &vao);
+	}
+private:
+	unsigned int id;
+	unsigned int vao;
+	unsigned int stride;
+	size_t count;
 };
 
 class Shader
@@ -90,7 +134,7 @@ public:
 class ShaderProgram
 {
 public:
-	ShaderProgram(VertexShader &vertexShader, FragmentShader &fragmentShader)
+	ShaderProgram(VertexShader &vertexShader, FragmentShader &fragmentShader, VertexBuffer::InputElementDescription* description)
 	: vertexShader(vertexShader)
 	, fragmentShader(fragmentShader)
 	{
@@ -98,7 +142,10 @@ public:
 		glAttachShader(id, vertexShader.GetId());
 		glAttachShader(id, fragmentShader.GetId());
 		
-		glBindAttribLocation(id, 0, "in_Position");
+		for(int i = 0; description[i].elementsize; ++i)
+		{
+			glBindAttribLocation(id, i, description[i].name.c_str());
+		}
 		glLinkProgram(id);
 		
 		int ok = true;
@@ -148,50 +195,6 @@ private:
 	FragmentShader& fragmentShader;
 };
 
-class VertexBuffer
-{
-public:
-	struct InputElementDescription
-	{
-		std::string name;
-		size_t numberofelements;
-		size_t elementsize;
-	};
-	template <typename T>
-	VertexBuffer(InputElementDescription *description, const T *vertexData, size_t count)
-	: stride(sizeof(T))
-	, count(count)
-	{
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-		glGenBuffers(1, &id);
-		glBindBuffer(GL_ARRAY_BUFFER, id);
-		size_t offset = 0;
-		for(int i = 0; description[i].elementsize; ++i)
-		{
-			glEnableVertexAttribArray(i);
-			glVertexAttribPointer(i, description[i].numberofelements, GL_FLOAT, GL_FALSE, stride, (void *)offset);
-			offset += description[i].numberofelements * description[i].elementsize;
-		}
-		glBufferData(GL_ARRAY_BUFFER, stride * count, vertexData, GL_STATIC_DRAW);
-	}
-	void Draw()
-	{
-		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLES, 0, count);
-	}
-	~VertexBuffer()
-	{
-		glDeleteBuffers(1, &id);
-		glDeleteVertexArrays(1, &vao);
-	}
-private:
-	unsigned int id;
-	unsigned int vao;
-	unsigned int stride;
-	size_t count;
-};
-
 class Window_
 {
 public:
@@ -232,12 +235,12 @@ int main()
 	Window_ window(1024, 768);
 	VertexShader vertexShader(vs);
 	FragmentShader fragmentShader(fs);
-	ShaderProgram shaderProgram(vertexShader, fragmentShader);
-	shaderProgram.Use();
 	static VertexBuffer::InputElementDescription description[] = {
 		{ "in_position", 3, sizeof(glm::vec3) },
 		{ "", 0, 0 }
 	};
+	ShaderProgram shaderProgram(vertexShader, fragmentShader, description);
+	shaderProgram.Use();
 	float triangle[] = {-1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f};
 	VertexBuffer vb(description, triangle, sizeof(triangle)/sizeof(float));
 	bool running = true;
