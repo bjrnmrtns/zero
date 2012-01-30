@@ -4,9 +4,10 @@
 #include <exception>
 #include <string>
 #include <memory>
+#include <vector>
 
 static const char *vs =
-"#version 150\n"
+"#version 330 core\n"
 "\n"
 "in vec3 in_position;\n"
 "out vec3 pass_Position;\n"
@@ -18,7 +19,7 @@ static const char *vs =
 "}\n";
 
 static const char *fs =
-"#version 150\n"
+"#version 330 core\n"
 "\n"
 "in vec3 pass_Position;\n"
 "out vec3 outColor;\n"
@@ -40,7 +41,7 @@ public:
 	}
 	const char *what() const throw()
 	{
-		return errors.c_str(); 
+		return errors.c_str();
 	}
 private:
 	const std::string errors;
@@ -141,13 +142,13 @@ public:
 		id = glCreateProgram();
 		glAttachShader(id, vertexShader.GetId());
 		glAttachShader(id, fragmentShader.GetId());
-		
+
 		for(int i = 0; description[i].elementsize; ++i)
 		{
 			glBindAttribLocation(id, i, description[i].name.c_str());
 		}
 		glLinkProgram(id);
-		
+
 		int ok = true;
 		glGetShaderiv(id, GL_LINK_STATUS, &ok);
 		if(!ok)
@@ -195,6 +196,97 @@ private:
 	FragmentShader& fragmentShader;
 };
 
+class Texture
+{
+public:
+	Texture(unsigned int width, unsigned int height)
+	{
+		glGenTextures(1, &id);
+		glBindTexture(GL_TEXTURE_2D, id);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+
+	}
+	void Bind(int textureUnit)
+	{
+		glActiveTexture(GL_TEXTURE0+textureUnit);
+		glBindTexture(GL_TEXTURE_2D, id);
+        }
+	void Attach(unsigned int nr)
+	{
+		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + nr, id, 0);
+	}
+	~Texture()
+	{
+		glDeleteTextures(1, &id);
+	}
+private:
+	unsigned int id;
+};
+
+static const unsigned int Attachments[] =
+{
+	GL_COLOR_ATTACHMENT0,
+	GL_COLOR_ATTACHMENT1,
+	GL_COLOR_ATTACHMENT2,
+	GL_COLOR_ATTACHMENT3,
+	GL_COLOR_ATTACHMENT4,
+	GL_COLOR_ATTACHMENT5,
+	GL_COLOR_ATTACHMENT6,
+	GL_COLOR_ATTACHMENT7,
+	GL_COLOR_ATTACHMENT8,
+	GL_COLOR_ATTACHMENT9,
+	GL_COLOR_ATTACHMENT10,
+	GL_COLOR_ATTACHMENT11,
+	GL_COLOR_ATTACHMENT12,
+	GL_COLOR_ATTACHMENT13,
+	GL_COLOR_ATTACHMENT14,
+	GL_COLOR_ATTACHMENT15
+};
+
+class RenderTarget
+{
+public:
+	RenderTarget(unsigned int width, unsigned int height)
+	: width(width)
+	, height(height)
+	{
+		glGenFramebuffers(1, &fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		glGenRenderbuffers(1, &rbo);
+		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+	}
+	void Activate(std::vector<Texture*>& targets)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		if(targets.size() > 0)
+		{
+			glDrawBuffers(targets.size(), Attachments);
+			for(unsigned int i=0; i < targets.size(); i++)
+			{
+				targets[i]->Attach(i);
+			}
+		}
+		glViewport(0, 0, width, height);
+		glEnable(GL_DEPTH_TEST);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
+	~RenderTarget()
+	{
+		glDeleteRenderbuffers(1, &rbo);
+		glDeleteFramebuffers(1, &fbo);
+	}
+private:
+	unsigned int fbo, rbo;
+	unsigned int width, height;
+};
+
+
 class Window_
 {
 public:
@@ -232,7 +324,9 @@ public:
 
 int main()
 {
-	Window_ window(1024, 768);
+	unsigned int width = 1024;
+	unsigned int height = 768;
+	Window_ window(width, height);
 	VertexShader vertexShader(vs);
 	FragmentShader fragmentShader(fs);
 	static VertexBuffer::InputElementDescription description[] = {
@@ -243,14 +337,26 @@ int main()
 	shaderProgram.Use();
 	float triangle[] = {-1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f};
 	VertexBuffer vb(description, triangle, sizeof(triangle)/sizeof(float));
+
+//	RenderTarget target(width, height);
+//	Texture texture(width, height);
+//	std::vector<Texture*> textures;
+//	textures.push_back(&texture);
+//	target.Activate(textures);
+
 	bool running = true;
 	while(running)
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		vb.Draw();
 		window.Swap();
-		running = !glfwGetKey(GLFW_KEY_ESC) && 
+		running = !glfwGetKey(GLFW_KEY_ESC) &&
 		          glfwGetWindowParam(GLFW_OPENED);
 
 	}
+//	glReadBuffer(GL_COLOR_ATTACHMENT0);
+//	texture.Bind(0);
+//	static float data[1024 * 768 * 3];
+//	glReadPixels(0, 0, width, height, GL_TEXTURE_2D, GL_FLOAT, &data);
+	return 0;
 }
