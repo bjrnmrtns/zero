@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <IL/il.h>
 
 static const char *vs =
 "#version 330 core\n"
@@ -356,8 +357,16 @@ int main()
 	texture.Bind(0);
 	static unsigned char data[1024 * 768 * 3];
 	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, &data);
-	FILE* test = fopen("test.raw", "w+");
-	fwrite(data, sizeof(unsigned char), sizeof(data)/sizeof(unsigned char), test);
+	unsigned int imageid;
+	ilInit();
+	ilGenImages(1, &imageid);
+	ilBindImage(imageid);
+	ilTexImage(width, height, 1, 3, IL_RGB, IL_UNSIGNED_BYTE, data);
+	static unsigned char savebuf[1024 * 768 * 3];
+	unsigned int size = ilSaveL(IL_PNG, savebuf, 1024 * 768 * 3);
+	FILE* test = fopen("test2.png", "w+");
+	fwrite(savebuf, sizeof(unsigned char), size, test);
 	fclose(test);
+	ilDeleteImages(1, &imageid);
 	return 0;
 }
