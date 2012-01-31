@@ -28,6 +28,15 @@ wget https://sourceforge.net/projects/ogl-math/files/glm-0.9.2.7/glm-0.9.2.7.zip
 unzip glm-0.9.2.7.zip
 mv glm-0.9.2.7/glm/ ${ZERO_EXTERNAL_DIR}/include
 
+# Get glm
+cd ${BOOTSTRAP_DIR}
+wget http://downloads.sourceforge.net/openil/DevIL-1.7.8.tar.gz
+tar xf DevIL-1.7.8.tar.gz
+cd devil-1.7.8
+./configure --prefix=${ZERO_EXTERNAL_DIR}/external
+make
+make install
+
 # Get bullet
 cd ${BOOTSTRAP_DIR}
 wget http://bullet.googlecode.com/files/bullet-2.79-rev2440.tgz

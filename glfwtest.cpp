@@ -5,11 +5,12 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <iostream>
 
 static const char *vs =
 "#version 330 core\n"
 "\n"
-"in vec3 in_position;\n"
+"layout (location = 0) in vec3 in_position;\n"
 "out vec3 pass_Position;\n"
 "\n"
 "void main()\n"
@@ -205,8 +206,6 @@ public:
 		glBindTexture(GL_TEXTURE_2D, id);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 
 	}
@@ -250,7 +249,7 @@ static const unsigned int Attachments[] =
 class RenderTarget
 {
 public:
-	RenderTarget(unsigned int width, unsigned int height)
+	RenderTarget(unsigned int width, unsigned int height, std::vector<Texture*> targets)
 	: width(width)
 	, height(height)
 	{
@@ -260,10 +259,6 @@ public:
 		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
-	}
-	void Activate(std::vector<Texture*>& targets)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		if(targets.size() > 0)
 		{
 			glDrawBuffers(targets.size(), Attachments);
@@ -272,6 +267,10 @@ public:
 				targets[i]->Attach(i);
 			}
 		}
+	}
+	void Activate()
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glViewport(0, 0, width, height);
 		glEnable(GL_DEPTH_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -338,25 +337,27 @@ int main()
 	float triangle[] = {-1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f};
 	VertexBuffer vb(description, triangle, sizeof(triangle)/sizeof(float));
 
-//	RenderTarget target(width, height);
-//	Texture texture(width, height);
-//	std::vector<Texture*> textures;
-//	textures.push_back(&texture);
-//	target.Activate(textures);
+	Texture texture(width, height);
+	std::vector<Texture*> textures;
+	textures.push_back(&texture);
+	RenderTarget target(width, height, textures);
 
 	bool running = true;
 	while(running)
 	{
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		target.Activate();
 		vb.Draw();
 		window.Swap();
 		running = !glfwGetKey(GLFW_KEY_ESC) &&
 		          glfwGetWindowParam(GLFW_OPENED);
 
 	}
-//	glReadBuffer(GL_COLOR_ATTACHMENT0);
-//	texture.Bind(0);
-//	static float data[1024 * 768 * 3];
-//	glReadPixels(0, 0, width, height, GL_TEXTURE_2D, GL_FLOAT, &data);
+	glReadBuffer(GL_FRONT);
+	texture.Bind(0);
+	static unsigned char data[1024 * 768 * 3];
+	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, &data);
+	FILE* test = fopen("test.raw", "w+");
+	fwrite(data, sizeof(unsigned char), sizeof(data)/sizeof(unsigned char), test);
+	fclose(test);
 	return 0;
 }
