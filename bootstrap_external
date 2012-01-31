@@ -6,7 +6,7 @@ ZERO_EXTERNAL_DIR=`pwd`/external
 rm -rf ${ZERO_EXTERNAL_DIR}
 mkdir -p ${ZERO_EXTERNAL_DIR}
 
-# Get SDL
+# Get GLFW
 cd ${BOOTSTRAP_DIR}
 wget http://sourceforge.net/projects/glfw/files/glfw/2.7.2/glfw-2.7.2.tar.bz2
 tar xfj glfw-2.7.2.tar.bz2
@@ -28,7 +28,7 @@ wget https://sourceforge.net/projects/ogl-math/files/glm-0.9.2.7/glm-0.9.2.7.zip
 unzip glm-0.9.2.7.zip
 mv glm-0.9.2.7/glm/ ${ZERO_EXTERNAL_DIR}/include
 
-# Get glm
+# Get DevIL
 cd ${BOOTSTRAP_DIR}
 wget http://downloads.sourceforge.net/openil/DevIL-1.7.8.tar.gz
 tar xf DevIL-1.7.8.tar.gz

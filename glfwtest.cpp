@@ -352,7 +352,7 @@ int main()
 		          glfwGetWindowParam(GLFW_OPENED);
 
 	}
-	glReadBuffer(GL_FRONT);
+	glReadBuffer(GL_COLOR_ATTACHMENT0);
 	texture.Bind(0);
 	static unsigned char data[1024 * 768 * 3];
 	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, &data);
