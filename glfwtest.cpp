@@ -286,7 +286,6 @@ private:
 	unsigned int width, height;
 };
 
-
 class Window_
 {
 public:
@@ -303,7 +302,6 @@ public:
 		}
 		glewExperimental = GL_TRUE;
 		if(glewInit() != GLEW_OK) throw new GeneralException("glewInit failed");
-
 		glCullFace(GL_BACK);
 		glFrontFace(GL_CW);
 		glEnable(GL_CULL_FACE);
