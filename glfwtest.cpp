@@ -6,7 +6,9 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <stdlib.h>
 #include <IL/il.h>
+#include <string.h>
 
 static const char *vs =
 "#version 330 core\n"
@@ -200,31 +202,100 @@ private:
 
 class Texture
 {
+	friend class Image;
+public:
+	struct ImageData
+	{
+		ImageData(int type, unsigned char* data, size_t size)
+		: type(type)
+		, data(data)
+		, size(size)
+		{
+		}
+		int type;
+		std::unique_ptr<unsigned char> data;
+		size_t size;
+	};
+	class Image
+	{
+	private:
+		Texture& texture;
+		unsigned int id;
+	public: 
+		Image(Texture& texture)
+		: texture(texture)
+		{
+			ilGenImages(1, &id);
+			ilBindImage(id);
+			ilTexImage(texture.width, texture.height, 1, 3, IL_RGB, IL_UNSIGNED_BYTE, 0);
+		}
+		void load(unsigned char* data, size_t size)
+		{
+			ilBindImage(id);
+			texture.Bind(0);
+			ilLoadL(IL_PNG, data, size);
+			assert(ilGetData() != 0);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.width, texture.height, 0, GL_RGB, GL_UNSIGNED_BYTE, ilGetData());
+		}
+		std::unique_ptr<ImageData> save()
+		{
+			const int maxwidth = 2048;
+			const int maxheight = 2048;
+			static unsigned char data[maxwidth * maxheight * 3];
+			ilBindImage(id);
+			texture.Bind(0);
+			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, &data);
+			ilSetData(data);
+			unsigned int size = ilSaveL(IL_PNG, data, maxwidth * maxheight * 3);
+			unsigned char* savedata = (unsigned char*)malloc(size);
+			memcpy(savedata, data, size);
+			return std::unique_ptr<ImageData>(new ImageData(IL_PNG, savedata, size));
+		}
+		~Image()
+		{
+			ilDeleteImages(1, &id);
+		}
+	};
+private:
+	unsigned int width;
+	unsigned int height;
+	Image image;
+	unsigned int id;
 public:
 	Texture(unsigned int width, unsigned int height)
+	: width(width)
+	, height(height)
+	, image(*this)
 	{
 		glGenTextures(1, &id);
 		glBindTexture(GL_TEXTURE_2D, id);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-
 	}
+	// Bind for render onto primitive.
 	void Bind(int textureUnit)
 	{
 		glActiveTexture(GL_TEXTURE0+textureUnit);
 		glBindTexture(GL_TEXTURE_2D, id);
         }
+	// Attach for render to texture using fbo
 	void Attach(unsigned int nr)
 	{
 		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + nr, id, 0);
+	}
+	void load(unsigned char* data, size_t size)
+	{
+		image.load(data, size);
+	}
+	std::unique_ptr<ImageData> save()
+	{
+		return image.save();
 	}
 	~Texture()
 	{
 		glDeleteTextures(1, &id);
 	}
-private:
-	unsigned int id;
 };
 
 static const unsigned int Attachments[] =
@@ -286,11 +357,18 @@ private:
 	unsigned int width, height;
 };
 
+class RenderStep
+{
+public:
+};
+
+
 class Window_
 {
 public:
 	Window_(size_t width, size_t height)
 	{
+		ilInit();
 		if(!glfwInit()) throw new GeneralException("glfwInit failed");
 		glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
 		glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 3);
@@ -351,20 +429,10 @@ int main()
 		          glfwGetWindowParam(GLFW_OPENED);
 
 	}
-	glReadBuffer(GL_COLOR_ATTACHMENT0);
-	texture.Bind(0);
-	static unsigned char data[1024 * 768 * 3];
-	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, &data);
-	unsigned int imageid;
-	ilInit();
-	ilGenImages(1, &imageid);
-	ilBindImage(imageid);
-	ilTexImage(width, height, 1, 3, IL_RGB, IL_UNSIGNED_BYTE, data);
-	static unsigned char savebuf[1024 * 768 * 3];
-	unsigned int size = ilSaveL(IL_PNG, savebuf, 1024 * 768 * 3);
+	std::unique_ptr<Texture::ImageData> data = texture.save();
 	FILE* test = fopen("test2.png", "w+");
-	fwrite(savebuf, sizeof(unsigned char), size, test);
+	fwrite(data->data.get(), sizeof(unsigned char), data->size, test);
 	fclose(test);
-	ilDeleteImages(1, &imageid);
 	return 0;
 }
+
