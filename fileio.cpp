@@ -4,15 +4,14 @@
 #include <memory>
 #include <cassert>
 
-struct Lump
-{
-	size_t size;
-	std::unique_ptr<unsigned char> buf;
-};
-
 class File
 {
 public:
+	struct Lump
+	{
+		size_t size;
+		std::unique_ptr<unsigned char> buf;
+	};
 	FILE* file;
 	File(const std::string name, const char* mode)
 	: file(fopen(name.c_str(), mode))
@@ -54,7 +53,7 @@ public:
 
 int main()
 {
-	std::unique_ptr<Lump> lump = File::read("RenderPipeline");
+	std::unique_ptr<File::Lump> lump = File::read("RenderPipeline");
 	File::write("Copyfile", *(lump.get()));
 	return 0;
 }
