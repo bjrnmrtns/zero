@@ -52,14 +52,15 @@ private:
 	const std::string errors;
 };
 
+struct Lump
+{
+	size_t size;
+	std::unique_ptr<unsigned char> buf;
+};
+
 class File
 {
 public:
-	struct Lump
-	{
-		size_t size;
-		std::unique_ptr<unsigned char> buf;
-	};
 	FILE* file;
 	File(const std::string name, const char* mode)
 	: file(fopen(name.c_str(), mode))
@@ -70,21 +71,21 @@ public:
 	{
 		fclose(file);
 	}
-	static std::unique_ptr<Lump> read(const std::string name)
+	static Lump read(const std::string name)
 	{
 		File file(name, "r");
 		fseek(file.file, 0L, SEEK_END);
-		std::unique_ptr<Lump> lump(new Lump);
-		lump->size = ftell(file.file);
+		Lump lump;
+		lump.size = ftell(file.file);
 		rewind(file.file);
-		unsigned char* buf = (unsigned char*)malloc(lump->size);
-		lump->buf.reset(buf);
+		unsigned char* buf = (unsigned char*)malloc(lump.size);
+		lump.buf.reset(buf);
 		size_t done = 0;
 		do {
-			size_t read = fread(buf+done, 1, lump->size - done, file.file);
+			size_t read = fread(buf+done, 1, lump.size - done, file.file);
 			assert(read != 0);
 			done += read;
-		} while(done != lump->size);
+		} while(done != lump.size);
 		return lump;
 	}
 	static void write(const std::string name, const Lump& lump)
@@ -254,15 +255,8 @@ class Texture
 public:
 	struct ImageData
 	{
-		ImageData(int type, unsigned char* data, size_t size)
-		: type(type)
-		, data(data)
-		, size(size)
-		{
-		}
 		int type;
-		std::unique_ptr<unsigned char> data;
-		size_t size;
+		Lump lump;
 	};
 	class Image
 	{
@@ -277,15 +271,15 @@ public:
 			ilBindImage(id);
 			ilTexImage(texture.width, texture.height, 1, 3, IL_RGB, IL_UNSIGNED_BYTE, 0);
 		}
-		void load(unsigned char* data, size_t size)
+		void load(ImageData& imagedata)
 		{
 			ilBindImage(id);
 			texture.Bind(0);
-			ilLoadL(IL_PNG, data, size);
+			ilLoadL(imagedata.type, imagedata.lump.buf.get(), imagedata.lump.size);
 			assert(ilGetData() != 0);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.width, texture.height, 0, GL_RGB, GL_UNSIGNED_BYTE, ilGetData());
 		}
-		std::unique_ptr<ImageData> save()
+		ImageData save()
 		{
 			const int maxwidth = 2048;
 			const int maxheight = 2048;
@@ -294,10 +288,13 @@ public:
 			texture.Bind(0);
 			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, &data);
 			ilSetData(data);
-			unsigned int size = ilSaveL(IL_PNG, data, maxwidth * maxheight * 3);
-			unsigned char* savedata = (unsigned char*)malloc(size);
-			memcpy(savedata, data, size);
-			return std::unique_ptr<ImageData>(new ImageData(IL_PNG, savedata, size));
+			ImageData imagedata;
+			imagedata.type = IL_PNG;
+			imagedata.lump.size = ilSaveL(IL_PNG, data, maxwidth * maxheight * 3);
+			unsigned char* savedata = (unsigned char*)malloc(imagedata.lump.size);
+			imagedata.lump.buf.reset(savedata);
+			memcpy(savedata, data, imagedata.lump.size);
+			return imagedata;
 		}
 		~Image()
 		{
@@ -332,11 +329,11 @@ public:
 	{
 		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + nr, id, 0);
 	}
-	void load(unsigned char* data, size_t size)
+	void load(ImageData& imagedata)
 	{
-		image.load(data, size);
+		image.load(imagedata);
 	}
-	std::unique_ptr<ImageData> save()
+	ImageData save()
 	{
 		return image.save();
 	}
@@ -477,10 +474,15 @@ int main()
 		          glfwGetWindowParam(GLFW_OPENED);
 
 	}
-	std::unique_ptr<Texture::ImageData> data = texture.save();
-	FILE* test = fopen("test2.png", "w+");
-	fwrite(data->data.get(), sizeof(unsigned char), data->size, test);
-	fclose(test);
+	Texture::ImageData data = texture.save();
+	Texture::ImageData imagedata;
+	imagedata.lump = File::read("phone.png");
+	imagedata.type = IL_PNG;	
+	Texture phonetex(1024, 768);
+	phonetex.load(imagedata);
+	Texture::ImageData imphone = phonetex.save();
+	File::write("blabla.png", imphone.lump);
+	File::write("rendtex.png", data.lump);
 	return 0;
 }
 
