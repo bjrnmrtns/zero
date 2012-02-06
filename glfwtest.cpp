@@ -15,6 +15,8 @@ static const char *vs =
 "#version 330 core\n"
 "\n"
 "layout (location = 0) in vec3 in_position;\n"
+"layout (location = 1) in vec3 in_normal;\n"
+"layout (location = 2) in vec3 in_texcoord;\n"
 "out vec3 pass_Position;\n"
 "\n"
 "void main()\n"
@@ -452,11 +454,18 @@ int main()
 	FragmentShader fragmentShader(fs);
 	static VertexBuffer::InputElementDescription description[] = {
 		{ "in_position", 3, sizeof(glm::vec3) },
+		{ "in_normal", 3, sizeof(glm::vec3) },
+		{ "in_texcoord", 2, sizeof(glm::vec2) },
 		{ "", 0, 0 }
 	};
 	ShaderProgram shaderProgram(vertexShader, fragmentShader, description);
 	shaderProgram.Use();
-	float triangle[] = {-1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f};
+	struct BufferInput
+	{
+		float x,y,z,nx,ny,nz,u,v;
+	};
+	BufferInput triangle[] = { { -1, -1, 1,  0,  0, 1,  0,  0}, {-1,  1, 1,  0,  0, 1,  0,  1}, {1, -1, 1,  0,  0, 1,  1,  0}, {-1,  1, 1,  0,  0, -1,  0,  1}, {1,  1, 1,  0,  0, -1,  1,  1}, {1, -1, 1,  0,  0, -1,  1,  0 }};
+
 	VertexBuffer vb(description, triangle, sizeof(triangle)/sizeof(float));
 
 	Texture texture(width, height);
