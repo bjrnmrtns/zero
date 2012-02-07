@@ -16,24 +16,31 @@ static const char *vs =
 "\n"
 "layout (location = 0) in vec3 in_position;\n"
 "layout (location = 1) in vec3 in_normal;\n"
-"layout (location = 2) in vec3 in_texcoord;\n"
-"out vec3 pass_Position;\n"
+"layout (location = 2) in vec2 in_texcoord;\n"
+"out vec3 pass_position;\n"
+"out vec3 pass_normal;\n"
+"out vec2 pass_texcoord;\n"
 "\n"
 "void main()\n"
 "{\n"
 "  gl_Position = vec4(in_position, 1.0);\n"
-"  pass_Position = gl_Position.xyz;\n"
+"  pass_position = in_position;\n"
+"  pass_normal = in_normal;\n"
+"  pass_texcoord = in_texcoord;\n"
 "}\n";
 
 static const char *fs =
 "#version 330 core\n"
 "\n"
-"in vec3 pass_Position;\n"
+"uniform sampler2D modeltex;\n"
+"in vec3 pass_position;\n"
+"in vec3 pass_normal;\n"
+"in vec2 pass_texcoord;\n"
 "out vec3 outColor;\n"
 "\n"
 "void main(void)\n"
 "{\n"
-"  outColor = vec3(1.0, 1.0, 0.0);\n"
+"  outColor = texture2D(modeltex, pass_texcoord).xyz;\n"
 "}\n";
 
 class GeneralException : public std::exception
@@ -125,7 +132,7 @@ public:
 		{
 			glEnableVertexAttribArray(i);
 			glVertexAttribPointer(i, description[i].numberofelements, GL_FLOAT, GL_FALSE, stride, (void *)offset);
-			offset += description[i].numberofelements * description[i].elementsize;
+			offset += description[i].elementsize;
 		}
 		glBufferData(GL_ARRAY_BUFFER, stride * count, vertexData, GL_STATIC_DRAW);
 	}
@@ -169,9 +176,9 @@ public:
 	{
 		glDeleteShader(id);
 	}
-	int GetId() { return id; }
+	unsigned int GetId() { return id; }
 private:
-	int id;
+	unsigned int id;
 	int type;
 };
 
@@ -195,6 +202,7 @@ public:
 	, fragmentShader(fragmentShader)
 	{
 		id = glCreateProgram();
+		if(id == 0) throw GeneralException("glCreateProgram of shader failed");
 		glAttachShader(id, vertexShader.GetId());
 		glAttachShader(id, fragmentShader.GetId());
 
@@ -206,6 +214,7 @@ public:
 
 		int ok = true;
 		glGetShaderiv(id, GL_LINK_STATUS, &ok);
+		glGetError(); //TODO: remove this because it is used to ignore the error GL_INVALID_OPERATION after glGetShaderiv
 		if(!ok)
 		{
 			int length = 0;
@@ -235,7 +244,6 @@ public:
 		int uniform = glGetUniformLocation(id, name);
 		error = glGetError(); if (error) { printf("%d\n", error); abort(); }
 		if (uniform == -1) return false;
-
 		glUseProgram(id);
 		glUniform1i(uniform, value);
 		error = glGetError(); if (error) { printf("%d\n", error); abort(); }
@@ -246,7 +254,7 @@ public:
 		glUseProgram(id);
 	}
 private:
-	int id;
+	unsigned int id;
 	VertexShader& vertexShader;
 	FragmentShader& fragmentShader;
 };
@@ -289,7 +297,7 @@ public:
 			ilBindImage(id);
 			texture.Bind(0);
 			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, &data);
-			ilSetData(data);
+			assert(ilSetData(data));
 			ImageData imagedata;
 			imagedata.type = IL_PNG;
 			imagedata.lump.size = ilSaveL(IL_PNG, data, maxwidth * maxheight * 3);
@@ -319,6 +327,17 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+	}
+	Texture(unsigned int width, unsigned int height, ImageData& imagedata)
+	: width(width)
+	, height(height)
+	, image(*this)
+	{
+		glGenTextures(1, &id);
+		glBindTexture(GL_TEXTURE_2D, id);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		load(imagedata);
 	}
 	// Bind for render onto primitive.
 	void Bind(int textureUnit)
@@ -427,6 +446,7 @@ public:
 		}
 		glewExperimental = GL_TRUE;
 		if(glewInit() != GLEW_OK) throw new GeneralException("glewInit failed");
+		glGetError(); // mask error of failed glewInit http://www.opengl.org/discussion_boards/ubbthreads.php?ubb=showflat&Number=284912
 		glCullFace(GL_BACK);
 		glFrontFace(GL_CW);
 		glEnable(GL_CULL_FACE);
@@ -473,9 +493,14 @@ int main()
 	textures.push_back(&texture);
 	RenderTarget target(width, height, textures);
 
+	Texture::ImageData imagedata({IL_PNG, File::read("pic.png")});	
+	Texture pic(1024, 768, imagedata);
+
 	bool running = true;
 	while(running)
 	{
+		pic.Bind(0);
+		shaderProgram.SetTexture("modeltex", 0);
 		target.Activate();
 		vb.Draw();
 		window.Swap();
@@ -483,15 +508,7 @@ int main()
 		          glfwGetWindowParam(GLFW_OPENED);
 
 	}
-	Texture::ImageData data = texture.save();
-	Texture::ImageData imagedata;
-	imagedata.lump = File::read("phone.png");
-	imagedata.type = IL_PNG;	
-	Texture phonetex(1024, 768);
-	phonetex.load(imagedata);
-	Texture::ImageData imphone = phonetex.save();
-	File::write("blabla.png", imphone.lump);
-	File::write("rendtex.png", data.lump);
+	File::write("rendtex.png", texture.save().lump);
 	return 0;
 }
 
