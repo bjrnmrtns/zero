@@ -11,38 +11,6 @@
 #include <string.h>
 #include <cstdlib>
 
-static const char *vs =
-"#version 330 core\n"
-"\n"
-"layout (location = 0) in vec3 in_position;\n"
-"layout (location = 1) in vec3 in_normal;\n"
-"layout (location = 2) in vec2 in_texcoord;\n"
-"out vec3 pass_position;\n"
-"out vec3 pass_normal;\n"
-"out vec2 pass_texcoord;\n"
-"\n"
-"void main()\n"
-"{\n"
-"  gl_Position = vec4(in_position, 1.0);\n"
-"  pass_position = in_position;\n"
-"  pass_normal = in_normal;\n"
-"  pass_texcoord = in_texcoord;\n"
-"}\n";
-
-static const char *fs =
-"#version 330 core\n"
-"\n"
-"uniform sampler2D modeltex;\n"
-"in vec3 pass_position;\n"
-"in vec3 pass_normal;\n"
-"in vec2 pass_texcoord;\n"
-"out vec3 outColor;\n"
-"\n"
-"void main(void)\n"
-"{\n"
-"  outColor = texture2D(modeltex, pass_texcoord).xyz;\n"
-"}\n";
-
 class GeneralException : public std::exception
 {
 public:
@@ -156,8 +124,10 @@ private:
 class Shader
 {
 public:
-	Shader(const char* source, int type) : type(type)
+	Shader(const std::string filename, int type) : type(type)
 	{
+		Lump shaderdata = File::read(filename);
+		const char * source = (const char*)shaderdata.buf.get();
 		id = glCreateShader(type);
 		glShaderSource(id, 1, &source, 0);
 		glCompileShader(id);
@@ -185,13 +155,13 @@ private:
 class VertexShader : public Shader
 {
 public:
-	VertexShader(const char* source) : Shader(source, GL_VERTEX_SHADER) {}
+	VertexShader(const std::string filename) : Shader(filename, GL_VERTEX_SHADER) {}
 };
 
 class FragmentShader : public Shader
 {
 public:
-	FragmentShader(const char* source) : Shader(source, GL_FRAGMENT_SHADER) {}
+	FragmentShader(const std::string filename) : Shader(filename, GL_FRAGMENT_SHADER) {}
 };
 
 class ShaderProgram
@@ -423,12 +393,6 @@ private:
 	unsigned int width, height;
 };
 
-class RenderStep
-{
-public:
-};
-
-
 class Window_
 {
 public:
@@ -465,13 +429,19 @@ public:
 	}
 };
 
+class RenderStep
+{
+public:
+
+};
+
 int main()
 {
 	unsigned int width = 1024;
 	unsigned int height = 768;
 	Window_ window(width, height);
-	VertexShader vertexShader(vs);
-	FragmentShader fragmentShader(fs);
+	VertexShader vertexShader("resources/shaders/null.vs");
+	FragmentShader fragmentShader("resources/shaders/null.fs");
 	static VertexBuffer::InputElementDescription description[] = {
 		{ "in_position", 3, sizeof(glm::vec3) },
 		{ "in_normal", 3, sizeof(glm::vec3) },
