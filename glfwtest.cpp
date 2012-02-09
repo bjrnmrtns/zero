@@ -429,11 +429,31 @@ public:
 	}
 };
 
-class RenderStep
+/*class RenderStep
 {
+private:
+	struct BufferInput
+	{
+		float x,y,z,nx,ny,nz,u,v;
+	};
+	static BufferInput triangle[] = { { -1, -1, 1,  0,  0, 1,  0,  0}, {-1,  1, 1,  0,  0, 1,  0,  1}, {1, -1, 1,  0,  0, 1,  1,  0}, {-1,  1, 1,  0,  0, -1,  0,  1}, {1,  1, 1,  0,  0, -1,  1,  1}, {1, -1, 1,  0,  0, -1,  1,  0 }};
+	static VertexBuffer::InputElementDescription description[] = {
+		{ "in_position", 3, sizeof(glm::vec3) },
+		{ "in_normal", 3, sizeof(glm::vec3) },
+		{ "in_texcoord", 2, sizeof(glm::vec2) },
+		{ "", 0, 0 }
+	};
+	VertexShader vs;
+	FragmentShader fs;
+	ShaderProgram sp;
 public:
-
-};
+	RenderStep()
+	: vs("resources/shaders/null.vs")
+	, fs("resources/shaders/null.fs")
+	, sp(vs, fs,  description)
+	{
+	}
+};*/
 
 int main()
 {
@@ -457,7 +477,6 @@ int main()
 	BufferInput triangle[] = { { -1, -1, 1,  0,  0, 1,  0,  0}, {-1,  1, 1,  0,  0, 1,  0,  1}, {1, -1, 1,  0,  0, 1,  1,  0}, {-1,  1, 1,  0,  0, -1,  0,  1}, {1,  1, 1,  0,  0, -1,  1,  1}, {1, -1, 1,  0,  0, -1,  1,  0 }};
 
 	VertexBuffer vb(description, triangle, sizeof(triangle)/sizeof(float));
-
 	Texture texture(width, height);
 	std::vector<Texture*> textures;
 	textures.push_back(&texture);
