@@ -10,3 +10,4 @@ void main(void)
 {
 	outColor = texture2D(modeltex, pass_texcoord).xyz;
 }
+

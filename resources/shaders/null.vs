@@ -7,10 +7,11 @@ out vec3 pass_position;
 out vec3 pass_normal;
 out vec2 pass_texcoord;
 
-void main()
+void main(void)
 {
 	gl_Position = vec4(in_position, 1.0);
 	pass_position = in_position;
 	pass_normal = in_normal;
 	pass_texcoord = in_texcoord;
 }
+

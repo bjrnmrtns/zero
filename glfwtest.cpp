@@ -129,7 +129,7 @@ public:
 		Lump shaderdata = File::read(filename);
 		const char * source = (const char*)shaderdata.buf.get();
 		id = glCreateShader(type);
-		glShaderSource(id, 1, &source, 0);
+		glShaderSource(id, 1, &source, (int *)&shaderdata.size);
 		glCompileShader(id);
 		int ok = true;
 		glGetShaderiv(id, GL_COMPILE_STATUS, &ok);
@@ -357,7 +357,7 @@ static const unsigned int Attachments[] =
 class RenderTarget
 {
 public:
-	RenderTarget(unsigned int width, unsigned int height, std::vector<Texture*> targets)
+	RenderTarget(unsigned int width, unsigned int height, std::vector<std::unique_ptr<Texture>>& targets)
 	: width(width)
 	, height(height)
 	{
@@ -429,75 +429,65 @@ public:
 	}
 };
 
-/*class RenderStep
+class RenderStep
 {
 private:
 	struct BufferInput
 	{
 		float x,y,z,nx,ny,nz,u,v;
 	};
-	static BufferInput triangle[] = { { -1, -1, 1,  0,  0, 1,  0,  0}, {-1,  1, 1,  0,  0, 1,  0,  1}, {1, -1, 1,  0,  0, 1,  1,  0}, {-1,  1, 1,  0,  0, -1,  0,  1}, {1,  1, 1,  0,  0, -1,  1,  1}, {1, -1, 1,  0,  0, -1,  1,  0 }};
-	static VertexBuffer::InputElementDescription description[] = {
-		{ "in_position", 3, sizeof(glm::vec3) },
-		{ "in_normal", 3, sizeof(glm::vec3) },
-		{ "in_texcoord", 2, sizeof(glm::vec2) },
-		{ "", 0, 0 }
-	};
+	BufferInput triangle[6];
+	VertexBuffer::InputElementDescription description[4];
 	VertexShader vs;
 	FragmentShader fs;
 	ShaderProgram sp;
+	VertexBuffer vb;
+	Texture::ImageData imagedata;
+	Texture input;
 public:
-	RenderStep()
-	: vs("resources/shaders/null.vs")
+	std::vector<std::unique_ptr<Texture>> output;
+private:
+	std::unique_ptr<RenderTarget> rt;
+public:
+	RenderStep(size_t width, size_t height)
+	: triangle{ { -1, -1, 1,  0,  0, 1,  0,  0}, {-1,  1, 1,  0,  0, 1,  0,  1}, {1, -1, 1,  0,  0, 1,  1,  0}, {-1,  1, 1,  0,  0, -1,  0,  1}, {1,  1, 1,  0,  0, -1,  1,  1}, {1, -1, 1,  0,  0, -1,  1,  0 } }
+	, description{ { "in_position", 3, sizeof(glm::vec3) }, { "in_normal", 3, sizeof(glm::vec3) }, { "in_texcoord", 2, sizeof(glm::vec2) }, { "", 0, 0 } }
+	, vs("resources/shaders/null.vs")
 	, fs("resources/shaders/null.fs")
 	, sp(vs, fs,  description)
+	, vb(description, triangle, sizeof(triangle)/sizeof(float))
+	, imagedata({IL_PNG, File::read("pic.png")})
+	, input(width, height, imagedata)
 	{
+		output.push_back(std::unique_ptr<Texture>(new Texture(width, height)));
+		rt.reset(new RenderTarget(width, height, output));
 	}
-};*/
+	void Step()
+	{
+		sp.Use();
+		input.Bind(0);
+		sp.SetTexture("modeltex", 0);
+		rt->Activate();
+		vb.Draw();
+	}
+};
 
 int main()
 {
 	unsigned int width = 1024;
 	unsigned int height = 768;
 	Window_ window(width, height);
-	VertexShader vertexShader("resources/shaders/null.vs");
-	FragmentShader fragmentShader("resources/shaders/null.fs");
-	static VertexBuffer::InputElementDescription description[] = {
-		{ "in_position", 3, sizeof(glm::vec3) },
-		{ "in_normal", 3, sizeof(glm::vec3) },
-		{ "in_texcoord", 2, sizeof(glm::vec2) },
-		{ "", 0, 0 }
-	};
-	ShaderProgram shaderProgram(vertexShader, fragmentShader, description);
-	shaderProgram.Use();
-	struct BufferInput
-	{
-		float x,y,z,nx,ny,nz,u,v;
-	};
-	BufferInput triangle[] = { { -1, -1, 1,  0,  0, 1,  0,  0}, {-1,  1, 1,  0,  0, 1,  0,  1}, {1, -1, 1,  0,  0, 1,  1,  0}, {-1,  1, 1,  0,  0, -1,  0,  1}, {1,  1, 1,  0,  0, -1,  1,  1}, {1, -1, 1,  0,  0, -1,  1,  0 }};
-
-	VertexBuffer vb(description, triangle, sizeof(triangle)/sizeof(float));
-	Texture texture(width, height);
-	std::vector<Texture*> textures;
-	textures.push_back(&texture);
-	RenderTarget target(width, height, textures);
-
-	Texture::ImageData imagedata({IL_PNG, File::read("pic.png")});	
-	Texture pic(1024, 768, imagedata);
-
+	RenderStep step(width, height);
 	bool running = true;
 	while(running)
 	{
-		pic.Bind(0);
-		shaderProgram.SetTexture("modeltex", 0);
-		target.Activate();
-		vb.Draw();
+		step.Step();
 		window.Swap();
 		running = !glfwGetKey(GLFW_KEY_ESC) &&
 		          glfwGetWindowParam(GLFW_OPENED);
 
 	}
-	File::write("rendtex.png", texture.save().lump);
+	File::write("rendtex.png", step.output[0]->save().lump);
 	return 0;
 }
 
