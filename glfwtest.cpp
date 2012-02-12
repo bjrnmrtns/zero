@@ -10,6 +10,7 @@
 #include <IL/il.h>
 #include <string.h>
 #include <cstdlib>
+#include <map>
 
 class GeneralException : public std::exception
 {
@@ -29,7 +30,7 @@ private:
 	const std::string errors;
 };
 
-struct Lump
+struct Blob
 {
 	size_t size;
 	std::unique_ptr<unsigned char> buf;
@@ -48,34 +49,57 @@ public:
 	{
 		fclose(file);
 	}
-	static Lump read(const std::string name)
+	static Blob read(const std::string name)
 	{
 		File file(name, "r");
 		fseek(file.file, 0L, SEEK_END);
-		Lump lump;
-		lump.size = ftell(file.file);
+		Blob blob;
+		blob.size = ftell(file.file);
 		rewind(file.file);
-		unsigned char* buf = (unsigned char*)malloc(lump.size);
-		lump.buf.reset(buf);
+		unsigned char* buf = (unsigned char*)malloc(blob.size);
+		blob.buf.reset(buf);
 		size_t done = 0;
 		do {
-			size_t read = fread(buf+done, 1, lump.size - done, file.file);
+			size_t read = fread(buf+done, 1, blob.size - done, file.file);
 			assert(read != 0);
 			done += read;
-		} while(done != lump.size);
-		return lump;
+		} while(done != blob.size);
+		return blob;
 	}
-	static void write(const std::string name, const Lump& lump)
+	static void write(const std::string name, const Blob& blob)
 	{
 		File file(name, "w");
 		size_t done = 0;
 		do {
-			size_t written = fwrite(lump.buf.get()+done, 1, lump.size - done, file.file);
+			size_t written = fwrite(blob.buf.get()+done, 1, blob.size - done, file.file);
 			assert(written != 0);
 			done += written;
-		} while(done != lump.size);
+		} while(done != blob.size);
 	}
 };
+
+template <typename T>
+class R
+{
+public:
+	static T* Load(std::string name)
+	{
+		auto it = data.find(name);
+		if(it != data.end()) return it->second;
+		std::unique_ptr<T> val(new T(name));
+		data.insert(std::make_pair(name, val));
+		return val.get();
+	}
+	static T* Load(std::string name, std::unique_ptr<T> val)
+	{
+		if(data.find(name) != data.end()) throw GeneralException("Resource: " + name + ", already loaded");
+		data.insert(std::make_pair(name, val));
+		return val.get();
+	}
+	static std::map<std::string, std::unique_ptr<T>> data;
+};
+template <typename T>
+std::map<std::string, std::unique_ptr<T>> R<T>::data;
 
 class VertexBuffer
 {
@@ -126,7 +150,7 @@ class Shader
 public:
 	Shader(const std::string filename, int type) : type(type)
 	{
-		Lump shaderdata = File::read(filename);
+		Blob shaderdata = File::read(filename);
 		const char * source = (const char*)shaderdata.buf.get();
 		id = glCreateShader(type);
 		glShaderSource(id, 1, &source, (int *)&shaderdata.size);
@@ -236,7 +260,7 @@ public:
 	struct ImageData
 	{
 		int type;
-		Lump lump;
+		Blob blob;
 	};
 	class Image
 	{
@@ -255,7 +279,7 @@ public:
 		{
 			ilBindImage(id);
 			texture.Bind(0);
-			ilLoadL(imagedata.type, imagedata.lump.buf.get(), imagedata.lump.size);
+			ilLoadL(imagedata.type, imagedata.blob.buf.get(), imagedata.blob.size);
 			assert(ilGetData() != 0);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.width, texture.height, 0, GL_RGB, GL_UNSIGNED_BYTE, ilGetData());
 		}
@@ -270,10 +294,10 @@ public:
 			assert(ilSetData(data));
 			ImageData imagedata;
 			imagedata.type = IL_PNG;
-			imagedata.lump.size = ilSaveL(IL_PNG, data, maxwidth * maxheight * 3);
-			unsigned char* savedata = (unsigned char*)malloc(imagedata.lump.size);
-			imagedata.lump.buf.reset(savedata);
-			memcpy(savedata, data, imagedata.lump.size);
+			imagedata.blob.size = ilSaveL(IL_PNG, data, maxwidth * maxheight * 3);
+			unsigned char* savedata = (unsigned char*)malloc(imagedata.blob.size);
+			imagedata.blob.buf.reset(savedata);
+			memcpy(savedata, data, imagedata.blob.size);
 			return imagedata;
 		}
 		~Image()
@@ -487,7 +511,7 @@ int main()
 		          glfwGetWindowParam(GLFW_OPENED);
 
 	}
-	File::write("rendtex.png", step.output[0]->save().lump);
+	File::write("rendtex.png", step.output[0]->save().blob);
 	return 0;
 }
 
