@@ -37,6 +37,15 @@ static T* LoadResource(std::string name, Factory f)
 	return f.Create();
 }
 
+class Resource
+{
+private:
+	int x;
+public:
+	Resource(int x) : x(x) {}
+	void Print() {std::cout << x << std::endl;}
+};
+
 int main()
 {
 	std::unique_ptr<A> a(LoadResource<A>("color", A::Factory(3, 'x')));

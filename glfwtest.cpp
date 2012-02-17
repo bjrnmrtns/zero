@@ -453,6 +453,19 @@ public:
 	}
 };
 
+static VertexBuffer::InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3) }, { "in_normal", 3, sizeof(glm::vec3) }, { "in_texcoord", 2, sizeof(glm::vec2) }, { "", 0, 0 } };
+class Model
+{
+public:
+//	static VertexBuffer::InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3) }, { "in_normal", 3, sizeof(glm::vec3) }, { "in_texcoord", 2, sizeof(glm::vec2) }, { "", 0, 0 } }
+
+	static Model& square()
+	{
+		static Model model;
+		return model;
+	};
+};
+
 class RenderStep
 {
 private:
@@ -489,7 +502,9 @@ public:
 	void Step()
 	{
 		sp.Use();
+		// TODO: bind all inputs ascending.
 		input.Bind(0);
+		// TODO: Set all inputs as texture by there name.
 		sp.SetTexture("modeltex", 0);
 		rt->Activate();
 		vb.Draw();
