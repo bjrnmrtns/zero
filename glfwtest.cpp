@@ -453,7 +453,7 @@ public:
 	}
 };
 
-static VertexBuffer::InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3) }, { "in_normal", 3, sizeof(glm::vec3) }, { "in_texcoord", 2, sizeof(glm::vec2) }, { "", 0, 0 } };
+//static VertexBuffer::InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3) }, { "in_normal", 3, sizeof(glm::vec3) }, { "in_texcoord", 2, sizeof(glm::vec2) }, { "", 0, 0 } };
 class Model
 {
 public:
