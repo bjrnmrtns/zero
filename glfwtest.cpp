@@ -481,6 +481,10 @@ public:
 		static Model model(description, vertices, sizeof(vertices)/sizeof(float));
 		return model;
 	};
+	void Draw()
+	{
+		vb.Draw();
+	}
 };
 const VertexBuffer::InputElementDescription Model::description[] { { "in_position", 3, sizeof(glm::vec3) },
                                                                    { "in_normal",   3, sizeof(glm::vec3) },
