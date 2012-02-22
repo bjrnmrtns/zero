@@ -453,18 +453,33 @@ public:
 	}
 };
 
-//static VertexBuffer::InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3) }, { "in_normal", 3, sizeof(glm::vec3) }, { "in_texcoord", 2, sizeof(glm::vec2) }, { "", 0, 0 } };
 class Model
 {
 public:
-//	static VertexBuffer::InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3) }, { "in_normal", 3, sizeof(glm::vec3) }, { "in_texcoord", 2, sizeof(glm::vec2) }, { "", 0, 0 } }
-
+	struct Vertex
+	{
+		glm::vec3 pos;
+		glm::vec3 normal;
+		glm::vec2 texcoord;
+	};
+public:
+	static const VertexBuffer::InputElementDescription description[];
 	static Model& square()
 	{
+		static const Vertex vertices[] { { glm::vec3(-1, -1, 1), glm::vec3(0, 0, 1), glm::vec2(0,  0) },
+		                                 { glm::vec3(-1,  1, 1), glm::vec3(0, 0, 1), glm::vec2(0,  1) },
+		                                 { glm::vec3( 1, -1, 1), glm::vec3(0, 0, 1), glm::vec2(1,  0) },
+		                                 { glm::vec3(-1,  1, 1), glm::vec3(0, 0,-1), glm::vec2(0,  1) },
+		                                 { glm::vec3( 1,  1, 1), glm::vec3(0, 0,-1), glm::vec2(1,  1) },
+		                                 { glm::vec3( 1, -1, 1), glm::vec3(0, 0,-1), glm::vec2(1,  0) } };
 		static Model model;
 		return model;
 	};
 };
+const VertexBuffer::InputElementDescription Model::description[] { { "in_position", 3, sizeof(glm::vec3) },
+                                                                   { "in_normal",   3, sizeof(glm::vec3) },
+                                                                   { "in_texcoord", 2, sizeof(glm::vec2) },
+                                                                   { "", 0, 0 } };
 
 class RenderStep
 {
