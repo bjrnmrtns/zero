@@ -498,9 +498,8 @@ private:
 	FragmentShader fs;
 	ShaderProgram sp;
 	Model square;
-	Texture::ImageData imagedata;
-	Texture input;
 public:
+	std::vector<std::pair<std::string, std::unique_ptr<Texture>>> inputs;
 	std::vector<std::unique_ptr<Texture>> output;
 private:
 	std::unique_ptr<RenderTarget> rt;
@@ -510,19 +509,20 @@ public:
 	, fs("resources/shaders/null.fs")
 	, sp(vs, fs, Model::description)
 	, square(Model::square())
-	, imagedata({IL_PNG, File::read("pic.png")})
-	, input(width, height, imagedata)
 	{
+		Texture::ImageData imagedata{IL_PNG, File::read("pic.png")};
+		inputs.push_back(std::make_pair("modeltex", std::unique_ptr<Texture>(new Texture(width, height, imagedata))));
 		output.push_back(std::unique_ptr<Texture>(new Texture(width, height)));
 		rt.reset(new RenderTarget(width, height, output));
 	}
 	void Step()
 	{
 		sp.Use();
-		// TODO: bind all inputs ascending.
-		input.Bind(0);
-		// TODO: Set all inputs as texture by there name.
-		sp.SetTexture("modeltex", 0);
+		for(size_t i = 0; i < inputs.size(); i++)
+		{
+			inputs[i].second->Bind(i);
+			sp.SetTexture(inputs[i].first.c_str(), i);
+		}
 		rt->Activate();
 		square.Draw();
 	}
