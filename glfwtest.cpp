@@ -191,7 +191,7 @@ public:
 class ShaderProgram
 {
 public:
-	ShaderProgram(VertexShader &vertexShader, FragmentShader &fragmentShader, VertexBuffer::InputElementDescription* description)
+	ShaderProgram(VertexShader &vertexShader, FragmentShader &fragmentShader, const VertexBuffer::InputElementDescription description[])
 	: vertexShader(vertexShader)
 	, fragmentShader(fragmentShader)
 	{
@@ -494,16 +494,10 @@ const VertexBuffer::InputElementDescription Model::description[] { { "in_positio
 class RenderStep
 {
 private:
-	struct BufferInput
-	{
-		float x,y,z,nx,ny,nz,u,v;
-	};
-	BufferInput triangle[6];
-	VertexBuffer::InputElementDescription description[4];
 	VertexShader vs;
 	FragmentShader fs;
 	ShaderProgram sp;
-	VertexBuffer vb;
+	Model square;
 	Texture::ImageData imagedata;
 	Texture input;
 public:
@@ -512,12 +506,10 @@ private:
 	std::unique_ptr<RenderTarget> rt;
 public:
 	RenderStep(size_t width, size_t height)
-	: triangle{ { -1, -1, 1,  0,  0, 1,  0,  0}, {-1,  1, 1,  0,  0, 1,  0,  1}, {1, -1, 1,  0,  0, 1,  1,  0}, {-1,  1, 1,  0,  0, -1,  0,  1}, {1,  1, 1,  0,  0, -1,  1,  1}, {1, -1, 1,  0,  0, -1,  1,  0 } }
-	, description{ { "in_position", 3, sizeof(glm::vec3) }, { "in_normal", 3, sizeof(glm::vec3) }, { "in_texcoord", 2, sizeof(glm::vec2) }, { "", 0, 0 } }
-	, vs("resources/shaders/null.vs")
+	: vs("resources/shaders/null.vs")
 	, fs("resources/shaders/null.fs")
-	, sp(vs, fs,  description)
-	, vb(description, triangle, sizeof(triangle)/sizeof(float))
+	, sp(vs, fs, Model::description)
+	, square(Model::square())
 	, imagedata({IL_PNG, File::read("pic.png")})
 	, input(width, height, imagedata)
 	{
@@ -532,7 +524,7 @@ public:
 		// TODO: Set all inputs as texture by there name.
 		sp.SetTexture("modeltex", 0);
 		rt->Activate();
-		vb.Draw();
+		square.Draw();
 	}
 };
 
