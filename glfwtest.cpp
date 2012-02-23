@@ -111,7 +111,7 @@ public:
 		size_t elementsize;
 	};
 	template <typename T>
-	VertexBuffer(InputElementDescription *description, const T *vertexData, size_t count)
+	VertexBuffer(const InputElementDescription description[], const T vertexData[], size_t count)
 	: stride(sizeof(T))
 	, count(count)
 	{
@@ -463,10 +463,10 @@ public:
 		glm::vec2 texcoord;
 	};
 private:
-	//VertexBuffer vb;
+	VertexBuffer vb;
 public:
 	static const VertexBuffer::InputElementDescription description[];
-	Model(VertexBuffer::InputElementDescription description[], Vertex vertices[], size_t size)
+	Model(const VertexBuffer::InputElementDescription description[], const Vertex vertices[], const size_t size)
 	: vb(description, vertices, size)
 	{
 	}
