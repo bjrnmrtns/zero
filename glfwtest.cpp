@@ -383,7 +383,7 @@ static const unsigned int Attachments[] =
 class RenderTarget
 {
 public:
-	RenderTarget(unsigned int width, unsigned int height, std::vector<std::pair<std::string, std::unique_ptr<Texture>>>& targets)
+	RenderTarget(unsigned int width, unsigned int height, std::vector<std::pair<std::string, Texture*>>& targets)
 	: width(width)
 	, height(height)
 	{
@@ -495,15 +495,26 @@ const VertexBuffer::InputElementDescription Model::description[] { { "in_positio
 
 class RenderStep
 {
+public:
+	struct Descriptor
+	{
+		std::string vertexshader;
+		std::string fragmentshader;
+		struct io
+		{
+			std::string key;
+			std::string value;
+		} inputs[], outputs[];
+	};
 private:
 	size_t width, height;
 	VertexShader vs;
 	FragmentShader fs;
 	ShaderProgram sp;
-	Model square;
+	Model& square;
 public:
 	std::vector<std::pair<std::string, Texture*>> inputs;
-	std::vector<std::pair<std::string, std::unique_ptr<Texture>>> output;
+	std::vector<std::pair<std::string, Texture*>> output;
 private:
 	std::unique_ptr<RenderTarget> rt;
 public:
@@ -514,31 +525,28 @@ public:
 	, sp(vs, fs, Model::description)
 	, square(Model::square())
 	{
-		AddInput("modeltex", "pic.png");
-		AddOutput("output");
+		addinput("modeltex", "pic.png");
+		addoutput("output");
 		rt.reset(new RenderTarget(width, height, output));
 	}
 private:
-	void AddInput(std::string name, std::string image)
+	void addinput(std::string name, std::string image)
 	{
-		//TODO: Use resourceloader with name and image here.
 		Texture::ImageData imagedata{IL_PNG, File::read(image)};
-		inputs.push_back(std::make_pair(name, Res<Texture>::load(name, std::unique_ptr<Texture>(new Texture(width, height, imagedata)))));
+		inputs.push_back(std::make_pair(name, Res<Texture>::load(image, std::unique_ptr<Texture>(new Texture(width, height, imagedata)))));
 		sp.Use();
 		for(size_t i = 0; i < inputs.size(); i++)
 		{
 			sp.SetTexture(inputs[i].first.c_str(), i);
 		}
 	}
-	void AddInput(std::string name)
+	void addinput(std::string name)
 	{
-		//TODO: Use resourceloader with name here.
 		inputs.push_back(std::make_pair(name, Res<Texture>::load(name, std::unique_ptr<Texture>(new Texture(width, height)))));
 	}
-	void AddOutput(std::string name)
+	void addoutput(std::string name)
 	{
-		//TODO: Use resourceloader with name here.
-		output.push_back(std::make_pair(name, std::unique_ptr<Texture>(new Texture(width, height))));
+		output.push_back(std::make_pair(name, Res<Texture>::load(name, std::unique_ptr<Texture>(new Texture(width, height)))));
 	}
 public:
 	void Step()
@@ -552,6 +560,8 @@ public:
 		square.Draw();
 	}
 };
+
+static const RenderStep::Descriptor effectX[]{{ "input", "modeltex" }};
 
 int main()
 {
