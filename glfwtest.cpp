@@ -79,27 +79,29 @@ public:
 };
 
 template <typename T>
-class R
+class Res
 {
 public:
-	static T* Load(std::string name)
+	static T* load(std::string name)
 	{
 		auto it = data.find(name);
 		if(it != data.end()) return it->second;
 		std::unique_ptr<T> val(new T(name));
-		data.insert(std::make_pair(name, val));
-		return val.get();
+		T* ptr = val.get();
+		data.insert(std::make_pair(name, std::move(val)));
+		return ptr;
 	}
-	static T* Load(std::string name, std::unique_ptr<T> val)
+	static T* load(std::string name, std::unique_ptr<T> val)
 	{
 		if(data.find(name) != data.end()) throw GeneralException("Resource: " + name + ", already loaded");
-		data.insert(std::make_pair(name, val));
-		return val.get();
+		T* ptr = val.get();
+		data.insert(std::make_pair(name, std::move(val)));
+		return ptr;
 	}
 	static std::map<std::string, std::unique_ptr<T>> data;
 };
 template <typename T>
-std::map<std::string, std::unique_ptr<T>> R<T>::data;
+std::map<std::string, std::unique_ptr<T>> Res<T>::data;
 
 class VertexBuffer
 {
@@ -381,7 +383,7 @@ static const unsigned int Attachments[] =
 class RenderTarget
 {
 public:
-	RenderTarget(unsigned int width, unsigned int height, std::vector<std::unique_ptr<Texture>>& targets)
+	RenderTarget(unsigned int width, unsigned int height, std::vector<std::pair<std::string, std::unique_ptr<Texture>>>& targets)
 	: width(width)
 	, height(height)
 	{
@@ -396,7 +398,7 @@ public:
 			glDrawBuffers(targets.size(), Attachments);
 			for(unsigned int i=0; i < targets.size(); i++)
 			{
-				targets[i]->Attach(i);
+				targets[i].second->Attach(i);
 			}
 		}
 	}
@@ -494,34 +496,57 @@ const VertexBuffer::InputElementDescription Model::description[] { { "in_positio
 class RenderStep
 {
 private:
+	size_t width, height;
 	VertexShader vs;
 	FragmentShader fs;
 	ShaderProgram sp;
 	Model square;
 public:
-	std::vector<std::pair<std::string, std::unique_ptr<Texture>>> inputs;
-	std::vector<std::unique_ptr<Texture>> output;
+	std::vector<std::pair<std::string, Texture*>> inputs;
+	std::vector<std::pair<std::string, std::unique_ptr<Texture>>> output;
 private:
 	std::unique_ptr<RenderTarget> rt;
 public:
 	RenderStep(size_t width, size_t height)
-	: vs("resources/shaders/null.vs")
+	: width(width), height(height)
+	, vs("resources/shaders/null.vs")
 	, fs("resources/shaders/null.fs")
 	, sp(vs, fs, Model::description)
 	, square(Model::square())
 	{
-		Texture::ImageData imagedata{IL_PNG, File::read("pic.png")};
-		inputs.push_back(std::make_pair("modeltex", std::unique_ptr<Texture>(new Texture(width, height, imagedata))));
-		output.push_back(std::unique_ptr<Texture>(new Texture(width, height)));
+		AddInput("modeltex", "pic.png");
+		AddOutput("output");
 		rt.reset(new RenderTarget(width, height, output));
 	}
+private:
+	void AddInput(std::string name, std::string image)
+	{
+		//TODO: Use resourceloader with name and image here.
+		Texture::ImageData imagedata{IL_PNG, File::read(image)};
+		inputs.push_back(std::make_pair(name, Res<Texture>::load(name, std::unique_ptr<Texture>(new Texture(width, height, imagedata)))));
+		sp.Use();
+		for(size_t i = 0; i < inputs.size(); i++)
+		{
+			sp.SetTexture(inputs[i].first.c_str(), i);
+		}
+	}
+	void AddInput(std::string name)
+	{
+		//TODO: Use resourceloader with name here.
+		inputs.push_back(std::make_pair(name, Res<Texture>::load(name, std::unique_ptr<Texture>(new Texture(width, height)))));
+	}
+	void AddOutput(std::string name)
+	{
+		//TODO: Use resourceloader with name here.
+		output.push_back(std::make_pair(name, std::unique_ptr<Texture>(new Texture(width, height))));
+	}
+public:
 	void Step()
 	{
 		sp.Use();
 		for(size_t i = 0; i < inputs.size(); i++)
 		{
 			inputs[i].second->Bind(i);
-			sp.SetTexture(inputs[i].first.c_str(), i);
 		}
 		rt->Activate();
 		square.Draw();
@@ -543,7 +568,7 @@ int main()
 		          glfwGetWindowParam(GLFW_OPENED);
 
 	}
-	File::write("rendtex.png", step.output[0]->save().blob);
+	File::write("rendtex.png", step.output[0].second->save().blob);
 	return 0;
 }
 
