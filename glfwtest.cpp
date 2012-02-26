@@ -519,15 +519,22 @@ public:
 private:
 	std::unique_ptr<RenderTarget> rt;
 public:
-	RenderStep(size_t width, size_t height)
+	RenderStep(size_t width, size_t height, const Descriptor& descriptor)
 	: width(width), height(height)
-	, vs("resources/shaders/null.vs")
-	, fs("resources/shaders/null.fs")
+	, vs(descriptor.vs)
+	, fs(descriptor.fs)
 	, sp(vs, fs, Model::description)
 	, square(Model::square())
 	{
-		addinput("modeltex", "pic.png");
-		addoutput("output");
+		for(size_t i = 0; i < descriptor.inputs.size(); i++)
+		{
+			std::cout << descriptor.inputs[i].key << std::endl;
+			addinput(descriptor.inputs[i].key, descriptor.inputs[i].value);
+		}
+		for(size_t i = 0; i < descriptor.outputs.size(); i++)
+		{
+			addoutput(descriptor.outputs[i].key);
+		}
 		rt.reset(new RenderTarget(width, height, output));
 	}
 private:
@@ -564,7 +571,7 @@ public:
 
 static const RenderStep::Descriptor effectX { "resources/shaders/null.vs", "resources/shaders/null.fs",
                                               { { "modeltex", "pic.png" } },
-                                              { { "output1", "output2" } }
+                                              { { "output", "output" } }
                                             };
 
 int main()
@@ -572,7 +579,7 @@ int main()
 	unsigned int width = 1024;
 	unsigned int height = 768;
 	Window_ window(width, height);
-	RenderStep step(width, height);
+	RenderStep step(width, height, effectX);
 	bool running = true;
 	while(running)
 	{
