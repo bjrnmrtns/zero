@@ -496,16 +496,20 @@ const VertexBuffer::InputElementDescription Model::description[] { { "in_positio
 class RenderStep
 {
 public:
-	struct Descriptor
+/*	struct Descriptor
 	{
-		std::string vertexshader;
-		std::string fragmentshader;
 		struct io
 		{
+			io(std::string key, std::string value) : key(key), value(value) {}
 			std::string key;
 			std::string value;
-		} inputs[], outputs[];
-	};
+		};
+		Descriptor(std::string vs, std::string fs, io inputs[], io outputs[])
+		: vs(vs), fs(fs), inputs(inputs), outputs(outputs) {}
+		std::string vs;
+		std::string fs;
+		io inputs[], outputs[];
+	};*/
 private:
 	size_t width, height;
 	VertexShader vs;
@@ -561,8 +565,11 @@ public:
 	}
 };
 
-static const RenderStep::Descriptor effectX[]{{ "input", "modeltex" }};
-
+/*static const RenderStep::Descriptor effectX( "resources/shaders/null.vs", "resources/shaders/null.fs",
+                                              { io("modeltex", "henk") },
+                                              { io("output1", "output2") }
+                                           );
+*/
 int main()
 {
 	unsigned int width = 1024;
