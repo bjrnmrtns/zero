@@ -528,7 +528,6 @@ public:
 	{
 		for(size_t i = 0; i < descriptor.inputs.size(); i++)
 		{
-			std::cout << descriptor.inputs[i].key << std::endl;
 			addinput(descriptor.inputs[i].key, descriptor.inputs[i].value);
 		}
 		for(size_t i = 0; i < descriptor.outputs.size(); i++)
@@ -569,7 +568,7 @@ public:
 	}
 };
 
-static const RenderStep::Descriptor effectX { "resources/shaders/null.vs", "resources/shaders/null.fs",
+static const RenderStep::Descriptor effectA { "resources/shaders/null.vs", "resources/shaders/null.fs",
                                               { { "modeltex", "pic.png" } },
                                               { { "output", "output" } }
                                             };
