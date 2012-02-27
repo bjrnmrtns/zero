@@ -85,11 +85,9 @@ public:
 	static T* load(std::string name)
 	{
 		auto it = data.find(name);
-		if(it != data.end()) return it->second;
-		std::unique_ptr<T> val(new T(name));
-		T* ptr = val.get();
-		data.insert(std::make_pair(name, std::move(val)));
-		return ptr;
+		if(it != data.end()) return it->second.get();
+		assert(false);
+
 	}
 	static T* load(std::string name, std::unique_ptr<T> val)
 	{
@@ -287,6 +285,7 @@ public:
 		}
 		ImageData save()
 		{
+			//TODO: Remove these magic numbers
 			const int maxwidth = 2048;
 			const int maxheight = 2048;
 			static unsigned char data[maxwidth * maxheight * 3];
@@ -509,8 +508,8 @@ public:
 	{
 		struct io
 		{
-			std::string key;
-			std::string value;
+			std::string name;
+			std::string id;
 		};
 		std::string vs;
 		std::string fs;
@@ -525,11 +524,11 @@ public:
 	{
 		for(size_t i = 0; i < descriptor.inputs.size(); i++)
 		{
-			addinput(descriptor.inputs[i].key, descriptor.inputs[i].value);
+			addinput(descriptor.inputs[i].name, descriptor.inputs[i].id);
 		}
 		for(size_t i = 0; i < descriptor.outputs.size(); i++)
 		{
-			addoutput(descriptor.outputs[i].key);
+			addoutput(descriptor.outputs[i].name, descriptor.outputs[i].id);
 		}
 		rt.reset(new RenderTarget(width, height, output));
 	}
@@ -544,23 +543,18 @@ public:
 		square.Draw();
 	}
 private:
-	void addinput(std::string name, std::string image)
+	void addinput(std::string name, std::string id)
 	{
-		Texture::ImageData imagedata{IL_PNG, File::read(image)};
-		inputs.push_back(std::make_pair(name, Res<Texture>::load(image, std::unique_ptr<Texture>(new Texture(width, height, imagedata)))));
+		inputs.push_back(std::make_pair(name, Res<Texture>::load(id)));
 		sp.Use();
 		for(size_t i = 0; i < inputs.size(); i++)
 		{
 			sp.SetTexture(inputs[i].first.c_str(), i);
 		}
 	}
-	void addinput(std::string name)
+	void addoutput(std::string name, std::string id)
 	{
-		inputs.push_back(std::make_pair(name, Res<Texture>::load(name, std::unique_ptr<Texture>(new Texture(width, height)))));
-	}
-	void addoutput(std::string name)
-	{
-		output.push_back(std::make_pair(name, Res<Texture>::load(name, std::unique_ptr<Texture>(new Texture(width, height)))));
+		output.push_back(std::make_pair(name, Res<Texture>::load(id)));
 	}
 };
 
@@ -578,6 +572,9 @@ public:
 		                                       { { "modeltex", "pic.png" } },
 		                                       { { "output", "output" } }
 		                                     };
+		Texture::ImageData imagedata{IL_PNG, File::read("pic.png")};
+		Res<Texture>::load("pic.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
+		Res<Texture>::load("output", std::unique_ptr<Texture>(new Texture(width, height)));
 		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, effectA)));
 	};
 	void Step()
