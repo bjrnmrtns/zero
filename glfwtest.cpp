@@ -495,6 +495,15 @@ const VertexBuffer::InputElementDescription Model::description[] { { "in_positio
 
 class RenderStep
 {
+private:
+	size_t width, height;
+	VertexShader vs;
+	FragmentShader fs;
+	ShaderProgram sp;
+	Model& square;
+	std::vector<std::pair<std::string, Texture*>> inputs;
+	std::vector<std::pair<std::string, Texture*>> output;
+	std::unique_ptr<RenderTarget> rt;
 public:
 	struct Descriptor
 	{
@@ -507,18 +516,6 @@ public:
 		std::string fs;
 		std::vector<io> inputs, outputs;
 	};
-private:
-	size_t width, height;
-	VertexShader vs;
-	FragmentShader fs;
-	ShaderProgram sp;
-	Model& square;
-public:
-	std::vector<std::pair<std::string, Texture*>> inputs;
-	std::vector<std::pair<std::string, Texture*>> output;
-private:
-	std::unique_ptr<RenderTarget> rt;
-public:
 	RenderStep(size_t width, size_t height, const Descriptor& descriptor)
 	: width(width), height(height)
 	, vs(descriptor.vs)
@@ -535,6 +532,16 @@ public:
 			addoutput(descriptor.outputs[i].key);
 		}
 		rt.reset(new RenderTarget(width, height, output));
+	}
+	void Step()
+	{
+		sp.Use();
+		for(size_t i = 0; i < inputs.size(); i++)
+		{
+			inputs[i].second->Bind(i);
+		}
+		rt->Activate();
+		square.Draw();
 	}
 private:
 	void addinput(std::string name, std::string image)
@@ -555,40 +562,49 @@ private:
 	{
 		output.push_back(std::make_pair(name, Res<Texture>::load(name, std::unique_ptr<Texture>(new Texture(width, height)))));
 	}
-public:
-	void Step()
-	{
-		sp.Use();
-		for(size_t i = 0; i < inputs.size(); i++)
-		{
-			inputs[i].second->Bind(i);
-		}
-		rt->Activate();
-		square.Draw();
-	}
 };
 
-static const RenderStep::Descriptor effectA { "resources/shaders/null.vs", "resources/shaders/null.fs",
-                                              { { "modeltex", "pic.png" } },
-                                              { { "output", "output" } }
-                                            };
+class RenderPipeline
+{
+private:
+	std::vector<std::unique_ptr<RenderStep>> steps;
+	size_t width, height;
+public:
+	RenderPipeline(size_t width, size_t height)
+	: width(width)
+	, height(height)
+	{
+		const RenderStep::Descriptor effectA { "resources/shaders/null.vs", "resources/shaders/null.fs",
+		                                       { { "modeltex", "pic.png" } },
+		                                       { { "output", "output" } }
+		                                     };
+		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, effectA)));
+	};
+	void Step()
+	{
+		for(size_t i = 0; i < steps.size(); i++)
+		{
+			steps[i]->Step();
+		}
+	}
+};
 
 int main()
 {
 	unsigned int width = 1024;
 	unsigned int height = 768;
 	Window_ window(width, height);
-	RenderStep step(width, height, effectX);
+	RenderPipeline pipeline(width, height);
 	bool running = true;
 	while(running)
 	{
-		step.Step();
+		pipeline.Step();
 		window.Swap();
 		running = !glfwGetKey(GLFW_KEY_ESC) &&
 		          glfwGetWindowParam(GLFW_OPENED);
 
 	}
-	File::write("rendtex.png", step.output[0].second->save().blob);
+	File::write("rendtex.png", Res<Texture>::data.find("output")->second->save().blob);
 	return 0;
 }
 
