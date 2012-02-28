@@ -1,1 +1,28 @@
-personal spike project for figuring stuff out.
+zero is my personal game engine.
+-personal notes on setting up github/git from scratch-
+--create project--
+mkdir project_name
+cd project_name
+git init
+git config --global user.name "Firstname Lastname"
+git config --global user.email "your_email@youremail.com"
+touch README
+git add README
+git commit -m "initial commit"
+
+--adding github remote--
+git remote add origin git@github.com:<username>/<project_name>.git
+git remote -v (shows which repo is remote)
+git push origin master (update github with local changes)
+
+--adding a system public key of public/private keypair to github--
+ssh-keygen -t rsa -C "<email-address>"
+add id_rsa.pub contents to github public keys
+test if it is working using ssh -T git@github.com
+Sometimes you need to add the private key using ssh-add ~/.ssh/id_rsa
+
+--git usefull commands--
+git remote -v # to see what is the remote git repo
+# after a git clone the remote pull/push is set to the place where you cloned
+git clone git@github.com/<username>/<project_name>.git
+
