@@ -575,15 +575,16 @@ public:
 	{
 		const RenderStep::Descriptor effectA { "resources/shaders/null.vs", "resources/shaders/null.fs",
 		                                       { { "modeltex", "pic.png" } },
-		                                       { { "output", "output" } }
+		                                       { { "output", "A1" }, { "output", "A2" } }
 		                                     };
 		const RenderStep::Descriptor effectB { "resources/shaders/stepB.vs", "resources/shaders/stepB.fs",
-		                                       { { "modeltex", "output" } },
+		                                       { { "modeltex", "A1" } },
 		                                       { }
 		                                     };
 		Texture::ImageData imagedata{IL_PNG, File::read("pic.png")};
 		Res<Texture>::load("pic.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
-		Res<Texture>::load("output", std::unique_ptr<Texture>(new Texture(width, height)));
+		Res<Texture>::load("A1", std::unique_ptr<Texture>(new Texture(width, height)));
+		Res<Texture>::load("A2", std::unique_ptr<Texture>(new Texture(width, height)));
 		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, effectA)));
 		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, effectB)));
 	};
@@ -611,7 +612,8 @@ int main()
 		          glfwGetWindowParam(GLFW_OPENED);
 
 	}
-	File::write("rendtexA.png", Res<Texture>::data.find("output")->second->save().blob);
+	File::write("rendtexA.png", Res<Texture>::data.find("A1")->second->save().blob);
+	File::write("rendtexB.png", Res<Texture>::data.find("A2")->second->save().blob);
 	return 0;
 }
 
