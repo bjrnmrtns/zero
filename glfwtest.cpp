@@ -385,15 +385,17 @@ public:
 	RenderTarget(unsigned int width, unsigned int height, std::vector<std::pair<std::string, Texture*>>& targets)
 	: width(width)
 	, height(height)
+	, fbo(0)
+	, rbo(0)
 	{
-		glGenFramebuffers(1, &fbo);
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-		glGenRenderbuffers(1, &rbo);
-		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
 		if(targets.size() > 0)
 		{
+			glGenFramebuffers(1, &fbo);
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			glGenRenderbuffers(1, &rbo);
+			glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
 			glDrawBuffers(targets.size(), Attachments);
 			for(unsigned int i=0; i < targets.size(); i++)
 			{
@@ -410,12 +412,15 @@ public:
 	}
 	~RenderTarget()
 	{
-		glDeleteRenderbuffers(1, &rbo);
-		glDeleteFramebuffers(1, &fbo);
+		if(fbo != 0)
+		{
+			glDeleteRenderbuffers(1, &rbo);
+			glDeleteFramebuffers(1, &fbo);
+		}
 	}
 private:
-	unsigned int fbo, rbo;
 	unsigned int width, height;
+	unsigned int fbo, rbo;
 };
 
 class Window_
@@ -574,12 +579,11 @@ public:
 		                                     };
 		const RenderStep::Descriptor effectB { "resources/shaders/stepB.vs", "resources/shaders/stepB.fs",
 		                                       { { "modeltex", "output" } },
-		                                       { { "output", "output2" } }
+		                                       { }
 		                                     };
 		Texture::ImageData imagedata{IL_PNG, File::read("pic.png")};
 		Res<Texture>::load("pic.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
 		Res<Texture>::load("output", std::unique_ptr<Texture>(new Texture(width, height)));
-		Res<Texture>::load("output2", std::unique_ptr<Texture>(new Texture(width, height)));
 		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, effectA)));
 		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, effectB)));
 	};
@@ -608,7 +612,6 @@ int main()
 
 	}
 	File::write("rendtexA.png", Res<Texture>::data.find("output")->second->save().blob);
-	File::write("rendtexB.png", Res<Texture>::data.find("output2")->second->save().blob);
 	return 0;
 }
 
