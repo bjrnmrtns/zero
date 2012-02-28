@@ -429,6 +429,8 @@ public:
 	Window_(size_t width, size_t height)
 	{
 		ilInit();
+		ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
+		ilEnable(IL_ORIGIN_SET);
 		if(!glfwInit()) throw new GeneralException("glfwInit failed");
 		glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
 		glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 3);
