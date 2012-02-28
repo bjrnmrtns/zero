@@ -583,10 +583,12 @@ public:
 		                                       { { "modeltex", "A1" } },
 		                                       { }
 		                                     };
+
 		Texture::ImageData imagedata{IL_PNG, File::read("pic.png")};
 		Res<Texture>::load("pic.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
 		Res<Texture>::load("A1", std::unique_ptr<Texture>(new Texture(width, height)));
 		Res<Texture>::load("A2", std::unique_ptr<Texture>(new Texture(width, height)));
+
 		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, effectA)));
 		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, effectB)));
 	};
