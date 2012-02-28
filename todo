@@ -1,2 +1,0 @@
-- make spike for window/opengl creation abstraction.
-- make spike using inotify and windows alternative for getting filesystem events about resource changes like shaders and other content.
