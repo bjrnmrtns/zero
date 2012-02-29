@@ -1,4 +1,4 @@
-all: RenderPipeline gamearchitecture glfwtest fileio deferredconstruction perfectforwarding initstruct
+all: RenderPipeline gamearchitecture glfwtest fileio deferredconstruction perfectforwarding initstruct webserver
 
 gamearchitecture: gamearchitecture.cpp
 	g++ -std=c++0x -Wall -Wextra -pedantic -o gamearchitecture gamearchitecture.cpp 
@@ -14,3 +14,6 @@ perfectforwarding: perfectforwarding.cpp
 	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o perfectforwarding perfectforwarding.cpp -Iexternal/include
 initstruct: initstruct.cpp
 	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o initstruct initstruct.cpp -Iexternal/include
+webserver: webserver.cpp
+	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o webserver webserver.cpp -Iexternal/include
+
