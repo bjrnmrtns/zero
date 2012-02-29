@@ -15,5 +15,5 @@ perfectforwarding: perfectforwarding.cpp
 initstruct: initstruct.cpp
 	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o initstruct initstruct.cpp -Iexternal/include
 webserver: webserver.cpp
-	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o webserver webserver.cpp -Iexternal/include
+	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o webserver webserver.cpp -lpthread -Iexternal/include
 

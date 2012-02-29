@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <thread>
+#include <iostream>
 
 class GeneralException : public std::exception
 {
@@ -99,17 +101,68 @@ public:
 	}
 };
 
+class HttpRequest
+{
+private:
+	ClientSocket *cs;
+	std::thread t;
+public:
+	HttpRequest(ClientSocket *cs)
+	: cs(cs)
+	, t(std::ref(*this))
+	{
+	}
+	std::string readline()
+	{
+		char buffer[1024];
+		int idx = 0;
+		do {
+			cs->read(&buffer[idx++], 1);
+		} while(idx < 2 || buffer[idx-2] != '\r' && buffer[idx-1] != '\n');
+		return std::string(buffer, 0, idx-2);
+	}
+	void operator()()
+	{
+		std::string argline = readline();
+		std::cout << argline << std::endl;
+		while(argline.size() > 0)
+		{
+			argline = readline();
+			std::cout << argline << std::endl;
+		}
+	}
+};
+
 class Webserver
 {
 ServerSocket server;
+bool running;
 public:
+	static Webserver &Instance()
+	{ 
+		static Webserver webserver(1080); 
+		return webserver; 
+	}
 	Webserver(int port)
 	: server(port)
+	, running(true)
 	{
+	}
+	void operator()()
+	{
+		while(running)
+		{
+			unsigned short port;
+			std::string address;
+			ClientSocket *client = server.Accept(port, address);
+			HttpRequest *request = new HttpRequest(client);
+		}
 	}
 };
 
 int main()
 {
+	std::thread t(std::ref(Webserver::Instance()));
+	t.join();
 	return 0;
 }
