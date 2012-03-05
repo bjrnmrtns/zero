@@ -10,6 +10,7 @@
 #include <thread>
 #include <vector>
 #include <iostream>
+#include <errno.h>
 #include <map>
 
 class GeneralException : public std::exception
@@ -37,13 +38,33 @@ class socket
 private:
 	int fd;
 public:
+	class exception : public std::exception
+	{
+	public:
+		exception(const std::string &errors)
+		: errors(errors)
+		{
+		}
+		~exception() throw ()
+		{
+		}
+		const char *what() const throw()
+		{
+			return errors.c_str();
+		}
+	private:
+		const std::string errors;
+	};
+
 	socket(int fd)
 	: fd(fd)
 	{
 	}
 	int read(char* buffer, int max)
 	{
-		return ::read(fd, buffer, max);
+		int bytesread = ::read(fd, buffer, max);
+		if(bytesread == -1) throw socket::exception("error reading socket");
+		return bytesread; 
 	}
 	int write(const char* buffer, int count)
 	{
@@ -107,23 +128,71 @@ public:
 
 class request
 {
+public:
+	class exception : public std::exception
+	{
+	public:
+		exception(const std::string &errors)
+		: errors(errors)
+		{
+		}
+		~exception() throw ()
+		{
+		}
+		const char *what() const throw()
+		{
+			return errors.c_str();
+		}
+	private:
+		const std::string errors;
+	};
 private:
 	socket& cs;
 	std::string method, url, httpversion;
 	std::map<std::string, std::string> attributes, arguments;
+	static const size_t buffersize = 1024;
+	char buffer[buffersize];
+	size_t alreadyfilled;
 public:
 	request(socket& cs)
 	: cs(cs)
+	, alreadyfilled(0)
 	{
 	}
 	std::string readline()
 	{
-		char buffer[1024];
-		int idx = 0;
+		size_t inspected = 1;
+		size_t read = cs.read(&buffer[alreadyfilled], buffersize - alreadyfilled);
+		if(read == 0) throw http::request::exception("bad request");
+		alreadyfilled += read;
+		
+	/*	size_t idx = 1;
+		do
+		{
+			int currentlyread = cs.read(&buffer[idx], buffersize);
+		}
+		while()
+		for(; (read == buffersize) || (read == 0); read += cs.read(&buffer[idx], buffersize);
+		{
+			if(read > 1)
+			{
+				for(;idx < read; idx++)
+				{
+					if(buffer[idx-1] == '\r' && buffer[idx] == '\n')
+					{
+					}
+				}
+			}
+		}
+
+*/
+
+/*		int idx;
 		do {
-			cs.read(&buffer[idx++], 1);
+			size_t read = cs.read(&buffer[idx], 1);
+			idx += read;
 		} while(idx < 2 || (buffer[idx-2] != '\r' && buffer[idx-1] != '\n'));
-		return std::string(buffer, 0, idx-2);
+		return std::string(buffer, 0, idx-2);*/
 	}
 	void operator()()
 	{
