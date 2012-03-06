@@ -36,7 +36,7 @@ class socket
 {
 private:
 	int fd;
-	static const size_t buffersize = 5;
+	static const size_t buffersize = 1024;
 	char buffer[buffersize];
 	size_t begin, end;
 public:
@@ -85,8 +85,7 @@ public:
 				if(sockread == -1) throw socket::exception("error reading socket");
 				end += sockread;
 				size_t fromsockettoclient = std::min(fromsocket, (size_t)sockread);
-				memcpy(buffer_, buffer, fromsockettoclient);
-				begin += fromsockettoclient;
+				memcpy(buffer_, buffer, fromsockettoclient); begin += fromsockettoclient;
 				return frombuffer + fromsockettoclient;
 			}
 		}
@@ -177,12 +176,12 @@ public:
 	};
 private:
 	socket& cs;
-	std::string method, url, httpversion;
 	std::map<std::string, std::string> attributes, arguments;
 	static const size_t buffersize = 1024;
 	char buffer[buffersize];
 	size_t alreadyfilled;
 public:
+	std::string method, url, httpversion;
 	request(socket& cs)
 	: cs(cs)
 	, alreadyfilled(0)
@@ -190,8 +189,9 @@ public:
 	}
 	std::string readline()
 	{
-		int idx = 0;
+		size_t idx = 0;
 		do {
+			if(idx == buffersize) throw exception("bad request, to much to shallow");
 			size_t read = cs.read(&buffer[idx], 1);
 			idx += read;
 		} while(idx < 2 || (buffer[idx-2] != '\r' && buffer[idx-1] != '\n'));
@@ -200,52 +200,21 @@ public:
 	void operator()()
 	{
 		std::string requestLine = readline();
-		std::cout << requestLine << std::endl;
-/*		int firstSpace = requestLine.find(" ", 0);
+		int firstSpace = requestLine.find(" ", 0);
 		int secondSpace = requestLine.find(" ", firstSpace+1);
 		method = requestLine.substr(0, firstSpace);
 		url = requestLine.substr(firstSpace+1, secondSpace - firstSpace - 1);
-		httpversion = requestLine.substr(secondSpace+1);*/
+		httpversion = requestLine.substr(secondSpace+1);
 		std::string argLine = readline();
 		while (argLine.size())
 		{
-			std::cout << argLine << std::endl;
-/*			std::string name, arg;
+			std::string name, arg;
 			int separator = argLine.find(": ", 0);
 			name = argLine.substr(0, separator);
 			arg = argLine.substr(separator+2);
-			attributes.insert(std::make_pair(name, arg));*/
+			attributes.insert(std::make_pair(name, arg));
 			argLine = readline();
 		}
-/*		if (url.find_first_of('?') != std::string::npos)
-		{
-			std::string args = url.substr(url.find_first_of('?')+1);
-			url = url.substr(0, url.find_first_of('?'));
-			while (args.size() > 0)
-			{
-				size_t nextAmp = args.find_first_of('&');
-				std::string nextArg;
-				if (nextAmp == std::string::npos)
-				{
-					nextArg = args;
-					args = "";
-				} 
-				else
-				{
-					nextArg = args.substr(0, nextAmp);
-					args = args.substr(nextAmp+1);
-				}
-				std::string val = "true";
-				size_t eq = nextArg.find_first_of('=');
-				if (eq != std::string::npos)
-				{
-					val = nextArg.substr(eq+1);
-					nextArg = nextArg.substr(0, eq);
-				}
-				arguments.insert(std::make_pair(nextArg, val));
-			}
-		}
-		if (url[url.size()-1] == '/') url = url.substr(0, url.size()-1);*/
 	}
 };
 
@@ -260,6 +229,8 @@ public:
 	}
 	void operator()()
 	{
+		std::string status("HTTP/1.0 200 blabla\r\n\r\nHenk");
+		sock.write(status.c_str(), status.size());
 	}
 };
 
@@ -269,11 +240,11 @@ public:
 	class handler
 	{
 	public:
-		virtual response handle(socket *sock) = 0;
+		virtual response handle(request& req, socket& sock) = 0;
 	};
 private:
-	listensocket ssock;
-	std::vector<std::pair<std::string, server::handler*>> uris;
+	listensocket lsock;
+	static std::vector<std::pair<std::string, server::handler*>> uris;
 public:
 	static server &Instance()
 	{ 
@@ -281,7 +252,7 @@ public:
 		return server_;
 	}
 	server(int port)
-	: ssock(port)
+	: lsock(port)
 	{
 	}
 	void operator()()
@@ -290,7 +261,7 @@ public:
 		{
 			unsigned short port;
 			std::string address;
-			std::thread t(server::handle, ssock.accept(port, address));
+			std::thread t(server::handle, lsock.accept(port, address));
 			t.detach();
 		}
 	}
@@ -298,24 +269,33 @@ public:
 	{
 		std::unique_ptr<socket> cs(clientsock);
 		request req(*cs.get());
-		response resp(*cs.get());
 		req();
-		resp();
+		for(auto uri : uris)
+		{
+			if(uri.first == req.url)
+			{
+				response resp = uri.second->handle(req, *cs.get());
+				resp();
+				return;
+			}
+		}
+		//TODO: do default 404 response
 	}
-	void registeruri(std::string uri, server::handler *handler)
+	static void registeruri(std::string uri, server::handler *handler)
 	{
 		uris.push_back(std::make_pair(uri, handler));
 	}
 };
+std::vector<std::pair<std::string, server::handler*>> server::uris;
 }
 }
 
 class TextureHandler : public net::http::server::handler
 {
 public:
-	net::http::response handle(net::socket *sock)
+	net::http::response handle(net::http::request& req, net::socket& sock)
 	{
-		net::http::response resp(*sock);
+		net::http::response resp(sock);
 		return resp;
 	}
 };
@@ -323,7 +303,7 @@ public:
 int main()
 {
 	TextureHandler texhandler;
-	net::http::server::Instance().registeruri("textures", &texhandler);
+	net::http::server::Instance().registeruri("/textures", &texhandler);
 	net::http::server::Instance()();
 	return 0;
 }
