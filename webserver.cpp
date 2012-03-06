@@ -31,12 +31,14 @@ private:
 	const std::string errors;
 };
 
-namespace http
-{
+namespace net {
 class socket
 {
 private:
 	int fd;
+	static const size_t buffersize = 5;
+	char buffer[buffersize];
+	size_t begin, end;
 public:
 	class exception : public std::exception
 	{
@@ -58,15 +60,39 @@ public:
 
 	socket(int fd)
 	: fd(fd)
+	, begin(0)
+	, end(0)
 	{
 	}
-	int read(char* buffer, int max)
+	
+	int read(char* buffer_, size_t want)
 	{
-		int bytesread = ::read(fd, buffer, max);
-		if(bytesread == -1) throw socket::exception("error reading socket");
-		return bytesread; 
+		size_t frombuffer = std::min(want, end - begin);
+		size_t fromsocket = want - frombuffer;
+		memcpy(buffer_, &buffer[begin], frombuffer); begin += frombuffer;
+		if(begin == end) begin = end = 0;
+		if(fromsocket > 0)
+		{
+			if(fromsocket >= buffersize)
+			{
+				int sockread = ::read(fd, &buffer_[frombuffer], fromsocket);
+				if(sockread == -1) throw socket::exception("error reading socket");
+				return frombuffer + sockread;
+			}
+			else
+			{
+				int sockread = ::read(fd, buffer, buffersize);
+				if(sockread == -1) throw socket::exception("error reading socket");
+				end += sockread;
+				size_t fromsockettoclient = std::min(fromsocket, (size_t)sockread);
+				memcpy(buffer_, buffer, fromsockettoclient);
+				begin += fromsockettoclient;
+				return frombuffer + fromsockettoclient;
+			}
+		}
+		return frombuffer + fromsocket;
 	}
-	int write(const char* buffer, int count)
+	int write(const char* buffer, size_t count)
 	{
 		return ::write(fd, buffer, count);
 	}
@@ -76,12 +102,12 @@ public:
 	}
 };
 
-class serversocket
+class listensocket
 {
 private:
 	int fd;
 public:
-	serversocket(unsigned short port)
+	listensocket(unsigned short port)
 	{
 		fd = ::socket(AF_INET, SOCK_STREAM, 0);
 		if(fd < 0)
@@ -107,7 +133,7 @@ public:
 			throw GeneralException(message + error);
 		}
 	}
-	~serversocket()
+	~listensocket()
 	{
 		close(fd);
 	}
@@ -126,6 +152,9 @@ public:
 	}
 };
 
+
+namespace http
+{
 class request
 {
 public:
@@ -161,58 +190,34 @@ public:
 	}
 	std::string readline()
 	{
-		size_t inspected = 1;
-		size_t read = cs.read(&buffer[alreadyfilled], buffersize - alreadyfilled);
-		if(read == 0) throw http::request::exception("bad request");
-		alreadyfilled += read;
-		
-	/*	size_t idx = 1;
-		do
-		{
-			int currentlyread = cs.read(&buffer[idx], buffersize);
-		}
-		while()
-		for(; (read == buffersize) || (read == 0); read += cs.read(&buffer[idx], buffersize);
-		{
-			if(read > 1)
-			{
-				for(;idx < read; idx++)
-				{
-					if(buffer[idx-1] == '\r' && buffer[idx] == '\n')
-					{
-					}
-				}
-			}
-		}
-
-*/
-
-/*		int idx;
+		int idx = 0;
 		do {
 			size_t read = cs.read(&buffer[idx], 1);
 			idx += read;
 		} while(idx < 2 || (buffer[idx-2] != '\r' && buffer[idx-1] != '\n'));
-		return std::string(buffer, 0, idx-2);*/
+		return std::string(buffer, 0, idx-2);
 	}
 	void operator()()
 	{
 		std::string requestLine = readline();
-		int firstSpace = requestLine.find(" ", 0);
+		std::cout << requestLine << std::endl;
+/*		int firstSpace = requestLine.find(" ", 0);
 		int secondSpace = requestLine.find(" ", firstSpace+1);
 		method = requestLine.substr(0, firstSpace);
 		url = requestLine.substr(firstSpace+1, secondSpace - firstSpace - 1);
-		httpversion = requestLine.substr(secondSpace+1);
+		httpversion = requestLine.substr(secondSpace+1);*/
 		std::string argLine = readline();
 		while (argLine.size())
 		{
-			std::string name, arg;
+			std::cout << argLine << std::endl;
+/*			std::string name, arg;
 			int separator = argLine.find(": ", 0);
 			name = argLine.substr(0, separator);
 			arg = argLine.substr(separator+2);
-			attributes.insert(std::make_pair(name, arg));
+			attributes.insert(std::make_pair(name, arg));*/
 			argLine = readline();
 		}
-		if (url.find_first_of('?') != std::string::npos)
+/*		if (url.find_first_of('?') != std::string::npos)
 		{
 			std::string args = url.substr(url.find_first_of('?')+1);
 			url = url.substr(0, url.find_first_of('?'));
@@ -240,7 +245,7 @@ public:
 				arguments.insert(std::make_pair(nextArg, val));
 			}
 		}
-		if (url[url.size()-1] == '/') url = url.substr(0, url.size()-1);
+		if (url[url.size()-1] == '/') url = url.substr(0, url.size()-1);*/
 	}
 };
 
@@ -267,7 +272,7 @@ public:
 		virtual response handle(socket *sock) = 0;
 	};
 private:
-	serversocket ssock;
+	listensocket ssock;
 	std::vector<std::pair<std::string, server::handler*>> uris;
 public:
 	static server &Instance()
@@ -303,13 +308,14 @@ public:
 	}
 };
 }
+}
 
-class TextureHandler : public http::server::handler
+class TextureHandler : public net::http::server::handler
 {
 public:
-	http::response handle(http::socket *sock)
+	net::http::response handle(net::socket *sock)
 	{
-		http::response resp(*sock);
+		net::http::response resp(*sock);
 		return resp;
 	}
 };
@@ -317,7 +323,7 @@ public:
 int main()
 {
 	TextureHandler texhandler;
-	http::server::Instance().registeruri("textures", &texhandler);
-	http::server::Instance()();
+	net::http::server::Instance().registeruri("textures", &texhandler);
+	net::http::server::Instance()();
 	return 0;
 }
