@@ -199,21 +199,21 @@ public:
 	}
 	void operator()()
 	{
-		std::string requestLine = readline();
-		int firstSpace = requestLine.find(" ", 0);
-		int secondSpace = requestLine.find(" ", firstSpace+1);
-		method = requestLine.substr(0, firstSpace);
-		url = requestLine.substr(firstSpace+1, secondSpace - firstSpace - 1);
-		httpversion = requestLine.substr(secondSpace+1);
-		std::string argLine = readline();
-		while (argLine.size())
+		std::string requestline = readline();
+		int firstspace = requestline.find(" ", 0);
+		int secondspace = requestline.find(" ", firstspace+1);
+		method = requestline.substr(0, firstspace);
+		url = requestline.substr(firstspace+1, secondspace - firstspace - 1);
+		httpversion = requestline.substr(secondspace+1);
+		std::string argline = readline();
+		while (argline.size())
 		{
 			std::string name, arg;
-			int separator = argLine.find(": ", 0);
-			name = argLine.substr(0, separator);
-			arg = argLine.substr(separator+2);
+			int separator = argline.find(": ", 0);
+			name = argline.substr(0, separator);
+			arg = argline.substr(separator+2);
 			attributes.insert(std::make_pair(name, arg));
-			argLine = readline();
+			argline = readline();
 		}
 	}
 };
