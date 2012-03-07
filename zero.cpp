@@ -575,14 +575,23 @@ public:
 	: width(width)
 	, height(height)
 	{
-		const RenderStep::Descriptor effectA { "resources/shaders/null.vs", "resources/shaders/null.fs",
-		                                       { { "modeltex", "pic.png" } },
+		RenderStep::Descriptor effectA { "resources/shaders/null.vs", "resources/shaders/null.fs"};//,
+		              /*                         { { "modeltex", "pic.png" } },
 		                                       { { "output", "A1" }, { "output", "A2" } }
-		                                     };
-		const RenderStep::Descriptor effectB { "resources/shaders/stepB.vs", "resources/shaders/stepB.fs",
-		                                       { { "modeltex", "A1" } },
+		                                     };*/
+		RenderStep::Descriptor::io inputA{"modeltex", "pic.png"};
+		RenderStep::Descriptor::io outputA1{"output", "A1"};
+		RenderStep::Descriptor::io outputA2{"output", "A2"};
+		effectA.inputs.push_back(inputA);
+		effectA.outputs.push_back(outputA1);
+		effectA.outputs.push_back(outputA2);
+
+		RenderStep::Descriptor effectB { "resources/shaders/stepB.vs", "resources/shaders/stepB.fs"};//,
+		                                       /*{ { "modeltex", "A1" } },
 		                                       { }
-		                                     };
+		                                     };*/
+		RenderStep::Descriptor::io inputB{"modeltex", "A1"};
+		effectB.inputs.push_back(inputB);
 
 		Texture::ImageData imagedata{IL_PNG, File::read("pic.png")};
 		Res<Texture>::load("pic.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
