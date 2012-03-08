@@ -11,24 +11,8 @@
 #include <string.h>
 #include <cstdlib>
 #include <map>
-
-class GeneralException : public std::exception
-{
-public:
-	GeneralException(const std::string &errors)
-	: errors(errors)
-	{
-	}
-	~GeneralException() throw ()
-	{
-	}
-	const char *what() const throw()
-	{
-		return errors.c_str();
-	}
-private:
-	const std::string errors;
-};
+#include "webserver.cpp"
+#include "GeneralException.cpp"
 
 struct Blob
 {
