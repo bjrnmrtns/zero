@@ -11,14 +11,10 @@
 #include <string.h>
 #include <cstdlib>
 #include <map>
+#include "Blob.cpp"
 #include "webserver.cpp"
 #include "GeneralException.cpp"
-
-struct Blob
-{
-	size_t size;
-	std::unique_ptr<unsigned char> buf;
-};
+#include <thread>
 
 class File
 {
@@ -594,8 +590,27 @@ public:
 	}
 };
 
+static std::map<std::string, Blob> textures;
+class TextureHandler : public net::http::server::handler
+{
+public:
+	net::http::response handle(net::http::request& req, net::socket& sock)
+	{
+		net::http::response resp(sock);
+		//TODO: not thread safe (assuming nobody writes to this image)
+		resp.setcontent(textures.find("A1")->second);
+		return resp;
+	}
+};
+
+
 int main()
 {
+	TextureHandler texhandler;
+	net::http::server::Instance().registeruri("/textures", &texhandler);
+	std::thread serverthread(std::ref(net::http::server::Instance()));
+	serverthread.detach();
+
 	unsigned int width = 1024;
 	unsigned int height = 768;
 	Window_ window(width, height);
@@ -605,8 +620,13 @@ int main()
 	{
 		pipeline.Step();
 		window.Swap();
+
 		running = !glfwGetKey(GLFW_KEY_ESC) &&
 		          glfwGetWindowParam(GLFW_OPENED);
+		for(auto &it : Res<Texture>::data) {
+			textures.insert(std::make_pair(it.first, it.second->save().blob));
+		}
+//std::map<std::string, std::unique_ptr<T>> Res<T>::data;
 
 	}
 	File::write("rendtexA.png", Res<Texture>::data.find("A1")->second->save().blob);

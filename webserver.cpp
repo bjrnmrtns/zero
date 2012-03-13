@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <map>
 #include "GeneralException.cpp"
+#include "Blob.cpp"
 
 namespace net {
 class socket
@@ -176,7 +177,7 @@ public:
 	{
 		size_t idx = 0;
 		do {
-			if(idx == buffersize) throw exception("bad request, to much to shallow");
+			if(idx == buffersize) throw exception("bad request, too much to shallow");
 			size_t read = cs.read(&buffer[idx], 1);
 			idx += read;
 		} while(idx < 2 || (buffer[idx-2] != '\r' && buffer[idx-1] != '\n'));
@@ -206,16 +207,21 @@ public:
 class response
 {
 private:
+	Blob content;
 	socket& sock;
 public:
 	response(socket& sock)
 	: sock(sock)
 	{
 	}
+	void setcontent(Blob blob)
+	{
+		content = std::move(blob);
+	}
 	void operator()()
 	{
 		std::string status("HTTP/1.0 200 blabla\r\n\r\nHenk");
-		sock.write(status.c_str(), status.size());
+		sock.write((const char *)content.buf.get(), content.size);
 	}
 };
 
