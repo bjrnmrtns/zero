@@ -16,7 +16,7 @@ make PREFIX=${ZERO_EXTERNAL_DIR} x11-install
 
 # Get glew
 cd ${BOOTSTRAP_DIR}
-wget https://sourceforge.net/projects/glew/files/glew/1.7.0/glew-1.7.0.tgz
+wget http://sourceforge.net/projects/glew/files/glew/1.7.0/glew-1.7.0.tgz
 tar xf glew-1.7.0.tgz
 cd glew-1.7.0
 make
@@ -24,7 +24,7 @@ make GLEW_DEST=${ZERO_EXTERNAL_DIR} install
 
 # Get glm
 cd ${BOOTSTRAP_DIR}
-wget https://sourceforge.net/projects/ogl-math/files/glm-0.9.2.7/glm-0.9.2.7.zip
+wget http://sourceforge.net/projects/ogl-math/files/glm-0.9.2.7/glm-0.9.2.7.zip
 unzip glm-0.9.2.7.zip
 mv glm-0.9.2.7/glm/ ${ZERO_EXTERNAL_DIR}/include
 
@@ -33,7 +33,7 @@ cd ${BOOTSTRAP_DIR}
 wget http://downloads.sourceforge.net/openil/DevIL-1.7.8.tar.gz
 tar xf DevIL-1.7.8.tar.gz
 cd devil-1.7.8
-./configure --prefix=${ZERO_EXTERNAL_DIR}/external
+./configure --prefix=${ZERO_EXTERNAL_DIR}
 make
 make install
 
