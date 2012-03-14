@@ -51,5 +51,5 @@ cd ${BOOTSTRAP_DIR}
 wget http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz
 tar xf boost_1_49_0.tar.gz
 cd boost_1_49_0
-mv boost external/include
+mv boost ${ZERO_EXTERNAL_DIR}/include
 
