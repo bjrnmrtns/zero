@@ -15,7 +15,12 @@
 #include "webserver.cpp"
 #include "GeneralException.cpp"
 #include <thread>
-
+#include <sstream>
+#include <json_spirit/json_spirit_writer_template.h>
+#define JSON_SPIRIT_VALUE_ENABLED
+#ifndef JSON_SPIRIT_VALUE_ENABLED
+#error Please define JSON_SPIRIT_VALUE_ENABLED for the Value type to be enabled 
+#endif
 class File
 {
 public:
@@ -606,6 +611,11 @@ public:
 
 int main()
 {
+	json_spirit::Object addr;
+	addr.push_back(json_spirit::Pair( "house_number", 42));
+	std::stringstream os;
+	std::cout << json_spirit::write_string(json_spirit::Value(addr), json_spirit::pretty_print);
+
 	TextureHandler texhandler;
 	net::http::server::Instance().registeruri("/textures", &texhandler);
 	std::thread serverthread(std::ref(net::http::server::Instance()));

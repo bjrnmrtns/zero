@@ -53,3 +53,9 @@ tar xf boost_1_49_0.tar.gz
 cd boost_1_49_0
 mv boost ${ZERO_EXTERNAL_DIR}/include
 
+# Get json spirit
+cd ${BOOTSTRAP_DIR}
+git clone git://gitorious.org/json-spirit/json-spirit.git
+cd json-spirit
+cp -r json_spirit ${ZERO_EXTERNAL_DIR}/external 
+
