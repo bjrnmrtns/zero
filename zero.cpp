@@ -13,15 +13,8 @@
 #include <cstdlib>
 #include <map>
 #include "Blob.cpp"
-#include "webserver.cpp"
 #include "GeneralException.cpp"
-#include <thread>
-#include <sstream>
-#include <json_spirit/json_spirit_writer_template.h>
-#define JSON_SPIRIT_VALUE_ENABLED
-#ifndef JSON_SPIRIT_VALUE_ENABLED
-#error Please define JSON_SPIRIT_VALUE_ENABLED for the Value type to be enabled 
-#endif
+
 class File
 {
 public:
@@ -114,7 +107,7 @@ public:
 		}
 		glBufferData(GL_ARRAY_BUFFER, stride * count, vertexData, GL_STATIC_DRAW);
 	}
-	void Draw()
+	void Draw() const
 	{
 		glBindVertexArray(vao);
 		glDrawArrays(GL_TRIANGLES, 0, count);
@@ -447,7 +440,13 @@ public:
 	}
 };
 
-class Model
+class Renderable
+{
+public:
+	virtual void Draw() const = 0;
+};
+
+class Model : public Renderable
 {
 public:
 	struct Vertex
@@ -475,7 +474,62 @@ public:
 		static Model model(description, vertices, sizeof(vertices)/sizeof(float));
 		return model;
 	};
-	void Draw()
+
+
+	static Model& cube()
+	{
+	static Vertex vertices[] = { { glm::vec3(-1,  1, -1), glm::vec3(-1,  0,  0),  glm::vec2(0,  0) },
+	                             { glm::vec3(-1, -1,  1), glm::vec3(-1,  0,  0),  glm::vec2(1,  1) },
+	                             { glm::vec3(-1, -1, -1), glm::vec3(-1,  0,  0),  glm::vec2(1,  0) }, 
+
+	                             { glm::vec3(-1, -1,  1), glm::vec3(-1,  0,  0),  glm::vec2(1,  1) },
+	                             { glm::vec3(-1,  1, -1), glm::vec3(-1,  0,  0),  glm::vec2(0,  0) },
+	                             { glm::vec3(-1,  1,  1), glm::vec3(-1,  0,  0),  glm::vec2(0,  1) },
+
+	                             { glm::vec3(-1,  1,  1), glm::vec3( 0,  0,  1),  glm::vec2(0,  0) },
+	                             { glm::vec3( 1, -1,  1), glm::vec3( 0,  0,  1),  glm::vec2(1,  1) },
+	                             { glm::vec3(-1, -1,  1), glm::vec3( 0,  0,  1),  glm::vec2(1,  0) },
+
+	                             { glm::vec3( 1, -1,  1), glm::vec3( 0,  0,  1),  glm::vec2(1,  1) },
+	                             { glm::vec3(-1,  1,  1), glm::vec3( 0,  0,  1),  glm::vec2(0,  0) },
+	                             { glm::vec3( 1,  1,  1), glm::vec3( 0,  0,  1),  glm::vec2(0,  1) },
+
+	                             { glm::vec3( 1, -1,  1), glm::vec3( 1,  0,  0),  glm::vec2(0,  0) },
+	                             { glm::vec3( 1,  1, -1), glm::vec3( 1,  0,  0),  glm::vec2(1,  1) },
+	                             { glm::vec3( 1, -1, -1), glm::vec3( 1,  0,  0),  glm::vec2(1,  0) },
+
+	                             { glm::vec3( 1,  1, -1), glm::vec3( 1,  0,  0),  glm::vec2(1,  1) },
+	                             { glm::vec3( 1, -1,  1), glm::vec3( 1,  0,  0),  glm::vec2(0,  0) },
+	                             { glm::vec3( 1,  1,  1), glm::vec3( 1,  0,  0),  glm::vec2(0,  1) },
+
+	                             { glm::vec3( 1,  1, -1), glm::vec3( 0,  0, -1),  glm::vec2(0,  0) },
+	                             { glm::vec3(-1, -1, -1), glm::vec3( 0,  0, -1),  glm::vec2(1,  1) },
+	                             { glm::vec3( 1, -1, -1), glm::vec3( 0,  0, -1),  glm::vec2(0,  1) },
+
+	                             { glm::vec3(-1, -1, -1), glm::vec3( 0,  0, -1),  glm::vec2(1,  1) },
+	                             { glm::vec3( 1,  1, -1), glm::vec3( 0,  0, -1),  glm::vec2(0,  0) },
+	                             { glm::vec3(-1,  1, -1), glm::vec3( 0,  0, -1),  glm::vec2(1,  0) },
+
+	                             { glm::vec3(-1,  1, -1), glm::vec3( 0,  1,  0),  glm::vec2(0,  0) },
+	                             { glm::vec3( 1,  1,  1), glm::vec3( 0,  1,  0),  glm::vec2(1,  1) },
+	                             { glm::vec3(-1,  1,  1), glm::vec3( 0,  1,  0),  glm::vec2(1,  0) },
+
+	                             { glm::vec3( 1,  1,  1), glm::vec3( 0,  1,  0),  glm::vec2(1,  1) },
+	                             { glm::vec3(-1,  1, -1), glm::vec3( 0,  1,  0),  glm::vec2(0,  0) },
+	                             { glm::vec3( 1,  1, -1), glm::vec3( 0,  1,  0),  glm::vec2(0,  1) },
+
+	                             { glm::vec3( 1, -1, -1), glm::vec3( 0, -1,  0),  glm::vec2(0,  0) },
+	                             { glm::vec3(-1, -1,  1), glm::vec3( 0, -1,  0),  glm::vec2(1,  1) },
+	                             { glm::vec3( 1, -1,  1), glm::vec3( 0, -1,  0),  glm::vec2(1,  0) },
+
+	                             { glm::vec3(-1, -1,  1), glm::vec3( 0, -1,  0),  glm::vec2(1,  1) },
+	                             { glm::vec3( 1, -1, -1), glm::vec3( 0, -1,  0),  glm::vec2(0,  0) },
+	                             { glm::vec3(-1, -1, -1), glm::vec3( 0, -1,  0),  glm::vec2(0,  1) }
+		};
+		static Model model(description, vertices, sizeof(vertices)/sizeof(float));
+		return model;
+	}
+	void Draw() const
 	{
 		vb.Draw();
 	}
@@ -485,6 +539,18 @@ const VertexBuffer::InputElementDescription Model::description[] { { "in_positio
                                                                    { "in_texcoord", 2, sizeof(glm::vec2) },
                                                                    { "", 0, 0 } };
 
+class View
+{
+public:
+	glm::mat4 projection;
+	glm::mat4 view;
+	View(glm::mat4 projection, glm::mat4 view)
+	: projection(projection)
+	, view(view)
+	{
+	}
+};
+
 class RenderStep
 {
 private:
@@ -492,7 +558,6 @@ private:
 	VertexShader vs;
 	FragmentShader fs;
 	ShaderProgram sp;
-	Model& square;
 	std::vector<std::pair<std::string, Texture*>> inputs;
 	std::vector<std::pair<std::string, Texture*>> output;
 	std::unique_ptr<RenderTarget> rt;
@@ -513,7 +578,6 @@ public:
 	, vs(descriptor.vs)
 	, fs(descriptor.fs)
 	, sp(vs, fs, Model::description)
-	, square(Model::square())
 	{
 		for(size_t i = 0; i < descriptor.inputs.size(); i++)
 		{
@@ -525,15 +589,17 @@ public:
 		}
 		rt.reset(new RenderTarget(width, height, output));
 	}
-	void Step()
+	virtual void Step(const View& view, const Renderable& renderable)
 	{
+		sp.Set("projection", &view.projection[0][0]);
+		sp.Set("view", &view.view[0][0]);
 		sp.Use();
 		for(size_t i = 0; i < inputs.size(); i++)
 		{
 			inputs[i].second->Bind(i);
 		}
 		rt->Activate();
-		square.Draw();
+		renderable.Draw();
 	}
 private:
 	void addinput(std::string name, std::string id)
@@ -551,22 +617,17 @@ private:
 	}
 };
 
-class View
+class EffectsStep : public RenderStep
 {
 public:
-	View(glm::mat4 projection, glm::mat4 view)
-	: view(view)
-	, projection(projection)
+	EffectsStep(size_t width, size_t height, const Descriptor& descriptor)
+	: RenderStep(width, height, descriptor)
 	{
 	}
-	glm::mat4 projection;
-	glm::mat4 view;
-};
-
-class Renderable
-{
-public:
-	virtual void Draw() = 0;
+	void Step(const View& view, const Renderable& renderable)
+	{
+		RenderStep::Step(view, Model::square());
+	}
 };
 
 class RenderPipeline
@@ -579,103 +640,59 @@ public:
 	: width(width)
 	, height(height)
 	{
-		RenderStep::Descriptor effectA { "resources/shaders/null.vs", "resources/shaders/null.fs"};//,
-		RenderStep::Descriptor::io inputA{"modeltex", "pic.png"};
-		RenderStep::Descriptor::io outputA1{"output", "A1"};
-		RenderStep::Descriptor::io outputA2{"output", "A2"};
-		effectA.inputs.push_back(inputA);
-		effectA.outputs.push_back(outputA1);
-		effectA.outputs.push_back(outputA2);
+		RenderStep::Descriptor geometrydescriptor { "resources/shaders/geometry.vs", "resources/shaders/geometry.fs"};
+		RenderStep::Descriptor::io picture{"modeltex", "pic.png"};
+		RenderStep::Descriptor::io geometryio{"output", "geometry"};
+		geometrydescriptor.outputs.push_back(geometryio);
+		geometrydescriptor.inputs.push_back(picture);
 
-		RenderStep::Descriptor effectB { "resources/shaders/stepB.vs", "resources/shaders/stepB.fs"};//,
-		RenderStep::Descriptor::io inputB{"modeltex", "A1"};
-		effectB.inputs.push_back(inputB);
+		RenderStep::Descriptor reducedescriptor { "resources/shaders/reduce.vs", "resources/shaders/reduce.fs"};
+		RenderStep::Descriptor::io reduceio{"modeltex", "geometry"};
+		reducedescriptor.inputs.push_back(reduceio);
 
 		Texture::ImageData imagedata{IL_PNG, File::read("pic.png")};
 		Res<Texture>::load("pic.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
-		Res<Texture>::load("A1", std::unique_ptr<Texture>(new Texture(width, height)));
-		Res<Texture>::load("A2", std::unique_ptr<Texture>(new Texture(width, height)));
+		Res<Texture>::load("geometry", std::unique_ptr<Texture>(new Texture(width, height)));
 
-		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, effectA)));
-		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, effectB)));
+		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, geometrydescriptor)));
+		steps.push_back(std::unique_ptr<RenderStep>(new EffectsStep(width, height, reducedescriptor)));
 	};
 	void Step(const View& view, const Renderable& renderable)
 	{
 		for(size_t i = 0; i < steps.size(); i++)
 		{
-			steps[i]->Step();
+			steps[i]->Step(view, renderable);
 		}
 	}
 };
 
 class Camera : public View
 {
-private:
 public:
 	Camera(size_t width, size_t height)
-	: View(glm::mat4(1.0f), glm::perspective(60.0f, (float)width / (float)height, 1.0f, 10000.0f))
+	: View(glm::perspective(60.0f, (float)width / (float)height, 1.0f, 10000.0f),
+	  glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -6.0f)))
 	{
 	}
 };
 
-class Cube : public Renderable
-{
-public:
-	void Draw()
-	{
-	}
-};
-
-/*static std::map<std::string, Blob> textures;
-class TextureHandler : public net::http::server::handler
-{
-public:
-	net::http::response handle(net::http::request& req, net::socket& sock)
-	{
-		net::http::response resp(sock);
-		//TODO: not thread safe (assuming nobody writes to this image)
-		resp.setcontent(textures.find("A1")->second);
-		return resp;
-	}
-};
-*/
 int main()
 {
-/*	json_spirit::Object addr;
-	json_spirit::Array textu;
-	addr.push_back(json_spirit::Pair( "texture", "texture/1"));
-	textu.push_back("texture/2");
-	textu.push_back("texture/3");
-	addr.push_back(json_spirit::Pair("textures", textu));
-	std::stringstream os;
-	std::cout << json_spirit::write_string(json_spirit::Value(addr), json_spirit::pretty_print);
-
-	TextureHandler texhandler;
-	net::http::server::Instance().registeruri("/textures", &texhandler);
-	std::thread serverthread(std::ref(net::http::server::Instance()));
-	serverthread.detach();
-*/
 	unsigned int width = 1024;
 	unsigned int height = 768;
 	Window_ window(width, height);
 	RenderPipeline pipeline(width, height);
 	bool running = true;
 	Camera camera(width, height);
-	Cube cube;
 	while(running)
 	{
-		pipeline.Step(camera, cube);
+		pipeline.Step(camera, Model::cube());
 		window.Swap();
 
 		running = !glfwGetKey(GLFW_KEY_ESC) &&
 		          glfwGetWindowParam(GLFW_OPENED);
-/*		for(auto &it : Res<Texture>::data) {
-			textures.insert(std::make_pair(it.first, it.second->save().blob));
-		}*/
 
 	}
-/*	File::write("rendtexA.png", Res<Texture>::data.find("A1")->second->save().blob);
-	File::write("rendtexB.png", Res<Texture>::data.find("A2")->second->save().blob);*/
 	return 0;
 }
 
