@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <GL/glfw.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <exception>
 #include <string>
 #include <memory>
@@ -550,6 +551,24 @@ private:
 	}
 };
 
+class View
+{
+public:
+	View(glm::mat4 projection, glm::mat4 view)
+	: view(view)
+	, projection(projection)
+	{
+	}
+	glm::mat4 projection;
+	glm::mat4 view;
+};
+
+class Renderable
+{
+public:
+	virtual void Draw() = 0;
+};
+
 class RenderPipeline
 {
 private:
@@ -561,9 +580,6 @@ public:
 	, height(height)
 	{
 		RenderStep::Descriptor effectA { "resources/shaders/null.vs", "resources/shaders/null.fs"};//,
-		              /*                         { { "modeltex", "pic.png" } },
-		                                       { { "output", "A1" }, { "output", "A2" } }
-		                                     };*/
 		RenderStep::Descriptor::io inputA{"modeltex", "pic.png"};
 		RenderStep::Descriptor::io outputA1{"output", "A1"};
 		RenderStep::Descriptor::io outputA2{"output", "A2"};
@@ -572,9 +588,6 @@ public:
 		effectA.outputs.push_back(outputA2);
 
 		RenderStep::Descriptor effectB { "resources/shaders/stepB.vs", "resources/shaders/stepB.fs"};//,
-		                                       /*{ { "modeltex", "A1" } },
-		                                       { }
-		                                     };*/
 		RenderStep::Descriptor::io inputB{"modeltex", "A1"};
 		effectB.inputs.push_back(inputB);
 
@@ -586,7 +599,7 @@ public:
 		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, effectA)));
 		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, effectB)));
 	};
-	void Step()
+	void Step(const View& view, const Renderable& renderable)
 	{
 		for(size_t i = 0; i < steps.size(); i++)
 		{
@@ -595,7 +608,25 @@ public:
 	}
 };
 
-static std::map<std::string, Blob> textures;
+class Camera : public View
+{
+private:
+public:
+	Camera(size_t width, size_t height)
+	: View(glm::mat4(1.0f), glm::perspective(60.0f, (float)width / (float)height, 1.0f, 10000.0f))
+	{
+	}
+};
+
+class Cube : public Renderable
+{
+public:
+	void Draw()
+	{
+	}
+};
+
+/*static std::map<std::string, Blob> textures;
 class TextureHandler : public net::http::server::handler
 {
 public:
@@ -607,12 +638,15 @@ public:
 		return resp;
 	}
 };
-
-
+*/
 int main()
 {
-	json_spirit::Object addr;
-	addr.push_back(json_spirit::Pair( "house_number", 42));
+/*	json_spirit::Object addr;
+	json_spirit::Array textu;
+	addr.push_back(json_spirit::Pair( "texture", "texture/1"));
+	textu.push_back("texture/2");
+	textu.push_back("texture/3");
+	addr.push_back(json_spirit::Pair("textures", textu));
 	std::stringstream os;
 	std::cout << json_spirit::write_string(json_spirit::Value(addr), json_spirit::pretty_print);
 
@@ -620,27 +654,28 @@ int main()
 	net::http::server::Instance().registeruri("/textures", &texhandler);
 	std::thread serverthread(std::ref(net::http::server::Instance()));
 	serverthread.detach();
-
+*/
 	unsigned int width = 1024;
 	unsigned int height = 768;
 	Window_ window(width, height);
 	RenderPipeline pipeline(width, height);
 	bool running = true;
+	Camera camera(width, height);
+	Cube cube;
 	while(running)
 	{
-		pipeline.Step();
+		pipeline.Step(camera, cube);
 		window.Swap();
 
 		running = !glfwGetKey(GLFW_KEY_ESC) &&
 		          glfwGetWindowParam(GLFW_OPENED);
-		for(auto &it : Res<Texture>::data) {
+/*		for(auto &it : Res<Texture>::data) {
 			textures.insert(std::make_pair(it.first, it.second->save().blob));
-		}
-//std::map<std::string, std::unique_ptr<T>> Res<T>::data;
+		}*/
 
 	}
-	File::write("rendtexA.png", Res<Texture>::data.find("A1")->second->save().blob);
-	File::write("rendtexB.png", Res<Texture>::data.find("A2")->second->save().blob);
+/*	File::write("rendtexA.png", Res<Texture>::data.find("A1")->second->save().blob);
+	File::write("rendtexB.png", Res<Texture>::data.find("A2")->second->save().blob);*/
 	return 0;
 }
 
