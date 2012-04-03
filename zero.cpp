@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <GL/glfw.h>
 #include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <exception>
 #include <string>
@@ -549,6 +550,7 @@ public:
 	, view(view)
 	{
 	}
+	virtual glm::mat4 GetViewMatrix() const = 0;
 };
 
 class RenderStep
@@ -592,7 +594,7 @@ public:
 	virtual void Step(const View& view, const Renderable& renderable)
 	{
 		sp.Set("projection", &view.projection[0][0]);
-		sp.Set("view", &view.view[0][0]);
+		sp.Set("view", &view.GetViewMatrix()[0][0]);
 		sp.Use();
 		for(size_t i = 0; i < inputs.size(); i++)
 		{
@@ -670,11 +672,74 @@ class Camera : public View
 {
 public:
 	Camera(size_t width, size_t height)
-	: View(glm::perspective(60.0f, (float)width / (float)height, 1.0f, 10000.0f),
-	  glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -6.0f)))
+	: View(glm::perspective(60.0f, (float)width / (float)height, 1.0f, 10000.0f), glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f)))
+	, quit(false)
+	, position(glm::vec3(0.0f, 0.0f, 4.0f))
+	, up(false), down(false), left(false), right(false)
+	, w(false), a(false), s(false), d(false)
+	, speed(0.3)
 	{
 	}
+	void Update()
+	{
+		left = glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS;
+		right = glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS;
+		up = glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS;
+		down = glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS;
+		w = glfwGetKey('W') == GLFW_PRESS;
+		a = glfwGetKey('A') == GLFW_PRESS;
+		s = glfwGetKey('S') == GLFW_PRESS;
+		d = glfwGetKey('D') == GLFW_PRESS;
+		quit = glfwGetKey(GLFW_KEY_ESC) || !glfwGetWindowParam(GLFW_OPENED);
+		Recalculate();
+	}
+
+	void Recalculate()
+	{
+		if(left) MoveX(-0.2 * speed);
+		if(right) MoveX(0.2 * speed);
+		if(up) MoveZ(0.2 * speed);
+		if(down) MoveZ(-0.2 * speed);
+		if(w) RotateX(1.0 * speed);
+		if(s) RotateX(-1.0 * speed);
+		if(a) RotateY(1.0 * speed);
+		if(d) RotateY(-1.0 * speed);
+	}
+	
+	glm::mat4 GetViewMatrix() const
+	{
+		return glm::inverse(glm::translate(glm::mat4(1.0f), position) * glm::toMat4(orientation));
+	}
+
+	void MoveX(float xmmod)
+	{
+		position += orientation * glm::vec3(xmmod, 0.0f, 0.0f);
+	}
+	 
+	void MoveZ(float zmmod)
+	{
+		position += orientation * glm::vec3(0.0f, 0.0f, -zmmod);
+	}
+	 
+	void RotateX(float xrmod)
+	{
+		orientation = orientation * glm::angleAxis(xrmod, glm::vec3(1.0f, 0.0f, 0.0f));
+	}
+	 
+	void RotateY(float yrmod)
+	{
+		orientation = orientation * glm::angleAxis(yrmod, glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+public:
+	bool quit;
+private:
+	glm::vec3 position;
+	glm::quat orientation;
+	bool up, down, left, right;
+	bool w, a, s, d;
+	float speed;
 };
+
 
 int main()
 {
@@ -682,16 +747,12 @@ int main()
 	unsigned int height = 768;
 	Window_ window(width, height);
 	RenderPipeline pipeline(width, height);
-	bool running = true;
 	Camera camera(width, height);
-	while(running)
+	while(!camera.quit)
 	{
 		pipeline.Step(camera, Model::cube());
 		window.Swap();
-
-		running = !glfwGetKey(GLFW_KEY_ESC) &&
-		          glfwGetWindowParam(GLFW_OPENED);
-
+		camera.Update();
 	}
 	return 0;
 }
