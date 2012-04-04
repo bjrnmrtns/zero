@@ -644,17 +644,22 @@ public:
 	{
 		RenderStep::Descriptor geometrydescriptor { "resources/shaders/geometry.vs", "resources/shaders/geometry.fs"};
 		RenderStep::Descriptor::io picture{"modeltex", "pic.png"};
-		RenderStep::Descriptor::io geometryio{"output", "geometry"};
-		geometrydescriptor.outputs.push_back(geometryio);
+		RenderStep::Descriptor::io colorio{"293487234", "color"};
+		RenderStep::Descriptor::io normalio{"asdfasdfe", "normal"};
+		geometrydescriptor.outputs.push_back(colorio);
+		geometrydescriptor.outputs.push_back(normalio);
 		geometrydescriptor.inputs.push_back(picture);
 
 		RenderStep::Descriptor reducedescriptor { "resources/shaders/reduce.vs", "resources/shaders/reduce.fs"};
-		RenderStep::Descriptor::io reduceio{"modeltex", "geometry"};
-		reducedescriptor.inputs.push_back(reduceio);
+		RenderStep::Descriptor::io reducecolorio{"colortex", "color"};
+		RenderStep::Descriptor::io reducenormalio{"normaltex", "normal"};
+		reducedescriptor.inputs.push_back(reducecolorio);
+		reducedescriptor.inputs.push_back(reducenormalio);
 
 		Texture::ImageData imagedata{IL_PNG, File::read("pic.png")};
 		Res<Texture>::load("pic.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
-		Res<Texture>::load("geometry", std::unique_ptr<Texture>(new Texture(width, height)));
+		Res<Texture>::load("color", std::unique_ptr<Texture>(new Texture(width, height)));
+		Res<Texture>::load("normal", std::unique_ptr<Texture>(new Texture(width, height)));
 
 		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, geometrydescriptor)));
 		steps.push_back(std::unique_ptr<RenderStep>(new EffectsStep(width, height, reducedescriptor)));
