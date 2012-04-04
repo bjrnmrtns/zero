@@ -8,7 +8,7 @@ in vec3 pass_normal;
 in vec2 pass_texcoord;
 out vec3 outColor;
 
-const vec3 light_position = vec3(-2, 0, 3);
+const vec3 light_position = vec3(-2, 2, 3);
 
 void main(void)
 {

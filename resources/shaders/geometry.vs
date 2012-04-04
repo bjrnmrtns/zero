@@ -13,7 +13,7 @@ out vec2 pass_texcoord;
 void main(void)
 {
 	gl_Position = projection * view * vec4(in_position, 1.0);
-	pass_position = gl_Position.xyz;
+	pass_position = in_position;
 	pass_normal = in_normal;
 	pass_texcoord = in_texcoord;
 }
