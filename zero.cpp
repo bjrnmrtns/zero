@@ -540,6 +540,14 @@ const VertexBuffer::InputElementDescription Model::description[] { { "in_positio
                                                                    { "in_texcoord", 2, sizeof(glm::vec2) },
                                                                    { "", 0, 0 } };
 
+class Object : public Renderable
+{
+private:
+	Model& model;
+	glm::vec3 position;
+	glm::quat rotation;
+};
+
 class View
 {
 public:
