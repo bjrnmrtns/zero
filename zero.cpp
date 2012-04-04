@@ -644,20 +644,25 @@ public:
 	{
 		RenderStep::Descriptor geometrydescriptor { "resources/shaders/geometry.vs", "resources/shaders/geometry.fs"};
 		RenderStep::Descriptor::io picture{"modeltex", "pic.png"};
+		RenderStep::Descriptor::io positionio{"293487234", "position"};
 		RenderStep::Descriptor::io colorio{"293487234", "color"};
 		RenderStep::Descriptor::io normalio{"asdfasdfe", "normal"};
+		geometrydescriptor.outputs.push_back(positionio);
 		geometrydescriptor.outputs.push_back(colorio);
 		geometrydescriptor.outputs.push_back(normalio);
 		geometrydescriptor.inputs.push_back(picture);
 
 		RenderStep::Descriptor reducedescriptor { "resources/shaders/reduce.vs", "resources/shaders/reduce.fs"};
+		RenderStep::Descriptor::io reducepositionio{"positiontex", "position"};
 		RenderStep::Descriptor::io reducecolorio{"colortex", "color"};
 		RenderStep::Descriptor::io reducenormalio{"normaltex", "normal"};
+		reducedescriptor.inputs.push_back(reducepositionio);
 		reducedescriptor.inputs.push_back(reducecolorio);
 		reducedescriptor.inputs.push_back(reducenormalio);
 
 		Texture::ImageData imagedata{IL_PNG, File::read("pic.png")};
 		Res<Texture>::load("pic.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
+		Res<Texture>::load("position", std::unique_ptr<Texture>(new Texture(width, height)));
 		Res<Texture>::load("color", std::unique_ptr<Texture>(new Texture(width, height)));
 		Res<Texture>::load("normal", std::unique_ptr<Texture>(new Texture(width, height)));
 
