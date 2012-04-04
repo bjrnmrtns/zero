@@ -8,19 +8,19 @@ in vec3 pass_normal;
 in vec2 pass_texcoord;
 out vec3 outColor;
 
-const vec3 light_position = vec3(0, 0, 0);
+const vec3 light_position = vec3(-2, 0, 3);
 
 void main(void)
 {
-	vec3 n = texture2D(normaltex, pass_texcoord).xyz;
-	outColor = (n.rgb + 1.0f) / 2.0f;
-/*	vec3 p = texture2D(positiontex, pass_texcoord).xyz;
+//	vec3 n = texture2D(normaltex, pass_texcoord).xyz;
+//	outColor = (n.rgb + 1.0f) / 2.0f;
+	vec3 p = texture2D(positiontex, pass_texcoord).xyz;
 	vec3 N = normalize(texture2D(normaltex, pass_texcoord).xyz);
 
 	vec3 L = normalize(light_position - p);
 	float lambert = max(0.0f, dot(N, L));
 
 	vec3 color = texture2D(colortex, pass_texcoord).xyz;
-	outColor *= lambert;*/
+	outColor = color * lambert;
 }
 

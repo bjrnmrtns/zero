@@ -301,7 +301,7 @@ public:
 		glBindTexture(GL_TEXTURE_2D, id);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGBA, GL_FLOAT, 0);
 	}
 	Texture(unsigned int width, unsigned int height, ImageData& imagedata)
 	: width(width)
@@ -643,7 +643,7 @@ public:
 	, height(height)
 	{
 		RenderStep::Descriptor geometrydescriptor { "resources/shaders/geometry.vs", "resources/shaders/geometry.fs"};
-		RenderStep::Descriptor::io picture{"modeltex", "pic.png"};
+		RenderStep::Descriptor::io picture{"modeltex", "masbor.png"};
 		RenderStep::Descriptor::io positionio{"293487234", "position"};
 		RenderStep::Descriptor::io colorio{"293487234", "color"};
 		RenderStep::Descriptor::io normalio{"asdfasdfe", "normal"};
@@ -660,8 +660,8 @@ public:
 		reducedescriptor.inputs.push_back(reducecolorio);
 		reducedescriptor.inputs.push_back(reducenormalio);
 
-		Texture::ImageData imagedata{IL_PNG, File::read("pic.png")};
-		Res<Texture>::load("pic.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
+		Texture::ImageData imagedata{IL_PNG, File::read("masbor.png")};
+		Res<Texture>::load("masbor.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
 		Res<Texture>::load("position", std::unique_ptr<Texture>(new Texture(width, height)));
 		Res<Texture>::load("color", std::unique_ptr<Texture>(new Texture(width, height)));
 		Res<Texture>::load("normal", std::unique_ptr<Texture>(new Texture(width, height)));
@@ -682,7 +682,7 @@ class Camera : public View
 {
 public:
 	Camera(size_t width, size_t height)
-	: View(glm::perspective(60.0f, (float)width / (float)height, 1.0f, 10000.0f), glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f)))
+	: View(glm::perspective(60.0f, (float)width / (float)height, 1.0f, 1000.0f), glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f)))
 	, quit(false)
 	, position(glm::vec3(0.0f, 0.0f, 4.0f))
 	, up(false), down(false), left(false), right(false)
