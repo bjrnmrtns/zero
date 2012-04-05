@@ -464,6 +464,40 @@ public:
 	: vb(description, vertices, size)
 	{
 	}
+	static Model& heightmap()
+	{
+		const size_t size = 128;
+		const size_t spacing = 1.0f;
+		static Vertex vertices[size * size * 6];
+		for(size_t x = 0; x < size; x++)
+		{
+			for(size_t z = 0; z < size; z++)
+			{
+				int xw =  (2 * x * spacing) - (size * spacing);
+				int zw =  (2 * z * spacing) - (size * spacing);
+				vertices[6 * ((z * size) + x) + 0].pos = glm::vec3(xw - spacing, 0, zw - spacing);
+				vertices[6 * ((z * size) + x) + 0].normal = glm::vec3(0, 1, 0);
+				vertices[6 * ((z * size) + x) + 0].texcoord = glm::vec2(0, 0);
+				vertices[6 * ((z * size) + x) + 1].pos = glm::vec3(xw - spacing, 0, zw + spacing);
+				vertices[6 * ((z * size) + x) + 1].normal = glm::vec3(0, 1, 0);
+				vertices[6 * ((z * size) + x) + 1].texcoord = glm::vec2(-1, -1);
+				vertices[6 * ((z * size) + x) + 2].pos = glm::vec3(xw + spacing, 0, zw - spacing);
+				vertices[6 * ((z * size) + x) + 2].normal = glm::vec3(0, 1, 0);
+				vertices[6 * ((z * size) + x) + 2].texcoord = glm::vec2(-1, -1);
+				vertices[6 * ((z * size) + x) + 3].pos = glm::vec3(xw - spacing, 0, zw + spacing);
+				vertices[6 * ((z * size) + x) + 3].normal = glm::vec3(0, 1, 0);
+				vertices[6 * ((z * size) + x) + 3].texcoord = glm::vec2(-1, -1);
+				vertices[6 * ((z * size) + x) + 4].pos = glm::vec3(xw + spacing, 0, zw + spacing);
+				vertices[6 * ((z * size) + x) + 4].normal = glm::vec3(0, 1, 0);
+				vertices[6 * ((z * size) + x) + 4].texcoord = glm::vec2(-1, -1);
+				vertices[6 * ((z * size) + x) + 5].pos = glm::vec3(xw + spacing, 0, zw - spacing);
+				vertices[6 * ((z * size) + x) + 5].normal = glm::vec3(0, 1, 0);
+				vertices[6 * ((z * size) + x) + 5].texcoord = glm::vec2(-1, -1);
+			}
+		}
+		static Model model(description, vertices, sizeof(vertices)/sizeof(Vertex));
+		return model;
+	};
 	static Model& square()
 	{
 		static const Vertex vertices[] { { glm::vec3(-1, -1, 1), glm::vec3(0, 0, 1), glm::vec2(0, 0) },
@@ -475,8 +509,6 @@ public:
 		static Model model(description, vertices, sizeof(vertices)/sizeof(Vertex));
 		return model;
 	};
-
-
 	static Model& cube()
 	{
 	static Vertex vertices[] = { { glm::vec3(-1,  1, -1), glm::vec3(-1,  0,  0),  glm::vec2(0,  0) },
@@ -763,7 +795,6 @@ private:
 	float speed;
 };
 
-
 int main()
 {
 	unsigned int width = 1024;
@@ -772,11 +803,13 @@ int main()
 	RenderPipeline pipeline(width, height);
 	Camera camera(width, height);
 
-	Object cube(Model::cube());
+//	Object cube(Model::cube());
+	Object heightmap(Model::heightmap());
 	while(!camera.quit)
 	{
-		cube.rotation = cube.rotation * glm::angleAxis(1.0f, glm::vec3(0.5f, 0.5f, 0.5f));
-		pipeline.Step(camera, cube.model, glm::translate(glm::mat4(1.0f), cube.position) * glm::mat4_cast(cube.rotation));
+		//cube.rotation = cube.rotation * glm::angleAxis(1.0f, glm::vec3(0.5f, 0.5f, 0.5f));
+		//pipeline.Step(camera, cube.model, glm::translate(glm::mat4(1.0f), cube.position) * glm::mat4_cast(cube.rotation));
+		pipeline.Step(camera, heightmap.model, glm::mat4(1.0f));
 		window.Swap();
 		camera.Update();
 	}
