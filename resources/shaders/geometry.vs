@@ -15,7 +15,7 @@ void main(void)
 {
 	gl_Position = projection * view * world * vec4(in_position, 1.0);
 	pass_position = in_position;
-	pass_normal = (world * vec4(in_normal, 1.0f)).xyz;
+	pass_normal = (world * vec4(in_normal, 0.0f)).xyz;
 	pass_texcoord = in_texcoord;
 }
 

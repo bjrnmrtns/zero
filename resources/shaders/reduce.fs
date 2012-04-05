@@ -12,14 +12,13 @@ const vec3 light_position = vec3(0, 20, 5);
 
 void main(void)
 {
-	outColor = (texture2D(normaltex, pass_texcoord).xyz + 1.0f) / 2.0f;
-/*	vec3 p = texture2D(positiontex, pass_texcoord).xyz;
+	vec3 p = texture2D(positiontex, pass_texcoord).xyz;
 	vec3 N = normalize(texture2D(normaltex, pass_texcoord).xyz);
 
 	vec3 L = normalize(light_position - p);
 	float lambert = max(0.0f, dot(N, L));
 
 	vec3 color = texture2D(colortex, pass_texcoord).xyz;
-	outColor = color * lambert;*/
+	outColor = color * (lambert + 0.1);
 }
 

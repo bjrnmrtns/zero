@@ -472,7 +472,7 @@ public:
 		                                 { glm::vec3(-1,  1, 1), glm::vec3(0, 0,-1), glm::vec2(0, 1) },
 		                                 { glm::vec3( 1,  1, 1), glm::vec3(0, 0,-1), glm::vec2(1, 1) },
 		                                 { glm::vec3( 1, -1, 1), glm::vec3(0, 0,-1), glm::vec2(1, 0) } };
-		static Model model(description, vertices, sizeof(vertices)/sizeof(float));
+		static Model model(description, vertices, sizeof(vertices)/sizeof(Vertex));
 		return model;
 	};
 
@@ -527,7 +527,7 @@ public:
 	                             { glm::vec3( 1, -1, -1), glm::vec3( 0, -1,  0),  glm::vec2(0,  0) },
 	                             { glm::vec3(-1, -1, -1), glm::vec3( 0, -1,  0),  glm::vec2(0,  1) }
 		};
-		static Model model(description, vertices, sizeof(vertices)/sizeof(float));
+		static Model model(description, vertices, sizeof(vertices)/sizeof(Vertex));
 		return model;
 	}
 	void Draw() const
@@ -775,9 +775,8 @@ int main()
 	Object cube(Model::cube());
 	while(!camera.quit)
 	{
-		static float rotation = 0.0f;
-		rotation++;
-		pipeline.Step(camera, cube.model, glm::translate(glm::mat4(1.0f), cube.position) * glm::mat4_cast(glm::angleAxis(rotation, glm::vec3(0.5f, 0.5f, 0.5f)) * cube.rotation));
+		cube.rotation = cube.rotation * glm::angleAxis(1.0f, glm::vec3(0.5f, 0.5f, 0.5f));
+		pipeline.Step(camera, cube.model, glm::translate(glm::mat4(1.0f), cube.position) * glm::mat4_cast(cube.rotation));
 		window.Swap();
 		camera.Update();
 	}
