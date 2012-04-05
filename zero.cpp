@@ -651,7 +651,7 @@ public:
 	, height(height)
 	{
 		RenderStep::Descriptor geometrydescriptor { "resources/shaders/geometry.vs", "resources/shaders/geometry.fs"};
-		RenderStep::Descriptor::io picture{"modeltex", "masbor.png"};
+		RenderStep::Descriptor::io picture{"modeltex", "pic.png"};
 		RenderStep::Descriptor::io positionio{"293487234", "position"};
 		RenderStep::Descriptor::io colorio{"293487234", "color"};
 		RenderStep::Descriptor::io normalio{"asdfasdfe", "normal"};
@@ -668,8 +668,8 @@ public:
 		reducedescriptor.inputs.push_back(reducecolorio);
 		reducedescriptor.inputs.push_back(reducenormalio);
 
-		Texture::ImageData imagedata{IL_PNG, File::read("masbor.png")};
-		Res<Texture>::load("masbor.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
+		Texture::ImageData imagedata{IL_PNG, File::read("pic.png")};
+		Res<Texture>::load("pic.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
 		Res<Texture>::load("position", std::unique_ptr<Texture>(new Texture(width, height)));
 		Res<Texture>::load("color", std::unique_ptr<Texture>(new Texture(width, height)));
 		Res<Texture>::load("normal", std::unique_ptr<Texture>(new Texture(width, height)));
