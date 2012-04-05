@@ -540,10 +540,14 @@ const VertexBuffer::InputElementDescription Model::description[] { { "in_positio
                                                                    { "in_texcoord", 2, sizeof(glm::vec2) },
                                                                    { "", 0, 0 } };
 
-class Object : public Renderable
+class Object
 {
-private:
-	Model& model;
+public:
+	Object(const Model& model)
+	: model(model)
+	{
+	}
+	const Model& model;
 	glm::vec3 position;
 	glm::quat rotation;
 };
@@ -599,10 +603,11 @@ public:
 		}
 		rt.reset(new RenderTarget(width, height, output));
 	}
-	virtual void Step(const View& view, const Renderable& renderable)
+	virtual void Step(const View& view, const Renderable& renderable, const glm::mat4& world)
 	{
 		sp.Set("projection", &view.projection[0][0]);
 		sp.Set("view", &view.GetViewMatrix()[0][0]);
+		sp.Set("world", &world[0][0]);
 		sp.Use();
 		for(size_t i = 0; i < inputs.size(); i++)
 		{
@@ -634,9 +639,9 @@ public:
 	: RenderStep(width, height, descriptor)
 	{
 	}
-	void Step(const View& view, const Renderable& renderable)
+	void Step(const View& view, const Renderable& renderable, const glm::mat4& world)
 	{
-		RenderStep::Step(view, Model::square());
+		RenderStep::Step(view, Model::square(), world);
 	}
 };
 
@@ -677,11 +682,11 @@ public:
 		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, geometrydescriptor)));
 		steps.push_back(std::unique_ptr<RenderStep>(new EffectsStep(width, height, reducedescriptor)));
 	};
-	void Step(const View& view, const Renderable& renderable)
+	void Step(const View& view, const Renderable& renderable, const glm::mat4& world)
 	{
 		for(size_t i = 0; i < steps.size(); i++)
 		{
-			steps[i]->Step(view, renderable);
+			steps[i]->Step(view, renderable, world);
 		}
 	}
 };
@@ -766,9 +771,13 @@ int main()
 	Window_ window(width, height);
 	RenderPipeline pipeline(width, height);
 	Camera camera(width, height);
+
+	Object cube(Model::cube());
 	while(!camera.quit)
 	{
-		pipeline.Step(camera, Model::cube());
+		static float rotation = 0.0f;
+		rotation++;
+		pipeline.Step(camera, cube.model, glm::translate(glm::mat4(1.0f), cube.position) * glm::mat4_cast(glm::angleAxis(rotation, glm::vec3(0.5f, 0.5f, 0.5f)) * cube.rotation));
 		window.Swap();
 		camera.Update();
 	}
