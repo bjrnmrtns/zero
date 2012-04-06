@@ -575,13 +575,22 @@ const VertexBuffer::InputElementDescription Model::description[] { { "in_positio
 class Object
 {
 public:
+	const Model& model;
+	glm::vec3 position;
+	glm::quat rotation;
 	Object(const Model& model)
 	: model(model)
 	{
 	}
-	const Model& model;
-	glm::vec3 position;
-	glm::quat rotation;
+	glm::mat4 getworld() const
+	{
+		return glm::translate(glm::mat4(1.0f), position) * glm::mat4_cast(rotation);
+	}
+	static Object& square()
+	{
+		static Object object(Model::square());
+		return object;
+	}
 };
 
 class View
@@ -635,18 +644,21 @@ public:
 		}
 		rt.reset(new RenderTarget(width, height, output));
 	}
-	virtual void Step(const View& view, const Renderable& renderable, const glm::mat4& world)
+	virtual void Step(const View& view, const std::vector<Object*> objects)
 	{
+		rt->Activate();
+		sp.Use();
 		sp.Set("projection", &view.projection[0][0]);
 		sp.Set("view", &view.GetViewMatrix()[0][0]);
-		sp.Set("world", &world[0][0]);
-		sp.Use();
-		for(size_t i = 0; i < inputs.size(); i++)
+		for(size_t j = 0; j < objects.size(); j++)
 		{
-			inputs[i].second->Bind(i);
+			sp.Set("world", &(objects[j]->getworld()[0][0]));
+			for(size_t i = 0; i < inputs.size(); i++)
+			{
+				inputs[i].second->Bind(i);
+			}
+			objects[j]->model.Draw();
 		}
-		rt->Activate();
-		renderable.Draw();
 	}
 private:
 	void addinput(std::string name, std::string id)
@@ -666,14 +678,17 @@ private:
 
 class EffectsStep : public RenderStep
 {
+private:
 public:
 	EffectsStep(size_t width, size_t height, const Descriptor& descriptor)
 	: RenderStep(width, height, descriptor)
 	{
 	}
-	void Step(const View& view, const Renderable& renderable, const glm::mat4& world)
+	void Step(const View& view, const std::vector<Object*> objects)
 	{
-		RenderStep::Step(view, Model::square(), world);
+		std::vector<Object*> squareobjects;
+		squareobjects.push_back(&Object::square());
+		RenderStep::Step(view, squareobjects);
 	}
 };
 
@@ -714,11 +729,11 @@ public:
 		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, geometrydescriptor)));
 		steps.push_back(std::unique_ptr<RenderStep>(new EffectsStep(width, height, reducedescriptor)));
 	};
-	void Step(const View& view, const Renderable& renderable, const glm::mat4& world)
+	void Step(const View& view, const std::vector<Object*> objects)
 	{
 		for(size_t i = 0; i < steps.size(); i++)
 		{
-			steps[i]->Step(view, renderable, world);
+			steps[i]->Step(view, objects);
 		}
 	}
 };
@@ -803,13 +818,15 @@ int main()
 	RenderPipeline pipeline(width, height);
 	Camera camera(width, height);
 
-//	Object cube(Model::cube());
+	Object cube(Model::cube());
 	Object heightmap(Model::heightmap());
+	std::vector<Object*> scene;
+	scene.push_back(&cube);
+	scene.push_back(&heightmap);
 	while(!camera.quit)
 	{
-		//cube.rotation = cube.rotation * glm::angleAxis(1.0f, glm::vec3(0.5f, 0.5f, 0.5f));
-		//pipeline.Step(camera, cube.model, glm::translate(glm::mat4(1.0f), cube.position) * glm::mat4_cast(cube.rotation));
-		pipeline.Step(camera, heightmap.model, glm::mat4(1.0f));
+		cube.rotation = cube.rotation * glm::angleAxis(1.0f, glm::vec3(0.5f, 0.5f, 0.5f));
+		pipeline.Step(camera, scene);
 		window.Swap();
 		camera.Update();
 	}
