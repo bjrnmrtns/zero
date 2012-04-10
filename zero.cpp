@@ -684,7 +684,7 @@ public:
 	: RenderStep(width, height, descriptor)
 	{
 	}
-	void Step(const View& view, const std::vector<Object*> objects)
+	void Step(const View& view, const std::vector<Object*> objects) 
 	{
 		std::vector<Object*> squareobjects;
 		squareobjects.push_back(&Object::square());

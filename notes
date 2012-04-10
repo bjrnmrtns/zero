@@ -3,3 +3,6 @@
 Given an opengl texture object referenced by its id. We can bind it to an active texture unit with glBindTexture(id). the active texture unit is selected using glActiveTexture(unit id). For every texture unit we can attach it to a sampler which can be used in a shader program.
 -- Textures as output in a shader program --
 Given an opengl framebuffer object referenced by its id. We can bind the current frame buffer object using glBindFrameBuffer(id). Using glFrameBufferTexture we can attach a texture object using its id to a attachment point of the frame buffer object.
+
+-Things to implement some time-
+-- MSAA --
