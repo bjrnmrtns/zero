@@ -15,5 +15,5 @@ initstruct: initstruct.cpp
 webserver: webserver.cpp
 	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o webserver webserver.cpp -lpthread -Iexternal/include
 md5: md5.cpp
-	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o md5 md5.cpp -Iexternal/include
+	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o md5 md5.cpp -I../external/include
 
