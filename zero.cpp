@@ -15,6 +15,7 @@
 #include <map>
 #include "Blob.cpp"
 #include "GeneralException.cpp"
+#include "md5.cpp"
 
 class File
 {
@@ -830,6 +831,8 @@ int main()
 		window.Swap();
 		camera.Update();
 	}
+	Tokenizer md5tokenizer("spikes/bob/boblampclean.md5mesh", md5::whitespace, md5::delimiters);
+	md5::mesh::parse(md5tokenizer);
 	return 0;
 }
 
