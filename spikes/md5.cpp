@@ -31,16 +31,17 @@ public:
 	}
 	std::string next()
 	{
-		if(tok_iter == tokens.end())
+		while(tok_iter == tokens.end())
 		{
-			std::getline(file, currentline);
-			tokens.assign(currentline, this->delimiters);
-			tok_iter = tokens.begin();
-			if(tok_iter == tokens.end())
+			if(!file.good()) 
 			{
-				current = "\n"; 
+				current = "";
 				return current;
 			}
+			std::getline(file, currentline);
+			currentline = currentline.substr(0, currentline.find("//"));
+			tokens.assign(currentline, this->delimiters);
+			tok_iter = tokens.begin();
 		}
 		current = *tok_iter;
 		++tok_iter;
@@ -49,6 +50,10 @@ public:
 	std::string token()
 	{
 		return current;
+	}
+	void expectnext(std::string token)
+	{
+		if(next() != token) throw new std::exception;
 	}
 };
 
@@ -75,9 +80,20 @@ namespace md5
 		{
 			while(tokenizer.next() != "}")
 			{
-				std::cout << tokenizer.token() << std::endl;
+				std::string name = tokenizer.token();
+				int parent = boost::lexical_cast<int>(tokenizer.next());
+				tokenizer.expectnext("(");
+				float x = boost::lexical_cast<float>(tokenizer.next());
+				float y = boost::lexical_cast<float>(tokenizer.next());
+				float z = boost::lexical_cast<float>(tokenizer.next());
+				tokenizer.expectnext(")");
+				tokenizer.expectnext("(");
+				float ox = boost::lexical_cast<float>(tokenizer.next());
+				float oy = boost::lexical_cast<float>(tokenizer.next());
+				float oz = boost::lexical_cast<float>(tokenizer.next());
+				tokenizer.expectnext(")");
+				std::cout << name << "(" << parent << ")" << "p(" << x << "," << y << "," << z << ")" << "o(" << ox << "," << oy << "," << oz << ")" << std::endl;
 			}
-				//float x = boost::lexical_cast<float>(tokenizer.nextToken());
 		}
 	};
 }
