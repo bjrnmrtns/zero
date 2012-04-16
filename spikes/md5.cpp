@@ -14,92 +14,77 @@ private:
 	boost::char_separator<char> delimiters;
 	std::ifstream file;
 	std::string currentline;
+	std::string current;
 	tokenizer tokens;
 	tokenizer::iterator tok_iter;
 public:
 	Tokenizer(const std::string filename, const std::string whitespace, const std::string delimiters)
 	: delimiters(whitespace.c_str(), delimiters.c_str())
 	, file(filename)
-	, currentline(Tokenizer::getline(file))
 	, tokens(currentline, this->delimiters)
-	, tok_iter(tokens.begin())
+	, tok_iter(tokens.end())
 	{
-		
 	}
-	static std::string getline(std::ifstream& file)
+	bool good()
 	{
-		if(!file.good()) return "";
-		std::string line;
-		std::getline(file, line);
-		return line;
+		return file.good();
 	}
-	// If using this one the token should not be "" (zero). It will throw.
-	std::string nextToken()
+	std::string next()
 	{
-		std::string token = nextTokenZ();
-		if(token == "") throw new std::exception;
-		return token;
-	}
-	std::string nextTokenZ()
-	{
-		while(tok_iter == tokens.end())
+		if(tok_iter == tokens.end())
 		{
-			currentline = Tokenizer::getline(file);
-			if(currentline == "") return "";
+			std::getline(file, currentline);
 			tokens.assign(currentline, this->delimiters);
 			tok_iter = tokens.begin();
+			if(tok_iter == tokens.end())
+			{
+				current = "\n"; 
+				return current;
+			}
 		}
-		std::string retval = *tok_iter;
+		current = *tok_iter;
 		++tok_iter;
-		return retval;
+		return current;
+	}
+	std::string token()
+	{
+		return current;
 	}
 };
 
 namespace md5
 {
+	static char whitespace[] = " \t\r\n";
+	static char delimiters[] = "{}()";
 	class mesh
 	{
 	public:
 		static void parse(Tokenizer& tokenizer)
 		{
-			std::string token;
-			while((token = tokenizer.nextTokenZ()) != "")
+			while(tokenizer.good())
 			{
-				if(token == "joints")
+				tokenizer.next();
+				if(tokenizer.token() == "joints")
 				{
+					if(tokenizer.next() != "{") throw new std::exception();
 					parsejoints(tokenizer);
 				}
 			}
 		}
 		static void parsejoints(Tokenizer& tokenizer)
 		{
-			if(tokenizer.nextToken() != "{") throw new std::exception;
-			std::string token;
-			while((token = tokenizer.nextToken()) != "}")
+			while(tokenizer.next() != "}")
 			{
-				std::string name = token;
-				int index = boost::lexical_cast<int>(tokenizer.nextToken());
-				if(tokenizer.nextToken() != "(") throw new std::exception;
-				float x = boost::lexical_cast<float>(tokenizer.nextToken());
-				float y = boost::lexical_cast<float>(tokenizer.nextToken());
-				float z = boost::lexical_cast<float>(tokenizer.nextToken());
-				if(tokenizer.nextToken() != ")") throw new std::exception;
-				if(tokenizer.nextToken() != "(") throw new std::exception;
-				float ox = boost::lexical_cast<float>(tokenizer.nextToken());
-				float oy = boost::lexical_cast<float>(tokenizer.nextToken());
-				float oz = boost::lexical_cast<float>(tokenizer.nextToken());
-				if(tokenizer.nextToken() != ")") throw new std::exception;
-				tokenizer.nextToken();
-				tokenizer.nextToken();
-				std::cout << name << index << x << y << z << ox << oy << oz << std::endl;
+				std::cout << tokenizer.token() << std::endl;
 			}
+				//float x = boost::lexical_cast<float>(tokenizer.nextToken());
 		}
 	};
 }
 
 int main()
 {
-	Tokenizer md5tokenizer("bob/boblampclean.md5mesh", " \t\r\n", "{}()");
+	Tokenizer md5tokenizer("bob/boblampclean.md5mesh", md5::whitespace, md5::delimiters);
 	md5::mesh::parse(md5tokenizer);
 	return 0;
 }
