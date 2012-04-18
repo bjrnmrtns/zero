@@ -293,4 +293,74 @@ namespace md5
 			}
 		}
 	};
+	struct ajoint
+	{
+		std::string name;
+		int parentid;
+		unsigned int flags;
+		unsigned int index;
+	};
+	struct anim
+	{
+		std::string version;
+		std::string commandline;
+		unsigned int framecount;
+		unsigned int jointcount;
+		unsigned int framerate;
+		unsigned int animcompcount;
+		std::vector<ajoint> joints;
+	};
+	class animfile
+	{
+	private:
+		static void checkcount(std::string name, size_t expected, size_t actual)
+		{
+			if(expected != actual)
+			{
+				std::stringstream sexp, sact;
+				sexp << expected;
+				sact << actual;
+				throw exception(name + " expected: " + sexp.str() + " actual: " + sact.str());
+			}
+		}
+	public:
+		static void parse(Tokenizer& tokenizer, anim& a)
+		{
+			if(!tokenizer.good()) throw exception("failed to parse");
+			tokenizer.expectnext("MD5Version");
+			a.version = tokenizer.next();
+			tokenizer.expectnext("commandline");
+			a.commandline = tokenizer.next();
+			tokenizer.expectnext("numFrames");
+			a.framecount = boost::lexical_cast<unsigned int>(tokenizer.next());
+			tokenizer.expectnext("numJoints");
+			a.jointcount = boost::lexical_cast<unsigned int>(tokenizer.next());
+			tokenizer.expectnext("frameRate");
+			a.framerate = boost::lexical_cast<unsigned int>(tokenizer.next());
+			tokenizer.expectnext("numAnimatedComponents");
+			a.animcompcount = boost::lexical_cast<unsigned int>(tokenizer.next());
+			while(tokenizer.good())
+			{
+				tokenizer.next();
+				if(tokenizer.token() == "hierarchy")
+				{
+					tokenizer.expectnext("{");
+					parsehierarchy(tokenizer, a);
+					checkcount("hierarchy", a.jointcount, a.joints.size());
+				} 
+			}
+		}
+		static void parsehierarchy(Tokenizer& tok, anim& a)
+		{
+			while(tok.next() != "}")
+			{
+				ajoint j;
+				j.name = tok.token();
+				j.parentid = boost::lexical_cast<int>(tok.next());
+				j.flags = boost::lexical_cast<unsigned int>(tok.next());
+				j.index = boost::lexical_cast<unsigned int>(tok.next());
+				a.joints.push_back(j);
+			}
+		}
+	};
 }

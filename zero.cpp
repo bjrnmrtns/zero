@@ -587,6 +587,12 @@ public:
 		std::unique_ptr<Model> model(new Model(description, &vertices[0], vertices.size(), GL_LINES));
 		return model;
 	}
+	static void animformd5(std::string animfile)
+	{
+		Tokenizer tok(animfile, md5::whitespace, md5::delimiters);
+		md5::anim a;
+		md5::animfile::parse(tok, a);
+	}
 	static std::unique_ptr<Model> meshesfrommd5(std::string meshfile)
 	{
 		Tokenizer md5tokenizer(meshfile, md5::whitespace, md5::delimiters);
@@ -757,6 +763,7 @@ public:
 	{
 		RenderStep::Descriptor geometrydescriptor { "resources/shaders/geometry.vs", "resources/shaders/geometry.fs"};
 		RenderStep::Descriptor::io picture{"modeltex", "marine.png"};
+		RenderStep::Descriptor::io picturenormals{"modelnormaltex", "marine_local.png"};
 		RenderStep::Descriptor::io positionio{"293487234", "position"};
 		RenderStep::Descriptor::io colorio{"293487234", "color"};
 		RenderStep::Descriptor::io normalio{"asdfasdfe", "normal"};
@@ -764,6 +771,7 @@ public:
 		geometrydescriptor.outputs.push_back(colorio);
 		geometrydescriptor.outputs.push_back(normalio);
 		geometrydescriptor.inputs.push_back(picture);
+		geometrydescriptor.inputs.push_back(picturenormals);
 
 		RenderStep::Descriptor reducedescriptor { "resources/shaders/reduce.vs", "resources/shaders/reduce.fs"};
 		RenderStep::Descriptor::io reducepositionio{"positiontex", "position"};
@@ -774,7 +782,9 @@ public:
 		reducedescriptor.inputs.push_back(reducenormalio);
 
 		Texture::ImageData imagedata{IL_PNG, File::read("marine.png")};
+		Texture::ImageData imagedata_normal{IL_PNG, File::read("marine_local.png")};
 		Res<Texture>::load("marine.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
+		Res<Texture>::load("marine_local.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
 		Res<Texture>::load("position", std::unique_ptr<Texture>(new Texture(width, height)));
 		Res<Texture>::load("color", std::unique_ptr<Texture>(new Texture(width, height)));
 		Res<Texture>::load("normal", std::unique_ptr<Texture>(new Texture(width, height)));
@@ -873,6 +883,7 @@ int main()
 
 	Object cube(Model::cube());
 	Object heightmap(Model::heightmap());
+	Model::animformd5("spikes/marine.md5anim");
 	std::unique_ptr<Model> md5modeljoints(Model::jointsfrommd5("spikes/marine.md5mesh"));
 	std::unique_ptr<Model> md5model(Model::meshesfrommd5("spikes/marine.md5mesh"));
 	Object md5j(*(md5modeljoints.get()));
