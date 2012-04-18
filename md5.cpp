@@ -253,6 +253,24 @@ namespace md5
 			tok.expectnext(")");
 			return w;
 		}
+		static glm::vec3 getfinalpos(vertex& v, model& mod, mesh& m)
+		{
+			glm::vec3 final;
+			for(size_t i = v.wid; i < v.wid + v.wcount; i++)
+			{
+				weight& w = m.weights[i];
+				joint& j = mod.joints[w.jointid];
+				glm::vec3 wv = j.orient * w.pos;
+				final += (j.pos + wv) * w.bias;
+			}
+			return final;
+		}
+		static void calcwcomp(glm::quat& q)
+		{
+			float t = 1.0f - (q.x * q.x) - (q.y * q.y) - (q.z * q.z);
+			if(t < 0.0f) q.w = 0.0f;
+			else q.w = -std::sqrt(t);
+		}
 		static void parsejoints(Tokenizer& tok, model& m)
 		{
 			while(tok.next() != "}")
@@ -269,6 +287,7 @@ namespace md5
 				j.orient.x = boost::lexical_cast<float>(tok.next());
 				j.orient.y = boost::lexical_cast<float>(tok.next());
 				j.orient.z = boost::lexical_cast<float>(tok.next());
+				calcwcomp(j.orient);
 				tok.expectnext(")");
 				m.joints.push_back(j);
 			}

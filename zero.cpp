@@ -590,6 +590,24 @@ public:
 		Tokenizer md5tokenizer(meshfile, md5::whitespace, md5::delimiters);
 		md5::model m; 
 		md5::meshfile::parse(md5tokenizer, m);
+		std::vector<Model::Vertex> vertices;
+		for(auto meshit = m.meshes.begin(); meshit != m.meshes.end(); ++meshit)
+		{
+			for(auto trisit = meshit->triangles.begin(); trisit != meshit->triangles.end(); ++trisit)
+			{
+				Model::Vertex v0;
+				v0.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v0], m, *meshit);
+				Model::Vertex v1;
+				v1.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v1], m, *meshit);
+				Model::Vertex v2;
+				v2.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v2], m, *meshit);
+				vertices.push_back(v0);
+				vertices.push_back(v1);
+				vertices.push_back(v2);
+			} 
+		}
+		std::unique_ptr<Model> model(new Model(description, &vertices[0], vertices.size()));
+		return model;
 		
 	}
 	void Draw() const
@@ -850,11 +868,14 @@ int main()
 
 	Object cube(Model::cube());
 	Object heightmap(Model::heightmap());
-	std::unique_ptr<Model> md5model(Model::jointsfrommd5("spikes/bob/boblampclean.md5mesh"));
+	std::unique_ptr<Model> md5modeljoints(Model::jointsfrommd5("spikes/bob/boblampclean.md5mesh"));
+	std::unique_ptr<Model> md5model(Model::meshesfrommd5("spikes/bob/boblampclean.md5mesh"));
+	Object md5j(*(md5modeljoints.get()));
 	Object md5(*(md5model.get()));
 	std::vector<Object*> scene;
 	scene.push_back(&cube);
-	scene.push_back(&heightmap);
+//	scene.push_back(&heightmap);
+	scene.push_back(&md5j);
 	scene.push_back(&md5);
 	while(!camera.quit)
 	{
