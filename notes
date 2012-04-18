@@ -6,3 +6,6 @@ Given an opengl framebuffer object referenced by its id. We can bind the current
 
 -Things to implement some time-
 -- MSAA --
+
+-Things to consider-
+-- Using QT as window/input system together with webkit as ui (or chromiumembedded/awesomium/berkelium) --

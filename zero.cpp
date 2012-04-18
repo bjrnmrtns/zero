@@ -92,9 +92,10 @@ public:
 		size_t elementsize;
 	};
 	template <typename T>
-	VertexBuffer(const InputElementDescription description[], const T vertexData[], size_t count)
+	VertexBuffer(const InputElementDescription description[], const T vertexData[], size_t count, unsigned int mode = GL_TRIANGLES)
 	: stride(sizeof(T))
 	, count(count)
+	, mode(mode)
 	{
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
@@ -112,7 +113,7 @@ public:
 	void Draw() const
 	{
 		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLES, 0, count);
+		glDrawArrays(mode, 0, count);
 	}
 	~VertexBuffer()
 	{
@@ -124,6 +125,7 @@ private:
 	unsigned int vao;
 	unsigned int stride;
 	size_t count;
+	unsigned int mode;
 };
 
 class Shader
@@ -424,7 +426,7 @@ public:
 		glewExperimental = GL_TRUE;
 		if(glewInit() != GLEW_OK) throw new GeneralException("glewInit failed");
 		glGetError(); // mask error of failed glewInit http://www.opengl.org/discussion_boards/ubbthreads.php?ubb=showflat&Number=284912
-		glCullFace(GL_BACK);
+//		glCullFace(GL_BACK);
 		glFrontFace(GL_CW);
 		glEnable(GL_CULL_FACE);
 		glClearDepth(1.0f);
@@ -461,8 +463,8 @@ private:
 	VertexBuffer vb;
 public:
 	static const VertexBuffer::InputElementDescription description[];
-	Model(const VertexBuffer::InputElementDescription description[], const Vertex vertices[], const size_t size)
-	: vb(description, vertices, size)
+	Model(const VertexBuffer::InputElementDescription description[], const Vertex vertices[], const size_t size, unsigned int mode = GL_TRIANGLES)
+	: vb(description, vertices, size, mode)
 	{
 	}
 	static Model& heightmap()
@@ -562,6 +564,33 @@ public:
 		};
 		static Model model(description, vertices, sizeof(vertices)/sizeof(Vertex));
 		return model;
+	}
+	static std::unique_ptr<Model> jointsfrommd5(std::string meshfile)
+	{
+		Tokenizer md5tokenizer(meshfile, md5::whitespace, md5::delimiters);
+		md5::model m; 
+		md5::meshfile::parse(md5tokenizer, m);
+		std::vector<Model::Vertex> vertices;
+		for(size_t i = 0; i < m.joints.size(); i++)
+		{
+			if(m.joints[i].parentid == -1) continue;
+			Model::Vertex b;
+			b.pos = m.joints[i].pos;
+			vertices.push_back(b);
+			Model::Vertex e;
+			e.pos = m.joints[m.joints[i].parentid].pos;
+			vertices.push_back(e);
+		}
+		std::cout << vertices.size() << std::endl; fflush(stdout);
+		std::unique_ptr<Model> model(new Model(description, &vertices[0], vertices.size(), GL_LINES));
+		return model;
+	}
+	static std::unique_ptr<Model> meshesfrommd5(std::string meshfile)
+	{
+		Tokenizer md5tokenizer(meshfile, md5::whitespace, md5::delimiters);
+		md5::model m; 
+		md5::meshfile::parse(md5tokenizer, m);
+		
 	}
 	void Draw() const
 	{
@@ -821,9 +850,12 @@ int main()
 
 	Object cube(Model::cube());
 	Object heightmap(Model::heightmap());
+	std::unique_ptr<Model> md5model(Model::jointsfrommd5("spikes/bob/boblampclean.md5mesh"));
+	Object md5(*(md5model.get()));
 	std::vector<Object*> scene;
 	scene.push_back(&cube);
 	scene.push_back(&heightmap);
+	scene.push_back(&md5);
 	while(!camera.quit)
 	{
 		cube.rotation = cube.rotation * glm::angleAxis(1.0f, glm::vec3(0.5f, 0.5f, 0.5f));
@@ -831,8 +863,6 @@ int main()
 		window.Swap();
 		camera.Update();
 	}
-	Tokenizer md5tokenizer("spikes/bob/boblampclean.md5mesh", md5::whitespace, md5::delimiters);
-	md5::mesh::parse(md5tokenizer);
 	return 0;
 }
 
