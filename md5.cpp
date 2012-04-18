@@ -222,8 +222,8 @@ namespace md5
 			tok.expectnext("vert");
 			v.index = boost::lexical_cast<unsigned int>(tok.next());
 			tok.expectnext("(");
-			v.texcoord.x = boost::lexical_cast<float>(tok.next());
-			v.texcoord.y = boost::lexical_cast<float>(tok.next());
+			v.texcoord.x = 1.0f - boost::lexical_cast<float>(tok.next());
+			v.texcoord.y = 1.0f - boost::lexical_cast<float>(tok.next());
 			tok.expectnext(")");
 			v.wid = boost::lexical_cast<unsigned int>(tok.next());
 			v.wcount = boost::lexical_cast<unsigned int>(tok.next());

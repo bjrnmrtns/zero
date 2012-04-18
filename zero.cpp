@@ -264,6 +264,8 @@ public:
 			texture.Bind(0);
 			ilLoadL(imagedata.type, imagedata.blob.buf.get(), imagedata.blob.size);
 			assert(ilGetData() != 0);
+			texture.width = ilGetInteger(IL_IMAGE_WIDTH);
+			texture.height = ilGetInteger(IL_IMAGE_HEIGHT);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.width, texture.height, 0, GL_RGB, GL_UNSIGNED_BYTE, ilGetData());
 		}
 		ImageData save()
@@ -597,10 +599,13 @@ public:
 			{
 				Model::Vertex v0;
 				v0.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v0], m, *meshit);
+				v0.texcoord = meshit->vertices[trisit->v0].texcoord;
 				Model::Vertex v1;
 				v1.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v1], m, *meshit);
+				v1.texcoord = meshit->vertices[trisit->v1].texcoord;
 				Model::Vertex v2;
 				v2.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v2], m, *meshit);
+				v2.texcoord = meshit->vertices[trisit->v2].texcoord;
 				vertices.push_back(v0);
 				vertices.push_back(v1);
 				vertices.push_back(v2);
@@ -751,7 +756,7 @@ public:
 	, height(height)
 	{
 		RenderStep::Descriptor geometrydescriptor { "resources/shaders/geometry.vs", "resources/shaders/geometry.fs"};
-		RenderStep::Descriptor::io picture{"modeltex", "pic.png"};
+		RenderStep::Descriptor::io picture{"modeltex", "marine.png"};
 		RenderStep::Descriptor::io positionio{"293487234", "position"};
 		RenderStep::Descriptor::io colorio{"293487234", "color"};
 		RenderStep::Descriptor::io normalio{"asdfasdfe", "normal"};
@@ -768,8 +773,8 @@ public:
 		reducedescriptor.inputs.push_back(reducecolorio);
 		reducedescriptor.inputs.push_back(reducenormalio);
 
-		Texture::ImageData imagedata{IL_PNG, File::read("pic.png")};
-		Res<Texture>::load("pic.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
+		Texture::ImageData imagedata{IL_PNG, File::read("marine.png")};
+		Res<Texture>::load("marine.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
 		Res<Texture>::load("position", std::unique_ptr<Texture>(new Texture(width, height)));
 		Res<Texture>::load("color", std::unique_ptr<Texture>(new Texture(width, height)));
 		Res<Texture>::load("normal", std::unique_ptr<Texture>(new Texture(width, height)));
@@ -868,8 +873,8 @@ int main()
 
 	Object cube(Model::cube());
 	Object heightmap(Model::heightmap());
-	std::unique_ptr<Model> md5modeljoints(Model::jointsfrommd5("spikes/bob/boblampclean.md5mesh"));
-	std::unique_ptr<Model> md5model(Model::meshesfrommd5("spikes/bob/boblampclean.md5mesh"));
+	std::unique_ptr<Model> md5modeljoints(Model::jointsfrommd5("spikes/marine.md5mesh"));
+	std::unique_ptr<Model> md5model(Model::meshesfrommd5("spikes/marine.md5mesh"));
 	Object md5j(*(md5modeljoints.get()));
 	Object md5(*(md5model.get()));
 	std::vector<Object*> scene;
