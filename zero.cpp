@@ -108,7 +108,14 @@ public:
 			glVertexAttribPointer(i, description[i].numberofelements, GL_FLOAT, GL_FALSE, stride, (void *)offset);
 			offset += description[i].elementsize;
 		}
-		glBufferData(GL_ARRAY_BUFFER, stride * count, vertexData, GL_STATIC_DRAW);
+//		glBufferData(GL_ARRAY_BUFFER, stride * count, vertexData, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, stride * count, vertexData, GL_DYNAMIC_DRAW);
+	}
+	template <typename T>
+	void Update(const T vertexData[], size_t count)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, id);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(T) * count, vertexData, GL_DYNAMIC_DRAW);
 	}
 	void Draw() const
 	{
@@ -583,34 +590,98 @@ public:
 			e.pos = m.joints[m.joints[i].parentid].pos;
 			vertices.push_back(e);
 		}
-		std::cout << vertices.size() << std::endl; fflush(stdout);
 		std::unique_ptr<Model> model(new Model(description, &vertices[0], vertices.size(), GL_LINES));
 		return model;
 	}
-	static void animformd5(std::string animfile)
+	static void animfrommd5(std::string animfile, md5::anim& a)
 	{
 		Tokenizer tok(animfile, md5::whitespace, md5::delimiters);
-		md5::anim a;
 		md5::animfile::parse(tok, a);
 	}
-	static std::unique_ptr<Model> meshesfrommd5(std::string meshfile)
+	void nextmd5frame(const md5::model& m, md5::anim& a, std::vector<Model::Vertex>& vertices, size_t framenr)
 	{
-		Tokenizer md5tokenizer(meshfile, md5::whitespace, md5::delimiters);
-		md5::model m; 
-		md5::meshfile::parse(md5tokenizer, m);
-		std::vector<Model::Vertex> vertices;
+		const std::vector<md5::baseframeval>& baseframe = a.baseframe;
+		const md5::frame& frame = a.frames[framenr];
+		std::vector<md5::joint> joints;
+		for(size_t i = 0; i < a.joints.size(); i++)
+		{
+			md5::joint& j = a.joints[i];
+			//TODO: can also be done when loading so joints start with correct base position.
+			j.pos = baseframe[i].pos;
+			j.orient = baseframe[i].orient;
+			unsigned int k = 0;
+			if(j.flags & 1)
+			{
+				j.pos.x = frame.diffs[j.index + k++];
+			}
+			if(j.flags & 2)
+			{
+				j.pos.y = frame.diffs[j.index + k++];
+			}
+			if(j.flags & 4)
+			{
+				j.pos.z = frame.diffs[j.index + k++];
+			}
+			if(j.flags & 8)
+			{
+				j.orient.x = frame.diffs[j.index + k++];
+			}
+			if(j.flags & 16)
+			{
+				j.orient.y = frame.diffs[j.index + k++];
+			}
+			if(j.flags & 32)
+			{
+				j.orient.z = frame.diffs[j.index + k++];
+			}
+			md5::calcwcomp(j.orient);
+			if(j.parentid >= 0)
+			{
+				md5::joint& pj = a.joints[j.parentid];
+				glm::vec3 rpos = pj.orient * j.pos;
+				j.pos = rpos + pj.pos;
+				j.orient = glm::normalize(pj.orient * j.orient);
+			}
+			joints.push_back(j);
+		}
+		//TODO: remove dirty copy past from meshesfrommd5 function.
+		size_t vi = 0;
 		for(auto meshit = m.meshes.begin(); meshit != m.meshes.end(); ++meshit)
 		{
 			for(auto trisit = meshit->triangles.begin(); trisit != meshit->triangles.end(); ++trisit)
 			{
 				Model::Vertex v0;
-				v0.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v0], m, *meshit);
+				v0.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v0], *meshit, joints);
 				v0.texcoord = meshit->vertices[trisit->v0].texcoord;
 				Model::Vertex v1;
-				v1.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v1], m, *meshit);
+				v1.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v1], *meshit, joints);
 				v1.texcoord = meshit->vertices[trisit->v1].texcoord;
 				Model::Vertex v2;
-				v2.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v2], m, *meshit);
+				v2.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v2], *meshit, joints);
+				v2.texcoord = meshit->vertices[trisit->v2].texcoord;
+				vertices[vi++] = v0;
+				vertices[vi++] = v1;
+				vertices[vi++] = v2;
+			} 
+		}
+		vb.Update(&vertices[0], vertices.size());
+	}
+	static std::unique_ptr<Model> meshesfrommd5(std::string meshfile, md5::model& m, std::vector<Model::Vertex>& vertices)
+	{
+		Tokenizer md5tokenizer(meshfile, md5::whitespace, md5::delimiters);
+		md5::meshfile::parse(md5tokenizer, m);
+		for(auto meshit = m.meshes.begin(); meshit != m.meshes.end(); ++meshit)
+		{
+			for(auto trisit = meshit->triangles.begin(); trisit != meshit->triangles.end(); ++trisit)
+			{
+				Model::Vertex v0;
+				v0.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v0], *meshit, m.joints);
+				v0.texcoord = meshit->vertices[trisit->v0].texcoord;
+				Model::Vertex v1;
+				v1.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v1], *meshit, m.joints);
+				v1.texcoord = meshit->vertices[trisit->v1].texcoord;
+				Model::Vertex v2;
+				v2.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v2], *meshit, m.joints);
 				v2.texcoord = meshit->vertices[trisit->v2].texcoord;
 				vertices.push_back(v0);
 				vertices.push_back(v1);
@@ -883,9 +954,12 @@ int main()
 
 	Object cube(Model::cube());
 	Object heightmap(Model::heightmap());
-	Model::animformd5("spikes/marine.md5anim");
+	md5::anim a;
+	Model::animfrommd5("spikes/marine.md5anim", a);
 	std::unique_ptr<Model> md5modeljoints(Model::jointsfrommd5("spikes/marine.md5mesh"));
-	std::unique_ptr<Model> md5model(Model::meshesfrommd5("spikes/marine.md5mesh"));
+	md5::model m; 
+	std::vector<Model::Vertex> vertices;
+	std::unique_ptr<Model> md5model(Model::meshesfrommd5("spikes/marine.md5mesh", m, vertices));
 	Object md5j(*(md5modeljoints.get()));
 	Object md5(*(md5model.get()));
 	std::vector<Object*> scene;
@@ -893,12 +967,21 @@ int main()
 //	scene.push_back(&heightmap);
 	scene.push_back(&md5j);
 	scene.push_back(&md5);
+	size_t framenr = 0;
+	size_t counter = 0;
 	while(!camera.quit)
 	{
 		cube.rotation = cube.rotation * glm::angleAxis(1.0f, glm::vec3(0.5f, 0.5f, 0.5f));
 		pipeline.Step(camera, scene);
 		window.Swap();
 		camera.Update();
+		//animation for now seems to have 60 frames.
+		md5model->nextmd5frame(m, a, vertices, framenr % 60);
+		if(counter++ == 10)
+		{
+			framenr++;
+			counter = 0;
+		}
 	}
 	return 0;
 }

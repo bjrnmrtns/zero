@@ -109,8 +109,12 @@ namespace md5
 	{
 		std::string name;
 		int parentid;
+		// flags only used for animation.
+		unsigned int flags;
 		glm::vec3 pos;
 		glm::quat orient;
+		// index only used for animation.
+		unsigned int index;
 	};
 	struct vertex
 	{
@@ -151,6 +155,12 @@ namespace md5
 		std::vector<joint> joints;
 		std::vector<mesh> meshes;
 	};
+	static void calcwcomp(glm::quat& q)
+	{
+		float t = 1.0f - (q.x * q.x) - (q.y * q.y) - (q.z * q.z);
+		if(t < 0.0f) q.w = 0.0f;
+		else q.w = -std::sqrt(t);
+	}
 	class meshfile
 	{
 	private:
@@ -261,23 +271,17 @@ namespace md5
 			tok.expectnext(")");
 			return w;
 		}
-		static glm::vec3 getfinalpos(vertex& v, model& mod, mesh& m)
+		static glm::vec3 getfinalpos(const vertex& v, const mesh& m, const std::vector<joint>& joints)
 		{
 			glm::vec3 final;
 			for(size_t i = v.wid; i < v.wid + v.wcount; i++)
 			{
-				weight& w = m.weights[i];
-				joint& j = mod.joints[w.jointid];
+				const weight& w = m.weights[i];
+				const joint& j = joints[w.jointid];
 				glm::vec3 wv = j.orient * w.pos;
 				final += (j.pos + wv) * w.bias;
 			}
 			return final;
-		}
-		static void calcwcomp(glm::quat& q)
-		{
-			float t = 1.0f - (q.x * q.x) - (q.y * q.y) - (q.z * q.z);
-			if(t < 0.0f) q.w = 0.0f;
-			else q.w = -std::sqrt(t);
 		}
 		static void parsejoints(Tokenizer& tok, model& m)
 		{
@@ -301,13 +305,6 @@ namespace md5
 			}
 		}
 	};
-	struct ajoint
-	{
-		std::string name;
-		int parentid;
-		unsigned int flags;
-		unsigned int index;
-	};
 	struct bound
 	{
 		glm::vec3 min;
@@ -318,6 +315,10 @@ namespace md5
 		glm::vec3 pos;
 		glm::quat orient;
 	};
+	struct frame
+	{
+		std::vector<float> diffs;
+	};
 	struct anim
 	{
 		std::string version;
@@ -326,9 +327,10 @@ namespace md5
 		unsigned int jointcount;
 		unsigned int framerate;
 		unsigned int animcompcount;
-		std::vector<ajoint> joints;
+		std::vector<joint> joints;
 		std::vector<bound> bounds;
-		std::vector<baseframeval> baseframevals;
+		std::vector<baseframeval> baseframe;
+		std::vector<frame> frames;
 	};
 	class animfile
 	{
@@ -346,6 +348,7 @@ namespace md5
 	public:
 		static void parse(Tokenizer& tokenizer, anim& a)
 		{
+			unsigned int framecounter = 0;
 			if(!tokenizer.good()) throw exception("failed to parse");
 			tokenizer.expectnext("MD5Version");
 			a.version = tokenizer.next();
@@ -378,9 +381,26 @@ namespace md5
 				{
 					tokenizer.expectnext("{");
 					parsebaseframe(tokenizer, a);
-					checkcount("baseframe", a.jointcount, a.baseframevals.size());
+					checkcount("baseframe", a.jointcount, a.baseframe.size());
+				}
+				else if(tokenizer.token() == "frame")
+				{
+					unsigned int framenumber = boost::lexical_cast<unsigned int>(tokenizer.next());
+					checkcount("framenumber", framenumber, framecounter++);
+					tokenizer.expectnext("{");
+					parseframe(tokenizer, a);
+					checkcount("frame", a.animcompcount, a.frames.back().diffs.size());
 				}
 			}
+		}
+		static void parseframe(Tokenizer& tok, anim& a)
+		{
+			frame f;
+			while(tok.next() != "}")
+			{
+				f.diffs.push_back(boost::lexical_cast<float>(tok.token()));
+			}
+			a.frames.push_back(f);
 		}
 		static void parsebaseframe(Tokenizer& tok, anim& a)
 		{
@@ -396,8 +416,9 @@ namespace md5
 				b.orient.x = boost::lexical_cast<float>(tok.next());
 				b.orient.y = boost::lexical_cast<float>(tok.next());
 				b.orient.z = boost::lexical_cast<float>(tok.next());
+				calcwcomp(b.orient);
 				tok.expectnext(")");
-				a.baseframevals.push_back(b);
+				a.baseframe.push_back(b);
 			}
 		}
 		static void parsebounds(Tokenizer& tok, anim& a)
@@ -422,7 +443,7 @@ namespace md5
 		{
 			while(tok.next() != "}")
 			{
-				ajoint j;
+				joint j;
 				j.name = tok.token();
 				j.parentid = boost::lexical_cast<int>(tok.next());
 				j.flags = boost::lexical_cast<unsigned int>(tok.next());
