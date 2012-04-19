@@ -70,9 +70,17 @@ public:
 	{
 		return current;
 	}
-	void expectnext(std::string token)
+	void expectnext(std::string expected)
 	{
-		if(next() != token) throw exception("expected: " + token);
+		check(expected, next());
+	}
+	void expectcurrent(std::string expected)
+	{
+		check(expected, current);
+	}
+	void check(std::string expected, std::string actual)
+	{
+		if(actual != expected) throw exception("expected: " + expected + " instead: " + actual);
 	}
 };
 
@@ -300,6 +308,16 @@ namespace md5
 		unsigned int flags;
 		unsigned int index;
 	};
+	struct bound
+	{
+		glm::vec3 min;
+		glm::vec3 max;
+	};
+	struct baseframeval
+	{
+		glm::vec3 pos;
+		glm::quat orient;
+	};
 	struct anim
 	{
 		std::string version;
@@ -309,6 +327,8 @@ namespace md5
 		unsigned int framerate;
 		unsigned int animcompcount;
 		std::vector<ajoint> joints;
+		std::vector<bound> bounds;
+		std::vector<baseframeval> baseframevals;
 	};
 	class animfile
 	{
@@ -347,7 +367,55 @@ namespace md5
 					tokenizer.expectnext("{");
 					parsehierarchy(tokenizer, a);
 					checkcount("hierarchy", a.jointcount, a.joints.size());
-				} 
+				}
+				else if(tokenizer.token() == "bounds")
+				{
+					tokenizer.expectnext("{");
+					parsebounds(tokenizer, a);
+					checkcount("bounds", a.jointcount - 1, a.bounds.size());
+				}
+				else if(tokenizer.token() == "baseframe")
+				{
+					tokenizer.expectnext("{");
+					parsebaseframe(tokenizer, a);
+					checkcount("baseframe", a.jointcount, a.baseframevals.size());
+				}
+			}
+		}
+		static void parsebaseframe(Tokenizer& tok, anim& a)
+		{
+			while(tok.next() != "}")
+			{
+				baseframeval b;
+				tok.expectcurrent("(");
+				b.pos.x = boost::lexical_cast<float>(tok.next());
+				b.pos.y = boost::lexical_cast<float>(tok.next());
+				b.pos.z = boost::lexical_cast<float>(tok.next());
+				tok.expectnext(")");
+				tok.expectnext("(");
+				b.orient.x = boost::lexical_cast<float>(tok.next());
+				b.orient.y = boost::lexical_cast<float>(tok.next());
+				b.orient.z = boost::lexical_cast<float>(tok.next());
+				tok.expectnext(")");
+				a.baseframevals.push_back(b);
+			}
+		}
+		static void parsebounds(Tokenizer& tok, anim& a)
+		{
+			while(tok.next() != "}")
+			{
+				bound b;
+				tok.expectcurrent("(");
+				b.min.x = boost::lexical_cast<float>(tok.next());
+				b.min.y = boost::lexical_cast<float>(tok.next());
+				b.min.z = boost::lexical_cast<float>(tok.next());
+				tok.expectnext(")");
+				tok.expectnext("(");
+				b.max.x = boost::lexical_cast<float>(tok.next());
+				b.max.y = boost::lexical_cast<float>(tok.next());
+				b.max.z = boost::lexical_cast<float>(tok.next());
+				tok.expectnext(")");
+				a.bounds.push_back(b);
 			}
 		}
 		static void parsehierarchy(Tokenizer& tok, anim& a)
