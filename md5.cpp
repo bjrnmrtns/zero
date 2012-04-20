@@ -375,7 +375,7 @@ namespace md5
 				{
 					tokenizer.expectnext("{");
 					parsebounds(tokenizer, a);
-					checkcount("bounds", a.jointcount - 1, a.bounds.size());
+					checkcount("bounds", a.framecount, a.bounds.size());
 				}
 				else if(tokenizer.token() == "baseframe")
 				{

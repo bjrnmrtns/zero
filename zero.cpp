@@ -955,7 +955,7 @@ int main()
 	Object cube(Model::cube());
 	Object heightmap(Model::heightmap());
 	md5::anim a;
-	Model::animfrommd5("spikes/marine.md5anim", a);
+	Model::animfrommd5("spikes/marscity_marine1_idle1.md5anim", a);
 	std::unique_ptr<Model> md5modeljoints(Model::jointsfrommd5("spikes/marine.md5mesh"));
 	md5::model m; 
 	std::vector<Model::Vertex> vertices;
@@ -976,7 +976,7 @@ int main()
 		window.Swap();
 		camera.Update();
 		//animation for now seems to have 60 frames.
-		md5model->nextmd5frame(m, a, vertices, framenr % 60);
+		md5model->nextmd5frame(m, a, vertices, framenr % 76);
 		if(counter++ == 10)
 		{
 			framenr++;
