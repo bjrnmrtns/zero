@@ -8,7 +8,8 @@
 #include <glm/gtx/quaternion.hpp>
 #include <memory>
 #include <exception>
-
+// General comment. idsoftwares coordinate system
+// X -> Left/Right, Y -> Forward/Backward, Z -> Up/Down
 class Tokenizer
 {
 class exception : public std::exception
@@ -266,8 +267,8 @@ namespace md5
 			w.bias = boost::lexical_cast<float>(tok.next());
 			tok.expectnext("(");
 			w.pos.x = boost::lexical_cast<float>(tok.next());
+			w.pos.z = -boost::lexical_cast<float>(tok.next());
 			w.pos.y = boost::lexical_cast<float>(tok.next());
-			w.pos.z = boost::lexical_cast<float>(tok.next());
 			tok.expectnext(")");
 			return w;
 		}
@@ -292,13 +293,13 @@ namespace md5
 				j.parentid = boost::lexical_cast<int>(tok.next());
 				tok.expectnext("(");
 				j.pos.x = boost::lexical_cast<float>(tok.next());
+				j.pos.z = -boost::lexical_cast<float>(tok.next());
 				j.pos.y = boost::lexical_cast<float>(tok.next());
-				j.pos.z = boost::lexical_cast<float>(tok.next());
 				tok.expectnext(")");
 				tok.expectnext("(");
 				j.orient.x = boost::lexical_cast<float>(tok.next());
+				j.orient.z = -boost::lexical_cast<float>(tok.next());
 				j.orient.y = boost::lexical_cast<float>(tok.next());
-				j.orient.z = boost::lexical_cast<float>(tok.next());
 				calcwcomp(j.orient);
 				tok.expectnext(")");
 				m.joints.push_back(j);
@@ -409,13 +410,13 @@ namespace md5
 				baseframeval b;
 				tok.expectcurrent("(");
 				b.pos.x = boost::lexical_cast<float>(tok.next());
+				b.pos.z = -boost::lexical_cast<float>(tok.next());
 				b.pos.y = boost::lexical_cast<float>(tok.next());
-				b.pos.z = boost::lexical_cast<float>(tok.next());
 				tok.expectnext(")");
 				tok.expectnext("(");
 				b.orient.x = boost::lexical_cast<float>(tok.next());
+				b.orient.z = -boost::lexical_cast<float>(tok.next());
 				b.orient.y = boost::lexical_cast<float>(tok.next());
-				b.orient.z = boost::lexical_cast<float>(tok.next());
 				calcwcomp(b.orient);
 				tok.expectnext(")");
 				a.baseframe.push_back(b);
@@ -428,13 +429,13 @@ namespace md5
 				bound b;
 				tok.expectcurrent("(");
 				b.min.x = boost::lexical_cast<float>(tok.next());
+				b.min.z = -boost::lexical_cast<float>(tok.next());
 				b.min.y = boost::lexical_cast<float>(tok.next());
-				b.min.z = boost::lexical_cast<float>(tok.next());
 				tok.expectnext(")");
 				tok.expectnext("(");
 				b.max.x = boost::lexical_cast<float>(tok.next());
+				b.max.z = -boost::lexical_cast<float>(tok.next());
 				b.max.y = boost::lexical_cast<float>(tok.next());
-				b.max.z = boost::lexical_cast<float>(tok.next());
 				tok.expectnext(")");
 				a.bounds.push_back(b);
 			}

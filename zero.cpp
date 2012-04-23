@@ -435,7 +435,7 @@ public:
 		glewExperimental = GL_TRUE;
 		if(glewInit() != GLEW_OK) throw new GeneralException("glewInit failed");
 		glGetError(); // mask error of failed glewInit http://www.opengl.org/discussion_boards/ubbthreads.php?ubb=showflat&Number=284912
-//		glCullFace(GL_BACK);
+		glCullFace(GL_BACK);
 		glFrontFace(GL_CW);
 		glEnable(GL_CULL_FACE);
 		glClearDepth(1.0f);
@@ -616,11 +616,11 @@ public:
 			}
 			if(j.flags & 2)
 			{
-				j.pos.y = frame.diffs[j.index + k++];
+				j.pos.z = -frame.diffs[j.index + k++];
 			}
 			if(j.flags & 4)
 			{
-				j.pos.z = frame.diffs[j.index + k++];
+				j.pos.y = frame.diffs[j.index + k++];
 			}
 			if(j.flags & 8)
 			{
@@ -628,11 +628,11 @@ public:
 			}
 			if(j.flags & 16)
 			{
-				j.orient.y = frame.diffs[j.index + k++];
+				j.orient.z = -frame.diffs[j.index + k++];
 			}
 			if(j.flags & 32)
 			{
-				j.orient.z = frame.diffs[j.index + k++];
+				j.orient.y = frame.diffs[j.index + k++];
 			}
 			md5::calcwcomp(j.orient);
 			if(j.parentid >= 0)
@@ -659,6 +659,10 @@ public:
 				Model::Vertex v2;
 				v2.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v2], *meshit, joints);
 				v2.texcoord = meshit->vertices[trisit->v2].texcoord;
+				glm::vec3 normal = glm::cross(v0.pos - v2.pos, v0.pos - v1.pos);
+				v0.normal = normal;
+				v1.normal = normal;
+				v2.normal = normal;
 				vertices[vi++] = v0;
 				vertices[vi++] = v1;
 				vertices[vi++] = v2;
@@ -686,6 +690,7 @@ public:
 				vertices.push_back(v0);
 				vertices.push_back(v1);
 				vertices.push_back(v2);
+				
 			} 
 		}
 		std::unique_ptr<Model> model(new Model(description, &vertices[0], vertices.size()));
@@ -878,7 +883,7 @@ public:
 	Camera(size_t width, size_t height)
 	: View(glm::perspective(60.0f, (float)width / (float)height, 1.0f, 1000.0f), glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f)))
 	, quit(false)
-	, position(glm::vec3(0.0f, 0.0f, 4.0f))
+	, position(glm::vec3(40.0f, 35.0f, 100.0f))
 	, up(false), down(false), left(false), right(false)
 	, w(false), a(false), s(false), d(false)
 	, speed(0.3)
@@ -955,7 +960,7 @@ int main()
 	Object cube(Model::cube());
 	Object heightmap(Model::heightmap());
 	md5::anim a;
-	Model::animfrommd5("spikes/marscity_marine1_idle1.md5anim", a);
+	Model::animfrommd5("spikes/marine.md5anim", a);
 	std::unique_ptr<Model> md5modeljoints(Model::jointsfrommd5("spikes/marine.md5mesh"));
 	md5::model m; 
 	std::vector<Model::Vertex> vertices;
@@ -976,7 +981,7 @@ int main()
 		window.Swap();
 		camera.Update();
 		//animation for now seems to have 60 frames.
-		md5model->nextmd5frame(m, a, vertices, framenr % 76);
+		md5model->nextmd5frame(m, a, vertices, framenr % 60);
 		if(counter++ == 10)
 		{
 			framenr++;

@@ -11,7 +11,7 @@ void main(void)
 {
 	outColor[0] = pass_position;
 	outColor[1] = texture2D(modeltex, pass_texcoord).xyz;
-//	outColor[2] = pass_normal;
-	outColor[2] = texture2D(modelnormaltex, pass_texcoord).xyz;
+	outColor[2] = pass_normal;
+//	outColor[2] = texture2D(modelnormaltex, pass_texcoord).xyz;
 }
 
