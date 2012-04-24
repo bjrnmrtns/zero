@@ -646,10 +646,14 @@ public:
 		}
 		//TODO: remove dirty copy past from meshesfrommd5 function.
 		size_t vi = 0;
+		size_t vi2 = 0;
 		for(auto meshit = m.meshes.begin(); meshit != m.meshes.end(); ++meshit)
 		{
+			std::map<unsigned int, glm::vec3> normals;
+
 			for(auto trisit = meshit->triangles.begin(); trisit != meshit->triangles.end(); ++trisit)
 			{
+
 				Model::Vertex v0;
 				v0.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v0], *meshit, joints);
 				v0.texcoord = meshit->vertices[trisit->v0].texcoord;
@@ -659,14 +663,20 @@ public:
 				Model::Vertex v2;
 				v2.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v2], *meshit, joints);
 				v2.texcoord = meshit->vertices[trisit->v2].texcoord;
-				glm::vec3 normal = glm::cross(v0.pos - v2.pos, v0.pos - v1.pos);
-				v0.normal = normal;
-				v1.normal = normal;
-				v2.normal = normal;
+				glm::vec3 normal = glm::cross(v2.pos - v0.pos, v1.pos - v0.pos);
+				normals[trisit->v0] += normal;
+				normals[trisit->v1] += normal;
+				normals[trisit->v2] += normal;
 				vertices[vi++] = v0;
 				vertices[vi++] = v1;
 				vertices[vi++] = v2;
 			} 
+			for(auto trisit = meshit->triangles.begin(); trisit != meshit->triangles.end(); ++trisit)
+			{
+				vertices[vi2++].normal = glm::normalize(normals[trisit->v0]);
+				vertices[vi2++].normal = glm::normalize(normals[trisit->v1]);
+				vertices[vi2++].normal = glm::normalize(normals[trisit->v2]);
+			}
 		}
 		vb.Update(&vertices[0], vertices.size());
 	}
@@ -886,7 +896,7 @@ public:
 	, position(glm::vec3(40.0f, 35.0f, 100.0f))
 	, up(false), down(false), left(false), right(false)
 	, w(false), a(false), s(false), d(false)
-	, speed(0.3)
+	, speed(2.0)
 	{
 	}
 	void Update()
