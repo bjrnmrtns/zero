@@ -102,8 +102,8 @@ public:
 				unsigned char g = *(source.pix(x,y) + 1);
 				unsigned char b = *(source.pix(x,y) + 2);
 				*(dest.pixw(x,y)) = 0.299 * r + 0.587 * g + 0.114 * b;
-				*(dest.pixw(x,y)+1) = (-0.147 * r - 0.289 * g + 0.436 * b) + 128;            
-				*(dest.pixw(x,y)+2) = (0.615 * r - 0.51499 * g - 0.10001 * b) + 128; 
+				*(dest.pixw(x,y)+1) = (-0.169 * r - 0.331 * g + 0.4998 * b) + 128;            
+				*(dest.pixw(x,y)+2) = (0.4998 * r - 0.419 * g - 0.081 * b) + 128; 
 			}
 		}
 		size_t i = 0;
@@ -199,14 +199,17 @@ public:
 
 int main()
 {
-	unsigned char data[1024 * 768 * 3];
-	for(size_t i = 0; i < 1024 * 768 * 3; i+=3)
-	{
-		data[i] = 0;
-		data[i+1] = 255;
-		data[i+2] = 0;
-	}
 	capture::encoder enc(1024, 768, "bla.ivf");
-	for(size_t i = 0; i < 300; i++) enc.encode(data);
+	unsigned char data[1024 * 768 * 3];
+	for (size_t i = 0; i < 256; i++) {
+		for (size_t j = 0; j < 768; j++) {
+			for (size_t k = 0; k < 1024; k++) {
+				data[(j*1024+k)*3+0] = j/3;
+				data[(j*1024+k)*3+1] = k/4;
+				data[(j*1024+k)*3+2] = i;
+			}
+		}
+		enc.encode(data);
+	}
 	return 0;
 }

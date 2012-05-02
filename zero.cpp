@@ -297,20 +297,15 @@ public:
 		}
 		ImageData save()
 		{
-			//TODO: Remove these magic numbers
-			const int maxwidth = 2048;
-			const int maxheight = 2048;
-			static unsigned char data[maxwidth * maxheight * 3];
 			ilBindImage(id);
-			texture.Bind(0);
-			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, &data);
-			assert(ilSetData(data));
+			std::unique_ptr<unsigned char> data = texture.getdata();
+			ilSetData(data.get());
 			ImageData imagedata;
 			imagedata.type = IL_PNG;
-			imagedata.blob.size = ilSaveL(IL_PNG, data, maxwidth * maxheight * 3);
+			imagedata.blob.size = ilSaveL(IL_PNG, data.get(), texture.width * texture.height * 3);
 			unsigned char* savedata = (unsigned char*)malloc(imagedata.blob.size);
 			imagedata.blob.buf.reset(savedata);
-			memcpy(savedata, data, imagedata.blob.size);
+			memcpy(savedata, data.get(), imagedata.blob.size);
 			return imagedata;
 		}
 		~Image()
@@ -356,6 +351,13 @@ public:
 	void Attach(unsigned int nr)
 	{
 		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + nr, id, 0);
+	}
+	std::unique_ptr<unsigned char> getdata()
+	{
+		std::unique_ptr<unsigned char> data(new unsigned char[width * height * 3]);
+		Bind(0);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, data.get());
+		return data;
 	}
 	void load(ImageData& imagedata)
 	{
@@ -964,6 +966,7 @@ int main()
 {
 	unsigned int width = 1024;
 	unsigned int height = 768;
+	capture::encoder enc(width, height, "capture.ivf");
 	Window_ window(width, height);
 	RenderPipeline pipeline(width, height);
 	Camera camera(width, height);
@@ -979,8 +982,10 @@ int main()
 	size_t framenr = 0;
 	size_t counter = 0;
 	timer t;
+	Texture* tex = Res<Texture>::load("color");
 	while(!camera.quit)
 	{
+		enc.encode(tex->getdata().get());
 		pipeline.Step(camera, scene);
 		window.Swap();
 		camera.Update();
