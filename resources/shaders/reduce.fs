@@ -8,7 +8,7 @@ in vec3 pass_normal;
 in vec2 pass_texcoord;
 out vec3 outColor;
 
-const vec3 light_position = vec3(0, 20, 5);
+const vec3 light_position = vec3(60, 40, 5);
 
 void main(void)
 {
@@ -20,6 +20,6 @@ void main(void)
 
 	vec3 color = texture2D(colortex, pass_texcoord).xyz;
 	outColor = color * (lambert + 0.1);
-	outColor = N;
+//	outColor = N;
 }
 

@@ -1,4 +1,4 @@
-all: RenderPipeline gamearchitecture fileio deferredconstruction perfectforwarding initstruct webserver md5
+all: RenderPipeline gamearchitecture fileio deferredconstruction perfectforwarding initstruct webserver md5 capture
 
 gamearchitecture: gamearchitecture.cpp
 	g++ -std=c++0x -Wall -Wextra -pedantic -o gamearchitecture gamearchitecture.cpp 
@@ -16,4 +16,6 @@ webserver: webserver.cpp
 	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o webserver webserver.cpp -lpthread -Iexternal/include
 md5: md5.cpp
 	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o md5 md5.cpp -I../external/include
+capture: capture.cpp
+	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o capture capture.cpp ../external/lib/libvpx.a -I../external/include -lm -lpthread
 

@@ -1,3 +1,4 @@
+#include "capture.cpp"
 #include <GL/glew.h>
 #include <GL/glfw.h>
 #include <glm/glm.hpp>
@@ -16,6 +17,25 @@
 #include "Blob.cpp"
 #include "GeneralException.cpp"
 #include "md5.cpp"
+
+class timer
+{
+private:
+	double start, last;
+public:
+	timer()
+	: start(glfwGetTime()) // high precision timer (time since glfwInit()).
+	, last(start)
+	{
+	}
+	double sincelast()
+	{
+		double now = glfwGetTime();
+		double retval = now - last;
+		last = now;
+		return retval;
+	}
+};
 
 class File
 {
@@ -574,25 +594,6 @@ public:
 		static Model model(description, vertices, sizeof(vertices)/sizeof(Vertex));
 		return model;
 	}
-	static std::unique_ptr<Model> jointsfrommd5(std::string meshfile)
-	{
-		Tokenizer md5tokenizer(meshfile, md5::whitespace, md5::delimiters);
-		md5::model m; 
-		md5::meshfile::parse(md5tokenizer, m);
-		std::vector<Model::Vertex> vertices;
-		for(size_t i = 0; i < m.joints.size(); i++)
-		{
-			if(m.joints[i].parentid == -1) continue;
-			Model::Vertex b;
-			b.pos = m.joints[i].pos;
-			vertices.push_back(b);
-			Model::Vertex e;
-			e.pos = m.joints[m.joints[i].parentid].pos;
-			vertices.push_back(e);
-		}
-		std::unique_ptr<Model> model(new Model(description, &vertices[0], vertices.size(), GL_LINES));
-		return model;
-	}
 	static void animfrommd5(std::string animfile, md5::anim& a)
 	{
 		Tokenizer tok(animfile, md5::whitespace, md5::delimiters);
@@ -610,15 +611,15 @@ public:
 			j.pos = baseframe[i].pos;
 			j.orient = baseframe[i].orient;
 			unsigned int k = 0;
-			if(j.flags & 1)
+			if(j.flags & 1 && j.parentid != -1)
 			{
 				j.pos.x = frame.diffs[j.index + k++];
 			}
-			if(j.flags & 2)
+			if(j.flags & 2 && j.parentid != -1)
 			{
 				j.pos.z = -frame.diffs[j.index + k++];
 			}
-			if(j.flags & 4)
+			if(j.flags & 4 && j.parentid != -1)
 			{
 				j.pos.y = frame.diffs[j.index + k++];
 			}
@@ -967,26 +968,19 @@ int main()
 	RenderPipeline pipeline(width, height);
 	Camera camera(width, height);
 
-	Object cube(Model::cube());
-	Object heightmap(Model::heightmap());
 	md5::anim a;
 	Model::animfrommd5("spikes/marine.md5anim", a);
-	std::unique_ptr<Model> md5modeljoints(Model::jointsfrommd5("spikes/marine.md5mesh"));
 	md5::model m; 
 	std::vector<Model::Vertex> vertices;
 	std::unique_ptr<Model> md5model(Model::meshesfrommd5("spikes/marine.md5mesh", m, vertices));
-	Object md5j(*(md5modeljoints.get()));
 	Object md5(*(md5model.get()));
 	std::vector<Object*> scene;
-	scene.push_back(&cube);
-//	scene.push_back(&heightmap);
-	scene.push_back(&md5j);
 	scene.push_back(&md5);
 	size_t framenr = 0;
 	size_t counter = 0;
+	timer t;
 	while(!camera.quit)
 	{
-		cube.rotation = cube.rotation * glm::angleAxis(1.0f, glm::vec3(0.5f, 0.5f, 0.5f));
 		pipeline.Step(camera, scene);
 		window.Swap();
 		camera.Update();
