@@ -57,7 +57,7 @@ mv boost ${ZERO_EXTERNAL_DIR}/include
 cd ${BOOTSTRAP_DIR}
 git clone git://gitorious.org/json-spirit/json-spirit.git
 cd json-spirit
-cp -r json_spirit ${ZERO_EXTERNAL_DIR}/external 
+cp -r json_spirit ${ZERO_EXTERNAL_DIR}/include
 
 # Get libvpx
 cd ${BOOTSTRAP_DIR}

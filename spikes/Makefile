@@ -1,4 +1,4 @@
-all: RenderPipeline gamearchitecture fileio deferredconstruction perfectforwarding initstruct webserver md5 capture
+all: RenderPipeline gamearchitecture fileio deferredconstruction perfectforwarding initstruct webserver md5 capture rocket
 
 gamearchitecture: gamearchitecture.cpp
 	g++ -std=c++0x -Wall -Wextra -pedantic -o gamearchitecture gamearchitecture.cpp 
@@ -18,4 +18,6 @@ md5: md5.cpp
 	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o md5 md5.cpp -I../external/include
 capture: capture.cpp
 	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o capture capture.cpp ../external/lib/libvpx.a -I../external/include -lm -lpthread
+rocket: rocket.cpp
+	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -o rocket rocket.cpp -L ../external/lib -lRocketCore -I../external/include -lm -lpthread
 
