@@ -1,4 +1,3 @@
-#include "capture.cpp"
 #include <GL/glew.h>
 #include <GL/glfw.h>
 #include <glm/glm.hpp>
@@ -966,7 +965,6 @@ int main()
 {
 	unsigned int width = 1024;
 	unsigned int height = 768;
-	capture::encoder enc(width, height, "capture.ivf");
 	Window_ window(width, height);
 	RenderPipeline pipeline(width, height);
 	Camera camera(width, height);
@@ -982,10 +980,8 @@ int main()
 	size_t framenr = 0;
 	size_t counter = 0;
 	timer t;
-	Texture* tex = Res<Texture>::load("color");
 	while(!camera.quit)
 	{
-		enc.encode(tex->getdata().get());
 		pipeline.Step(camera, scene);
 		window.Swap();
 		camera.Update();

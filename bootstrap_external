@@ -68,3 +68,11 @@ cd libvpx-v1.0.0
 make
 make install
 
+# Get librocket
+cd ${BOOTSTRAP_DIR}
+git clone https://github.com/lloydw/libRocket.git
+cd libRocket/Build
+cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX:PATH=${ZERO_EXTERNAL_DIR}
+make
+make install
+
