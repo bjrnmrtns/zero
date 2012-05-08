@@ -141,6 +141,11 @@ public:
 		glBindVertexArray(vao);
 		glDrawArrays(mode, 0, count);
 	}
+	void DrawIndexed(int& indices, int num_indices) const
+	{
+		glBindVertexArray(vao);
+		glDrawElements(mode, num_indices, GL_UNSIGNED_INT, &indices);
+	}
 	~VertexBuffer()
 	{
 		glDeleteBuffers(1, &id);
@@ -340,6 +345,17 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		load(imagedata);
 	}
+	Texture(unsigned int width, unsigned int height, unsigned char* data)
+	: width(width)
+	, height(height)
+	, image(*this)
+	{
+		glGenTextures(1, &id);
+		glBindTexture(GL_TEXTURE_2D, id);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGBA, GL_FLOAT, data);
+	}
 	// Bind for render onto primitive.
 	void Bind(int textureUnit)
 	{
@@ -474,13 +490,13 @@ public:
 	}
 };
 
-class Renderable
+class object
 {
 public:
-	virtual void Draw() const = 0;
+	virtual void Draw(ShaderProgram& sp) const = 0;
 };
 
-class Model : public Renderable
+class mesh
 {
 public:
 	struct Vertex
@@ -493,11 +509,11 @@ private:
 	VertexBuffer vb;
 public:
 	static const VertexBuffer::InputElementDescription description[];
-	Model(const VertexBuffer::InputElementDescription description[], const Vertex vertices[], const size_t size, unsigned int mode = GL_TRIANGLES)
+	mesh(const VertexBuffer::InputElementDescription description[], const Vertex vertices[], const size_t size, unsigned int mode = GL_TRIANGLES)
 	: vb(description, vertices, size, mode)
 	{
 	}
-	static Model& heightmap()
+	static mesh& heightmap()
 	{
 		const size_t size = 128;
 		const size_t spacing = 1.0f;
@@ -528,10 +544,10 @@ public:
 				vertices[6 * ((z * size) + x) + 5].texcoord = glm::vec2(-1, -1);
 			}
 		}
-		static Model model(description, vertices, sizeof(vertices)/sizeof(Vertex));
+		static mesh model(description, vertices, sizeof(vertices)/sizeof(Vertex));
 		return model;
 	};
-	static Model& square()
+	static mesh& square()
 	{
 		static const Vertex vertices[] { { glm::vec3(-1, -1, 1), glm::vec3(0, 0, 1), glm::vec2(0, 0) },
 		                                 { glm::vec3(-1,  1, 1), glm::vec3(0, 0, 1), glm::vec2(0, 1) },
@@ -539,10 +555,10 @@ public:
 		                                 { glm::vec3(-1,  1, 1), glm::vec3(0, 0,-1), glm::vec2(0, 1) },
 		                                 { glm::vec3( 1,  1, 1), glm::vec3(0, 0,-1), glm::vec2(1, 1) },
 		                                 { glm::vec3( 1, -1, 1), glm::vec3(0, 0,-1), glm::vec2(1, 0) } };
-		static Model model(description, vertices, sizeof(vertices)/sizeof(Vertex));
+		static mesh model(description, vertices, sizeof(vertices)/sizeof(Vertex));
 		return model;
 	};
-	static Model& cube()
+	static mesh& cube()
 	{
 	static Vertex vertices[] = { { glm::vec3(-1,  1, -1), glm::vec3(-1,  0,  0),  glm::vec2(0,  0) },
 	                             { glm::vec3(-1, -1,  1), glm::vec3(-1,  0,  0),  glm::vec2(1,  1) },
@@ -592,7 +608,7 @@ public:
 	                             { glm::vec3( 1, -1, -1), glm::vec3( 0, -1,  0),  glm::vec2(0,  0) },
 	                             { glm::vec3(-1, -1, -1), glm::vec3( 0, -1,  0),  glm::vec2(0,  1) }
 		};
-		static Model model(description, vertices, sizeof(vertices)/sizeof(Vertex));
+		static mesh model(description, vertices, sizeof(vertices)/sizeof(Vertex));
 		return model;
 	}
 	static void animfrommd5(std::string animfile, md5::anim& a)
@@ -600,7 +616,7 @@ public:
 		Tokenizer tok(animfile, md5::whitespace, md5::delimiters);
 		md5::animfile::parse(tok, a);
 	}
-	void nextmd5frame(const md5::model& m, md5::anim& a, std::vector<Model::Vertex>& vertices, size_t framenr)
+	void nextmd5frame(const md5::model& m, md5::anim& a, std::vector<mesh::Vertex>& vertices, size_t framenr)
 	{
 		const std::vector<md5::baseframeval>& baseframe = a.baseframe;
 		const md5::frame& frame = a.frames[framenr];
@@ -656,13 +672,13 @@ public:
 			for(auto trisit = meshit->triangles.begin(); trisit != meshit->triangles.end(); ++trisit)
 			{
 
-				Model::Vertex v0;
+				mesh::Vertex v0;
 				v0.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v0], *meshit, joints);
 				v0.texcoord = meshit->vertices[trisit->v0].texcoord;
-				Model::Vertex v1;
+				mesh::Vertex v1;
 				v1.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v1], *meshit, joints);
 				v1.texcoord = meshit->vertices[trisit->v1].texcoord;
-				Model::Vertex v2;
+				mesh::Vertex v2;
 				v2.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v2], *meshit, joints);
 				v2.texcoord = meshit->vertices[trisit->v2].texcoord;
 				glm::vec3 normal = glm::cross(v2.pos - v0.pos, v1.pos - v0.pos);
@@ -682,7 +698,7 @@ public:
 		}
 		vb.Update(&vertices[0], vertices.size());
 	}
-	static std::unique_ptr<Model> meshesfrommd5(std::string meshfile, md5::model& m, std::vector<Model::Vertex>& vertices)
+	static std::unique_ptr<mesh> meshesfrommd5(std::string meshfile, md5::model& m, std::vector<mesh::Vertex>& vertices)
 	{
 		Tokenizer md5tokenizer(meshfile, md5::whitespace, md5::delimiters);
 		md5::meshfile::parse(md5tokenizer, m);
@@ -690,13 +706,13 @@ public:
 		{
 			for(auto trisit = meshit->triangles.begin(); trisit != meshit->triangles.end(); ++trisit)
 			{
-				Model::Vertex v0;
+				mesh::Vertex v0;
 				v0.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v0], *meshit, m.joints);
 				v0.texcoord = meshit->vertices[trisit->v0].texcoord;
-				Model::Vertex v1;
+				mesh::Vertex v1;
 				v1.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v1], *meshit, m.joints);
 				v1.texcoord = meshit->vertices[trisit->v1].texcoord;
-				Model::Vertex v2;
+				mesh::Vertex v2;
 				v2.pos = md5::meshfile::getfinalpos(meshit->vertices[trisit->v2], *meshit, m.joints);
 				v2.texcoord = meshit->vertices[trisit->v2].texcoord;
 				vertices.push_back(v0);
@@ -705,7 +721,7 @@ public:
 				
 			} 
 		}
-		std::unique_ptr<Model> model(new Model(description, &vertices[0], vertices.size()));
+		std::unique_ptr<mesh> model(new mesh(description, &vertices[0], vertices.size()));
 		return model;
 		
 	}
@@ -714,30 +730,69 @@ public:
 		vb.Draw();
 	}
 };
-const VertexBuffer::InputElementDescription Model::description[] { { "in_position", 3, sizeof(glm::vec3) },
+const VertexBuffer::InputElementDescription mesh::description[] { { "in_position", 3, sizeof(glm::vec3) },
                                                                    { "in_normal",   3, sizeof(glm::vec3) },
                                                                    { "in_texcoord", 2, sizeof(glm::vec2) },
                                                                    { "", 0, 0 } };
+class effectinput : public object
+{
+private:
+	mesh& m;
+	std::vector<Texture*> textures;
+public:
+	effectinput(std::vector<Texture*> textures)
+	: m(mesh::square())
+	, textures(textures)
+	{
+	}
+	void Draw(ShaderProgram& sp) const
+	{
+		for(size_t i = 0; i < textures.size(); i++)
+		{
+			textures[i]->Bind(i);
+		}
+		m.Draw();
+	}
+};
 
-class Object
+
+class scene : public object
+{
+private:
+	std::vector<object*> objs;
+public:
+	void add(object* obj)
+	{
+		objs.push_back(obj);
+	}
+	void Draw(ShaderProgram& sp) const
+	{
+		for(auto it = objs.begin(); it != objs.end(); ++it)
+		{
+			(*it)->Draw(sp);
+		}
+	}
+};
+
+class entity : public object
 {
 public:
-	const Model& model;
+	mesh& model;
 	glm::vec3 position;
 	glm::quat rotation;
-	Object(const Model& model)
+	Texture& ctex;
+	entity(mesh& model, Texture& ctex)
 	: model(model)
+	, ctex(ctex)
 	{
 	}
-	glm::mat4 getworld() const
+	void Draw(ShaderProgram& sp) const
 	{
-		return glm::translate(glm::mat4(1.0f), position) * glm::mat4_cast(rotation);
+		sp.Set("world", &(glm::translate(glm::mat4(1.0f), position) * glm::mat4_cast(rotation))[0][0]);
+		ctex.Bind(0);
+		model.Draw();
 	}
-	static Object& square()
-	{
-		static Object object(Model::square());
-		return object;
-	}
+	
 };
 
 class View
@@ -755,12 +810,12 @@ public:
 
 class RenderStep
 {
-private:
+protected:
 	size_t width, height;
 	VertexShader vs;
 	FragmentShader fs;
 	ShaderProgram sp;
-	std::vector<std::pair<std::string, Texture*>> inputs;
+	std::vector<std::string> inputs;
 	std::vector<std::pair<std::string, Texture*>> output;
 	std::unique_ptr<RenderTarget> rt;
 public:
@@ -779,7 +834,7 @@ public:
 	: width(width), height(height)
 	, vs(descriptor.vs)
 	, fs(descriptor.fs)
-	, sp(vs, fs, Model::description)
+	, sp(vs, fs, mesh::description)
 	{
 		for(size_t i = 0; i < descriptor.inputs.size(); i++)
 		{
@@ -791,30 +846,22 @@ public:
 		}
 		rt.reset(new RenderTarget(width, height, output));
 	}
-	virtual void Step(const View& view, const std::vector<Object*> objects)
+	virtual void Step(const View& view, const object& obj)
 	{
 		rt->Activate();
 		sp.Use();
 		sp.Set("projection", &view.projection[0][0]);
 		sp.Set("view", &view.GetViewMatrix()[0][0]);
-		for(size_t j = 0; j < objects.size(); j++)
-		{
-			sp.Set("world", &(objects[j]->getworld()[0][0]));
-			for(size_t i = 0; i < inputs.size(); i++)
-			{
-				inputs[i].second->Bind(i);
-			}
-			objects[j]->model.Draw();
-		}
+		obj.Draw(sp);
 	}
 private:
 	void addinput(std::string name, std::string id)
 	{
-		inputs.push_back(std::make_pair(name, Res<Texture>::load(id)));
+		inputs.push_back(name);
 		sp.Use();
 		for(size_t i = 0; i < inputs.size(); i++)
 		{
-			sp.SetTexture(inputs[i].first.c_str(), i);
+			sp.SetTexture(inputs[i].c_str(), i);
 		}
 	}
 	void addoutput(std::string name, std::string id)
@@ -826,18 +873,171 @@ private:
 class EffectsStep : public RenderStep
 {
 private:
+	std::vector<Texture*> textures;
 public:
 	EffectsStep(size_t width, size_t height, const Descriptor& descriptor)
 	: RenderStep(width, height, descriptor)
 	{
+		for(size_t i = 0; i < descriptor.inputs.size(); i++)
+		{
+			textures.push_back(Res<Texture>::load(descriptor.inputs[i].id));
+		}
 	}
-	void Step(const View& view, const std::vector<Object*> objects) 
+	void Step(const View& view, const object& obj) 
 	{
-		std::vector<Object*> squareobjects;
-		squareobjects.push_back(&Object::square());
-		RenderStep::Step(view, squareobjects);
+		effectinput input(textures);
+		RenderStep::Step(view, input);
 	}
 };
+
+/*
+#include <Rocket/Core/FileInterface.h>
+#include <Rocket/Core/RenderInterface.h>
+#include <Rocket/Core/SystemInterface.h>
+#include <Rocket/Core/Core.h>
+namespace ui
+{
+
+class UiFileInterface : public Rocket::Core::FileInterface
+{
+public:
+	const Rocket::Core::String& root;
+	UiFileInterface(const Rocket::Core::String& root)
+	: root(root)
+	{
+	}
+	~UiFileInterface()
+	{
+	}
+	Rocket::Core::FileHandle Open(const Rocket::Core::String& path)
+	{
+		FILE* fp = fopen((root + path).CString(), "rb");
+		if (fp != NULL) return (Rocket::Core::FileHandle) fp;
+		fp = fopen(path.CString(), "rb");
+		return (Rocket::Core::FileHandle) fp;
+	}
+	void Close(Rocket::Core::FileHandle file)
+	{
+		fclose((FILE*) file);
+	}
+	size_t Read(void* buffer, size_t size, Rocket::Core::FileHandle file)
+	{
+		return fread(buffer, 1, size, (FILE*) file);
+	}
+	bool Seek(Rocket::Core::FileHandle file, long offset, int origin)
+	{
+		return fseek((FILE*) file, offset, origin) == 0;
+	}
+	size_t Tell(Rocket::Core::FileHandle file)
+	{
+		return ftell((FILE*) file);
+	}
+};
+
+class UiRenderer : public Rocket::Core::RenderInterface
+{
+private:
+	size_t width, height;
+	std::map<Rocket::Core::TextureHandle, std::unique_ptr<Texture>> texmap;
+public:
+	UiRenderer(size_t width, size_t height)
+	: width(width)
+	, height(height)
+	{
+	}
+	void RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, const Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f& translation)
+	{
+//		glPushMatrix();
+//		glTranslatef(translation.x, translation.y, 0);
+		static VertexBuffer::InputElementDescription description[] { { "in_position", 3, sizeof(Rocket::Core::Vector2f) },
+                                                                             { "in_color",   1, sizeof(Rocket::Core::Colourb) },
+                                                                             { "in_texcoord", 1, sizeof(Rocket::Core::Vector2f) },
+                                                                             { "", 0, 0 } };
+		VertexBuffer vb(description, vertices, num_vertices, GL_TRIANGLES);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		if(!texture) throw new std::exception();
+		texmap.find(texture)->second->Bind(0);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		vb.DrawIndexed(*indices, num_indices);
+
+
+//		glPopMatrix();
+	}
+	void EnableScissorRegion(bool enable)
+	{
+		if(enable)
+		{
+			glEnable(GL_SCISSOR_TEST);
+		}
+		else
+		{
+			glDisable(GL_SCISSOR_TEST);
+		}
+	}
+	void SetScissorRegion(int x, int y, int width, int height)
+	{
+		glScissor(x, this->height - (y + height), width, height);
+	}
+	bool GenerateTexture(Rocket::Core::TextureHandle& texture_handle, const Rocket::Core::byte* source, const Rocket::Core::Vector2i& source_dimensions)
+	{
+		texmap.insert(std::make_pair(texture_handle, new Texture(source_dimensions.x, source_dimensions.y, (unsigned char*)source)));
+		return true;
+	}
+	void ReleaseTexture(Rocket::Core::TextureHandle texture_handle)
+	{
+		texmap.erase(texture_handle);
+	}
+};
+
+class UIStep : public RenderStep
+{
+private:
+	UiRenderer renderer;
+	UiFileInterface fileinterface;
+	Rocket::Core::Context* Context;
+public:
+	UIStep(size_t width, size_t height, const Descriptor& descriptor)
+	: RenderStep(width, height, descriptor)
+	, renderer(width, height)
+	, fileinterface("resources/ui/")
+	{
+		Rocket::Core::SetFileInterface(&fileinterface);
+		Rocket::Core::SetRenderInterface(&renderer);
+
+		if(!Rocket::Core::Initialise())
+			throw new std::exception();
+
+		Rocket::Core::FontDatabase::LoadFontFace("Delicious-Bold.otf");
+		Rocket::Core::FontDatabase::LoadFontFace("Delicious-BoldItalic.otf");
+		Rocket::Core::FontDatabase::LoadFontFace("Delicious-Italic.otf");
+		Rocket::Core::FontDatabase::LoadFontFace("Delicious-Roman.otf");
+
+		Context = Rocket::Core::CreateContext("default", Rocket::Core::Vector2i(width, height));
+
+		//Rocket::Debugger::Initialise(Context);
+
+		Rocket::Core::ElementDocument *Document = Context->LoadDocument("demo.rml");
+
+		Document->Show();
+		Document->RemoveReference();
+	}
+	void Step(const View& view, const std::vector<entity*> objects) 
+	{
+		rt->Activate();
+		sp.Use();
+//		sp.Set("world", &(objects[j]->getworld()[0][0]));
+		Context->Render();
+		Context->Update();
+	}
+};
+		RenderStep::Descriptor geometrydescriptor { "resources/shaders/geometry.vs", "resources/shaders/geometry.fs"};
+}
+*/
 
 class RenderPipeline
 {
@@ -851,7 +1051,6 @@ public:
 	{
 		RenderStep::Descriptor geometrydescriptor { "resources/shaders/geometry.vs", "resources/shaders/geometry.fs"};
 		RenderStep::Descriptor::io picture{"modeltex", "marine.png"};
-		RenderStep::Descriptor::io picturenormals{"modelnormaltex", "marine_local.png"};
 		RenderStep::Descriptor::io positionio{"293487234", "position"};
 		RenderStep::Descriptor::io colorio{"293487234", "color"};
 		RenderStep::Descriptor::io normalio{"asdfasdfe", "normal"};
@@ -859,7 +1058,6 @@ public:
 		geometrydescriptor.outputs.push_back(colorio);
 		geometrydescriptor.outputs.push_back(normalio);
 		geometrydescriptor.inputs.push_back(picture);
-		geometrydescriptor.inputs.push_back(picturenormals);
 
 		RenderStep::Descriptor reducedescriptor { "resources/shaders/reduce.vs", "resources/shaders/reduce.fs"};
 		RenderStep::Descriptor::io reducepositionio{"positiontex", "position"};
@@ -869,22 +1067,24 @@ public:
 		reducedescriptor.inputs.push_back(reducecolorio);
 		reducedescriptor.inputs.push_back(reducenormalio);
 
-		Texture::ImageData imagedata{IL_PNG, File::read("marine.png")};
-		Texture::ImageData imagedata_normal{IL_PNG, File::read("marine_local.png")};
-		Res<Texture>::load("marine.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
-		Res<Texture>::load("marine_local.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
+//		RenderStep::Descriptor uidescriptor { "resources/shaders/ui.vs", "resources/shaders/ui.fs"};
+//		RenderStep::Descriptor::io colorui{"bla", "colorui"};
+//		uidescriptor.outputs.push_back(colorui);
+
 		Res<Texture>::load("position", std::unique_ptr<Texture>(new Texture(width, height)));
 		Res<Texture>::load("color", std::unique_ptr<Texture>(new Texture(width, height)));
 		Res<Texture>::load("normal", std::unique_ptr<Texture>(new Texture(width, height)));
+//		Res<Texture>::load("colorui", std::unique_ptr<Texture>(new Texture(width, height)));
 
 		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, geometrydescriptor)));
 		steps.push_back(std::unique_ptr<RenderStep>(new EffectsStep(width, height, reducedescriptor)));
+		//steps.push_back(std::unique_ptr<RenderStep>(new ui::UIStep(width, height, uidescriptor)));
 	};
-	void Step(const View& view, const std::vector<Object*> objects)
+	void Step(const View& view, const object& obj)
 	{
 		for(size_t i = 0; i < steps.size(); i++)
 		{
-			steps[i]->Step(view, objects);
+			steps[i]->Step(view, obj);
 		}
 	}
 };
@@ -969,20 +1169,23 @@ int main()
 	RenderPipeline pipeline(width, height);
 	Camera camera(width, height);
 
+	Texture::ImageData imagedata{IL_PNG, File::read("marine.png")};
+	Res<Texture>::load("marine.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
+
 	md5::anim a;
-	Model::animfrommd5("spikes/marine.md5anim", a);
+	mesh::animfrommd5("spikes/marine.md5anim", a);
 	md5::model m; 
-	std::vector<Model::Vertex> vertices;
-	std::unique_ptr<Model> md5model(Model::meshesfrommd5("spikes/marine.md5mesh", m, vertices));
-	Object md5(*(md5model.get()));
-	std::vector<Object*> scene;
-	scene.push_back(&md5);
+	std::vector<mesh::Vertex> vertices;
+	std::unique_ptr<mesh> md5model(mesh::meshesfrommd5("spikes/marine.md5mesh", m, vertices));
+	entity md5(*(md5model.get()), *Res<Texture>::load("marine.png"));
+	scene s;
+	s.add(&md5);
 	size_t framenr = 0;
 	size_t counter = 0;
 	timer t;
 	while(!camera.quit)
 	{
-		pipeline.Step(camera, scene);
+		pipeline.Step(camera, s);
 		window.Swap();
 		camera.Update();
 		//animation for now seems to have 60 frames.
