@@ -411,7 +411,7 @@ static const unsigned int Attachments[] =
 class RenderTarget
 {
 public:
-	RenderTarget(unsigned int width, unsigned int height, std::vector<std::pair<std::string, Texture*>>& targets)
+	RenderTarget(unsigned int width, unsigned int height, std::vector<Texture*>& targets)
 	: width(width)
 	, height(height)
 	, fbo(0)
@@ -428,7 +428,7 @@ public:
 			glDrawBuffers(targets.size(), Attachments);
 			for(unsigned int i=0; i < targets.size(); i++)
 			{
-				targets[i].second->Attach(i);
+				targets[i]->Attach(i);
 			}
 		}
 	}
@@ -815,21 +815,16 @@ protected:
 	VertexShader vs;
 	FragmentShader fs;
 	ShaderProgram sp;
-	std::vector<std::string> inputs;
-	std::vector<std::pair<std::string, Texture*>> output;
+	std::vector<Texture*> output;
 	std::unique_ptr<RenderTarget> rt;
 	object& obj;
 public:
 	struct Descriptor
 	{
-		struct io
-		{
-			std::string name;
-			std::string id;
-		};
 		std::string vs;
 		std::string fs;
-		std::vector<io> inputs, outputs;
+		std::vector<std::string> outputs;
+		std::vector<std::string> inputs;
 	};
 	RenderStep(size_t width, size_t height, const Descriptor& descriptor, object& obj)
 	: width(width), height(height)
@@ -838,13 +833,14 @@ public:
 	, sp(vs, fs, mesh::description)
 	, obj(obj)
 	{
+		sp.Use();
 		for(size_t i = 0; i < descriptor.inputs.size(); i++)
 		{
-			addinput(descriptor.inputs[i].name, descriptor.inputs[i].id);
+			sp.SetTexture(descriptor.inputs[i].c_str(), i);
 		}
 		for(size_t i = 0; i < descriptor.outputs.size(); i++)
 		{
-			addoutput(descriptor.outputs[i].name, descriptor.outputs[i].id);
+			output.push_back(Res<Texture>::load(descriptor.outputs[i]));
 		}
 		rt.reset(new RenderTarget(width, height, output));
 	}
@@ -855,20 +851,6 @@ public:
 		sp.Set("projection", &view.projection[0][0]);
 		sp.Set("view", &view.GetViewMatrix()[0][0]);
 		obj.Draw(sp);
-	}
-private:
-	void addinput(std::string name, std::string id)
-	{
-		inputs.push_back(name);
-		sp.Use();
-		for(size_t i = 0; i < inputs.size(); i++)
-		{
-			sp.SetTexture(inputs[i].c_str(), i);
-		}
-	}
-	void addoutput(std::string name, std::string id)
-	{
-		output.push_back(std::make_pair(name, Res<Texture>::load(id)));
 	}
 };
 
@@ -1033,22 +1015,15 @@ public:
 	, height(height)
 	{
 		RenderStep::Descriptor geometrydescriptor { "resources/shaders/geometry.vs", "resources/shaders/geometry.fs"};
-		RenderStep::Descriptor::io picture{"modeltex", "marine.png"};
-		RenderStep::Descriptor::io positionio{"293487234", "position"};
-		RenderStep::Descriptor::io colorio{"293487234", "color"};
-		RenderStep::Descriptor::io normalio{"asdfasdfe", "normal"};
-		geometrydescriptor.outputs.push_back(positionio);
-		geometrydescriptor.outputs.push_back(colorio);
-		geometrydescriptor.outputs.push_back(normalio);
-		geometrydescriptor.inputs.push_back(picture);
+		geometrydescriptor.outputs.push_back("position");
+		geometrydescriptor.outputs.push_back("color");
+		geometrydescriptor.outputs.push_back("normal");
+		geometrydescriptor.inputs.push_back("modeltex");
 
 		RenderStep::Descriptor reducedescriptor { "resources/shaders/reduce.vs", "resources/shaders/reduce.fs"};
-		RenderStep::Descriptor::io reducepositionio{"positiontex", "position"};
-		RenderStep::Descriptor::io reducecolorio{"colortex", "color"};
-		RenderStep::Descriptor::io reducenormalio{"normaltex", "normal"};
-		reducedescriptor.inputs.push_back(reducepositionio);
-		reducedescriptor.inputs.push_back(reducecolorio);
-		reducedescriptor.inputs.push_back(reducenormalio);
+		reducedescriptor.inputs.push_back("positiontex");
+		reducedescriptor.inputs.push_back("colortex");
+		reducedescriptor.inputs.push_back("normaltex");
 		std::vector<Texture*> textures;
 		textures.push_back(Res<Texture>::load("position", std::unique_ptr<Texture>(new Texture(width, height))));
 		textures.push_back(Res<Texture>::load("color", std::unique_ptr<Texture>(new Texture(width, height))));
