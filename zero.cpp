@@ -910,7 +910,6 @@ public:
 	}
 };
 
-/*
 #include <Rocket/Core/FileInterface.h>
 #include <Rocket/Core/RenderInterface.h>
 #include <Rocket/Core/SystemInterface.h>
@@ -1014,6 +1013,45 @@ public:
 	}
 };
 
+class ui
+{
+private:
+	UiRenderer renderer;
+	UiFileInterface fileinterface;
+	Rocket::Core::Context* Context;
+public:
+	ui(size_t width, size_t height)
+	: renderer(width, height)
+	, fileinterface("resources/ui")
+	{
+		Rocket::Core::SetFileInterface(&fileinterface);
+		Rocket::Core::SetRenderInterface(&renderer);
+
+		if(!Rocket::Core::Initialise())
+			throw new std::exception();
+
+		Rocket::Core::FontDatabase::LoadFontFace("Delicious-Bold.otf");
+		Rocket::Core::FontDatabase::LoadFontFace("Delicious-BoldItalic.otf");
+		Rocket::Core::FontDatabase::LoadFontFace("Delicious-Italic.otf");
+		Rocket::Core::FontDatabase::LoadFontFace("Delicious-Roman.otf");
+
+		Context = Rocket::Core::CreateContext("default", Rocket::Core::Vector2i(width, height));
+
+		//Rocket::Debugger::Initialise(Context);
+
+		Rocket::Core::ElementDocument *Document = Context->LoadDocument("demo.rml");
+
+		Document->Show();
+		Document->RemoveReference();
+	}
+	void Update()
+	{
+		Context->Render();
+		Context->Update();
+	}
+};
+
+/*
 class UIStep : public RenderStep
 {
 private:
@@ -1054,15 +1092,14 @@ public:
 		Context->Render();
 		Context->Update();
 	}
-};
-		RenderStep::Descriptor geometrydescriptor { "resources/shaders/geometry.vs", "resources/shaders/geometry.fs"};
+};*/
 }
-*/
 
 class RenderPipeline
 {
 private:
 	std::unique_ptr<RenderStep> geometry;
+	std::unique_ptr<RenderStep> ui;
 	std::unique_ptr<EffectsStep> deferred;
 	size_t width, height;
 public:
@@ -1084,18 +1121,27 @@ public:
 		deferreddescriptor.add(RenderStep::Descriptor::INPUT, "positiontex");
 		deferreddescriptor.add(RenderStep::Descriptor::INPUT, "colortex");
 		deferreddescriptor.add(RenderStep::Descriptor::INPUT, "normaltex");
+		deferreddescriptor.add(RenderStep::Descriptor::INPUT, "uitex");
+
+		RenderStep::Descriptor uidescr;
+		uidescr.set(RenderStep::Descriptor::VS, "resources/shaders/ui.vs");
+		uidescr.set(RenderStep::Descriptor::FS, "resources/shaders/ui.fs");
+		uidescr.add(RenderStep::Descriptor::OUTPUT, "ui");
 
 		std::vector<Texture*> textures;
 		textures.push_back(Res<Texture>::load("position", new Texture(width, height)));
 		textures.push_back(Res<Texture>::load("color", new Texture(width, height)));
 		textures.push_back(Res<Texture>::load("normal", new Texture(width, height)));
+		textures.push_back(Res<Texture>::load("ui", new Texture(width, height)));
 
 		geometry.reset(new RenderStep(width, height, geometrydescriptor));
+		ui.reset(new RenderStep(width, height, uidescr));
 		deferred.reset(new EffectsStep(width, height, deferreddescriptor, textures));
 	};
 	void Step(const View& view, object& obj)
 	{
 		geometry->Step(view, obj);
+		ui->Step(view, obj);
 		deferred->Step();
 	}
 };
@@ -1192,8 +1238,10 @@ int main()
 	size_t framenr = 0;
 	size_t counter = 0;
 	timer t;
+	ui::ui ui_(width, height);
 	while(!camera.quit)
 	{
+		ui_.Update();
 		pipeline.Step(camera, s);
 		window.Swap();
 		camera.Update();

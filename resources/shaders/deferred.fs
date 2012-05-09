@@ -3,6 +3,7 @@
 uniform sampler2D colortex;
 uniform sampler2D normaltex;
 uniform sampler2D positiontex;
+uniform sampler2D uitex;
 in vec3 pass_position;
 in vec3 pass_normal;
 in vec2 pass_texcoord;
