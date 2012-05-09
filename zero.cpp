@@ -807,16 +807,16 @@ public:
 	virtual glm::mat4 GetViewMatrix() const = 0;
 };
 
+class EffectsStep;
 class RenderStep
 {
+friend class EffectsStep;
 protected:
 	size_t width, height;
 	VertexShader vs;
 	FragmentShader fs;
 	ShaderProgram sp;
-	std::vector<Texture*> output;
 	std::unique_ptr<RenderTarget> rt;
-	object& obj;
 public:
 	struct Descriptor
 	{
@@ -825,31 +825,50 @@ public:
 		std::vector<std::string> outputs;
 		std::vector<std::string> inputs;
 	};
-	RenderStep(size_t width, size_t height, const Descriptor& descriptor, object& obj)
+	RenderStep(size_t width, size_t height, const Descriptor& descriptor)
 	: width(width), height(height)
 	, vs(descriptor.vs)
 	, fs(descriptor.fs)
 	, sp(vs, fs, mesh::description)
-	, obj(obj)
 	{
 		sp.Use();
 		for(size_t i = 0; i < descriptor.inputs.size(); i++)
 		{
 			sp.SetTexture(descriptor.inputs[i].c_str(), i);
 		}
+		std::vector<Texture*> output;
 		for(size_t i = 0; i < descriptor.outputs.size(); i++)
 		{
 			output.push_back(Res<Texture>::load(descriptor.outputs[i]));
 		}
 		rt.reset(new RenderTarget(width, height, output));
 	}
-	virtual void Step(const View& view)
+	void Step(const View& view, object& obj)
 	{
 		rt->Activate();
 		sp.Use();
 		sp.Set("projection", &view.projection[0][0]);
 		sp.Set("view", &view.GetViewMatrix()[0][0]);
 		obj.Draw(sp);
+	}
+};
+
+class EffectsStep
+{
+private:
+	RenderStep rs;
+	effectinput input;
+public:
+	EffectsStep(size_t width, size_t height, const RenderStep::Descriptor& descriptor, std::vector<Texture*> textures)
+	: rs(width, height, descriptor)
+	, input(textures)
+	{
+	}
+	void Step()
+	{
+		rs.rt->Activate();
+		rs.sp.Use();
+		input.Draw(rs.sp);
 	}
 };
 
@@ -1005,11 +1024,11 @@ public:
 class RenderPipeline
 {
 private:
-	std::vector<std::unique_ptr<RenderStep>> steps;
+	std::unique_ptr<RenderStep> geometry;
+	std::unique_ptr<EffectsStep> deferred;
 	size_t width, height;
-	std::unique_ptr<effectinput> input;
 public:
-	RenderPipeline(size_t width, size_t height, scene& s)
+	RenderPipeline(size_t width, size_t height)
 	: width(width)
 	, height(height)
 	{
@@ -1019,26 +1038,23 @@ public:
 		geometrydescriptor.outputs.push_back("normal");
 		geometrydescriptor.inputs.push_back("modeltex");
 
-		RenderStep::Descriptor reducedescriptor { "resources/shaders/reduce.vs", "resources/shaders/reduce.fs"};
-		reducedescriptor.inputs.push_back("positiontex");
-		reducedescriptor.inputs.push_back("colortex");
-		reducedescriptor.inputs.push_back("normaltex");
+		RenderStep::Descriptor deferreddescriptor { "resources/shaders/deferred.vs", "resources/shaders/deferred.fs"};
+		deferreddescriptor.inputs.push_back("positiontex");
+		deferreddescriptor.inputs.push_back("colortex");
+		deferreddescriptor.inputs.push_back("normaltex");
 
 		std::vector<Texture*> textures;
 		textures.push_back(Res<Texture>::load("position", new Texture(width, height)));
 		textures.push_back(Res<Texture>::load("color", new Texture(width, height)));
 		textures.push_back(Res<Texture>::load("normal", new Texture(width, height)));
-		input.reset(new effectinput(textures));
 
-		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, geometrydescriptor, s)));
-		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, reducedescriptor, *input.get())));
+		geometry.reset(new RenderStep(width, height, geometrydescriptor));
+		deferred.reset(new EffectsStep(width, height, deferreddescriptor, textures));
 	};
-	void Step(const View& view)
+	void Step(const View& view, object& obj)
 	{
-		for(size_t i = 0; i < steps.size(); i++)
-		{
-			steps[i]->Step(view);
-		}
+		geometry->Step(view, obj);
+		deferred->Step();
 	}
 };
 
@@ -1130,13 +1146,13 @@ int main()
 	entity md5(*(md5model.get()), *Res<Texture>::load("marine.png", new Texture(width, height, imagedata)));
 	scene s;
 	s.add(&md5);
-	RenderPipeline pipeline(width, height, s);
+	RenderPipeline pipeline(width, height);
 	size_t framenr = 0;
 	size_t counter = 0;
 	timer t;
 	while(!camera.quit)
 	{
-		pipeline.Step(camera);
+		pipeline.Step(camera, s);
 		window.Swap();
 		camera.Update();
 		//animation for now seems to have 60 frames.
