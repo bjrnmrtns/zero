@@ -89,12 +89,11 @@ public:
 		assert(false);
 
 	}
-	static T* load(std::string name, std::unique_ptr<T> val)
+	static T* load(std::string name, T* val)
 	{
 		if(data.find(name) != data.end()) throw GeneralException("Resource: " + name + ", already loaded");
-		T* ptr = val.get();
-		data.insert(std::make_pair(name, std::move(val)));
-		return ptr;
+		data.insert(std::make_pair(name, std::unique_ptr<T>(val)));
+		return val;
 	}
 	static std::map<std::string, std::unique_ptr<T>> data;
 };
@@ -1024,10 +1023,11 @@ public:
 		reducedescriptor.inputs.push_back("positiontex");
 		reducedescriptor.inputs.push_back("colortex");
 		reducedescriptor.inputs.push_back("normaltex");
+
 		std::vector<Texture*> textures;
-		textures.push_back(Res<Texture>::load("position", std::unique_ptr<Texture>(new Texture(width, height))));
-		textures.push_back(Res<Texture>::load("color", std::unique_ptr<Texture>(new Texture(width, height))));
-		textures.push_back(Res<Texture>::load("normal", std::unique_ptr<Texture>(new Texture(width, height))));
+		textures.push_back(Res<Texture>::load("position", new Texture(width, height)));
+		textures.push_back(Res<Texture>::load("color", new Texture(width, height)));
+		textures.push_back(Res<Texture>::load("normal", new Texture(width, height)));
 		input.reset(new effectinput(textures));
 
 		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, geometrydescriptor, s)));
@@ -1116,8 +1116,8 @@ private:
 
 int main()
 {
-	unsigned int width = 1024;
-	unsigned int height = 768;
+	unsigned int width = 800;
+	unsigned int height = 600;
 	Window_ window(width, height);
 	Camera camera(width, height);
 
@@ -1127,7 +1127,7 @@ int main()
 	std::vector<mesh::Vertex> vertices;
 	std::unique_ptr<mesh> md5model(mesh::meshesfrommd5("spikes/marine.md5mesh", m, vertices));
 	Texture::ImageData imagedata{IL_PNG, File::read("marine.png")};
-	entity md5(*(md5model.get()), *Res<Texture>::load("marine.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata))));
+	entity md5(*(md5model.get()), *Res<Texture>::load("marine.png", new Texture(width, height, imagedata)));
 	scene s;
 	s.add(&md5);
 	RenderPipeline pipeline(width, height, s);
