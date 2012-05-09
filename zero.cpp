@@ -820,6 +820,44 @@ protected:
 public:
 	struct Descriptor
 	{
+		enum shadertype {
+			VS,
+			FS
+		};
+		enum iotype {
+			OUTPUT,
+			INPUT
+		};
+		void set(shadertype t, std::string val)
+		{
+			switch(t)
+			{
+			case VS:
+				vs = val;
+			break;
+			case FS:
+				fs = val;
+			break;
+			default:
+				assert(false);
+			break;
+			};
+		}
+		void add(iotype t, std::string val)
+		{
+			switch(t)
+			{
+			case INPUT:
+				inputs.push_back(val);
+			break;
+			case OUTPUT:
+				outputs.push_back(val);
+			break;
+			default:
+				assert(false);
+			break;
+			};
+		}
 		std::string vs;
 		std::string fs;
 		std::vector<std::string> outputs;
@@ -1032,16 +1070,20 @@ public:
 	: width(width)
 	, height(height)
 	{
-		RenderStep::Descriptor geometrydescriptor { "resources/shaders/geometry.vs", "resources/shaders/geometry.fs"};
-		geometrydescriptor.outputs.push_back("position");
-		geometrydescriptor.outputs.push_back("color");
-		geometrydescriptor.outputs.push_back("normal");
-		geometrydescriptor.inputs.push_back("modeltex");
+		RenderStep::Descriptor geometrydescriptor;
+		geometrydescriptor.set(RenderStep::Descriptor::VS, "resources/shaders/geometry.vs");
+		geometrydescriptor.set(RenderStep::Descriptor::FS, "resources/shaders/geometry.fs");
+		geometrydescriptor.add(RenderStep::Descriptor::INPUT, "modeltex");
+		geometrydescriptor.add(RenderStep::Descriptor::OUTPUT, "position");
+		geometrydescriptor.add(RenderStep::Descriptor::OUTPUT, "color");
+		geometrydescriptor.add(RenderStep::Descriptor::OUTPUT, "normal");
 
-		RenderStep::Descriptor deferreddescriptor { "resources/shaders/deferred.vs", "resources/shaders/deferred.fs"};
-		deferreddescriptor.inputs.push_back("positiontex");
-		deferreddescriptor.inputs.push_back("colortex");
-		deferreddescriptor.inputs.push_back("normaltex");
+		RenderStep::Descriptor deferreddescriptor;
+		deferreddescriptor.set(RenderStep::Descriptor::VS, "resources/shaders/deferred.vs");
+		deferreddescriptor.set(RenderStep::Descriptor::FS, "resources/shaders/deferred.fs");
+		deferreddescriptor.add(RenderStep::Descriptor::INPUT, "positiontex");
+		deferreddescriptor.add(RenderStep::Descriptor::INPUT, "colortex");
+		deferreddescriptor.add(RenderStep::Descriptor::INPUT, "normaltex");
 
 		std::vector<Texture*> textures;
 		textures.push_back(Res<Texture>::load("position", new Texture(width, height)));
