@@ -818,6 +818,7 @@ protected:
 	std::vector<std::string> inputs;
 	std::vector<std::pair<std::string, Texture*>> output;
 	std::unique_ptr<RenderTarget> rt;
+	object& obj;
 public:
 	struct Descriptor
 	{
@@ -830,11 +831,12 @@ public:
 		std::string fs;
 		std::vector<io> inputs, outputs;
 	};
-	RenderStep(size_t width, size_t height, const Descriptor& descriptor)
+	RenderStep(size_t width, size_t height, const Descriptor& descriptor, object& obj)
 	: width(width), height(height)
 	, vs(descriptor.vs)
 	, fs(descriptor.fs)
 	, sp(vs, fs, mesh::description)
+	, obj(obj)
 	{
 		for(size_t i = 0; i < descriptor.inputs.size(); i++)
 		{
@@ -846,7 +848,7 @@ public:
 		}
 		rt.reset(new RenderTarget(width, height, output));
 	}
-	virtual void Step(const View& view, const object& obj)
+	virtual void Step(const View& view)
 	{
 		rt->Activate();
 		sp.Use();
@@ -867,26 +869,6 @@ private:
 	void addoutput(std::string name, std::string id)
 	{
 		output.push_back(std::make_pair(name, Res<Texture>::load(id)));
-	}
-};
-
-class EffectsStep : public RenderStep
-{
-private:
-	std::vector<Texture*> textures;
-public:
-	EffectsStep(size_t width, size_t height, const Descriptor& descriptor)
-	: RenderStep(width, height, descriptor)
-	{
-		for(size_t i = 0; i < descriptor.inputs.size(); i++)
-		{
-			textures.push_back(Res<Texture>::load(descriptor.inputs[i].id));
-		}
-	}
-	void Step(const View& view, const object& obj) 
-	{
-		effectinput input(textures);
-		RenderStep::Step(view, input);
 	}
 };
 
@@ -1044,8 +1026,9 @@ class RenderPipeline
 private:
 	std::vector<std::unique_ptr<RenderStep>> steps;
 	size_t width, height;
+	std::unique_ptr<effectinput> input;
 public:
-	RenderPipeline(size_t width, size_t height)
+	RenderPipeline(size_t width, size_t height, scene& s)
 	: width(width)
 	, height(height)
 	{
@@ -1066,25 +1049,20 @@ public:
 		reducedescriptor.inputs.push_back(reducepositionio);
 		reducedescriptor.inputs.push_back(reducecolorio);
 		reducedescriptor.inputs.push_back(reducenormalio);
+		std::vector<Texture*> textures;
+		textures.push_back(Res<Texture>::load("position", std::unique_ptr<Texture>(new Texture(width, height))));
+		textures.push_back(Res<Texture>::load("color", std::unique_ptr<Texture>(new Texture(width, height))));
+		textures.push_back(Res<Texture>::load("normal", std::unique_ptr<Texture>(new Texture(width, height))));
+		input.reset(new effectinput(textures));
 
-//		RenderStep::Descriptor uidescriptor { "resources/shaders/ui.vs", "resources/shaders/ui.fs"};
-//		RenderStep::Descriptor::io colorui{"bla", "colorui"};
-//		uidescriptor.outputs.push_back(colorui);
-
-		Res<Texture>::load("position", std::unique_ptr<Texture>(new Texture(width, height)));
-		Res<Texture>::load("color", std::unique_ptr<Texture>(new Texture(width, height)));
-		Res<Texture>::load("normal", std::unique_ptr<Texture>(new Texture(width, height)));
-//		Res<Texture>::load("colorui", std::unique_ptr<Texture>(new Texture(width, height)));
-
-		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, geometrydescriptor)));
-		steps.push_back(std::unique_ptr<RenderStep>(new EffectsStep(width, height, reducedescriptor)));
-		//steps.push_back(std::unique_ptr<RenderStep>(new ui::UIStep(width, height, uidescriptor)));
+		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, geometrydescriptor, s)));
+		steps.push_back(std::unique_ptr<RenderStep>(new RenderStep(width, height, reducedescriptor, *input.get())));
 	};
-	void Step(const View& view, const object& obj)
+	void Step(const View& view)
 	{
 		for(size_t i = 0; i < steps.size(); i++)
 		{
-			steps[i]->Step(view, obj);
+			steps[i]->Step(view);
 		}
 	}
 };
@@ -1166,26 +1144,24 @@ int main()
 	unsigned int width = 1024;
 	unsigned int height = 768;
 	Window_ window(width, height);
-	RenderPipeline pipeline(width, height);
 	Camera camera(width, height);
-
-	Texture::ImageData imagedata{IL_PNG, File::read("marine.png")};
-	Res<Texture>::load("marine.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata)));
 
 	md5::anim a;
 	mesh::animfrommd5("spikes/marine.md5anim", a);
 	md5::model m; 
 	std::vector<mesh::Vertex> vertices;
 	std::unique_ptr<mesh> md5model(mesh::meshesfrommd5("spikes/marine.md5mesh", m, vertices));
-	entity md5(*(md5model.get()), *Res<Texture>::load("marine.png"));
+	Texture::ImageData imagedata{IL_PNG, File::read("marine.png")};
+	entity md5(*(md5model.get()), *Res<Texture>::load("marine.png", std::unique_ptr<Texture>(new Texture(width, height, imagedata))));
 	scene s;
 	s.add(&md5);
+	RenderPipeline pipeline(width, height, s);
 	size_t framenr = 0;
 	size_t counter = 0;
 	timer t;
 	while(!camera.quit)
 	{
-		pipeline.Step(camera, s);
+		pipeline.Step(camera);
 		window.Swap();
 		camera.Update();
 		//animation for now seems to have 60 frames.
