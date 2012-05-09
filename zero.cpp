@@ -27,6 +27,10 @@ public:
 	, last(start)
 	{
 	}
+	double sincebegin()
+	{
+		return start - glfwGetTime();
+	}
 	double sincelast()
 	{
 		double now = glfwGetTime();
@@ -916,6 +920,16 @@ public:
 #include <Rocket/Core/Core.h>
 namespace ui
 {
+class UiSystemInterface : public Rocket::Core::SystemInterface
+{
+private:
+	timer t;
+public:
+	float GetElapsedTime()
+	{
+		return t.sincebegin();
+	}
+};
 
 class UiFileInterface : public Rocket::Core::FileInterface
 {
@@ -1018,12 +1032,14 @@ class ui
 private:
 	UiRenderer renderer;
 	UiFileInterface fileinterface;
+	UiSystemInterface systeminterface;
 	Rocket::Core::Context* Context;
 public:
 	ui(size_t width, size_t height)
 	: renderer(width, height)
-	, fileinterface("resources/ui")
+	, fileinterface("resources/ui/")
 	{
+		Rocket::Core::SetSystemInterface(&systeminterface);
 		Rocket::Core::SetFileInterface(&fileinterface);
 		Rocket::Core::SetRenderInterface(&renderer);
 
