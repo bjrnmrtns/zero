@@ -934,8 +934,8 @@ public:
 class UiFileInterface : public Rocket::Core::FileInterface
 {
 public:
-	const Rocket::Core::String& root;
-	UiFileInterface(const Rocket::Core::String& root)
+	const Rocket::Core::String root;
+	UiFileInterface(const Rocket::Core::String root)
 	: root(root)
 	{
 	}
@@ -946,8 +946,7 @@ public:
 	{
 		FILE* fp = fopen((root + path).CString(), "rb");
 		if (fp != NULL) return (Rocket::Core::FileHandle) fp;
-		fp = fopen(path.CString(), "rb");
-		return (Rocket::Core::FileHandle) fp;
+		throw GeneralException((root + path).CString());
 	}
 	void Close(Rocket::Core::FileHandle file)
 	{
