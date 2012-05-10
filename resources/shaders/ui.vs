@@ -1,21 +1,19 @@
 #version 330 core
 #extension GL_ARB_separate_shader_objects : enable
 
-layout (location = 0) in vec3 in_position;
-layout (location = 1) in vec3 in_normal;
+layout (location = 0) in vec2 in_position;
+layout (location = 1) in vec4 in_color;
 layout (location = 2) in vec2 in_texcoord;
-layout (location = 3) uniform mat4 projection;
-layout (location = 4) uniform mat4 view;
-layout (location = 5) uniform mat4 world;
-out vec3 pass_position;
-out vec3 pass_normal;
+layout (location = 3) uniform mat4 world;
+out vec2 pass_position;
+out vec4 pass_color;
 out vec2 pass_texcoord;
 
 void main(void)
 {
-	gl_Position = projection * view * world * vec4(in_position, 1.0);
+	gl_Position = vec4(in_position, 0.0f, 1.0f);
 	pass_position = in_position;
-	pass_normal = (world * vec4(in_normal, 0.0f)).xyz;
+	pass_color = in_color;
 	pass_texcoord = in_texcoord;
 }
 

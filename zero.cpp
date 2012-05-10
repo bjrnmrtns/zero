@@ -112,6 +112,7 @@ public:
 		std::string name;
 		size_t numberofelements;
 		size_t elementsize;
+		int type;
 	};
 	template <typename T>
 	VertexBuffer(const InputElementDescription description[], const T vertexData[], size_t count, unsigned int mode = GL_TRIANGLES)
@@ -127,7 +128,7 @@ public:
 		for(int i = 0; description[i].elementsize; ++i)
 		{
 			glEnableVertexAttribArray(i);
-			glVertexAttribPointer(i, description[i].numberofelements, GL_FLOAT, GL_FALSE, stride, (void *)offset);
+			glVertexAttribPointer(i, description[i].numberofelements, description[i].type, GL_FALSE, stride, (void *)offset);
 			offset += description[i].elementsize;
 		}
 //		glBufferData(GL_ARRAY_BUFFER, stride * count, vertexData, GL_STATIC_DRAW);
@@ -733,10 +734,10 @@ public:
 		vb.Draw();
 	}
 };
-const VertexBuffer::InputElementDescription mesh::description[] { { "in_position", 3, sizeof(glm::vec3) },
-                                                                   { "in_normal",   3, sizeof(glm::vec3) },
-                                                                   { "in_texcoord", 2, sizeof(glm::vec2) },
-                                                                   { "", 0, 0 } };
+const VertexBuffer::InputElementDescription mesh::description[] { { "in_position", 3, sizeof(glm::vec3), GL_FLOAT },
+                                                                   { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT },
+                                                                   { "in_texcoord", 2, sizeof(glm::vec2), GL_FLOAT },
+                                                                   { "", 0, 0, 0 } };
 class effectinput : public object
 {
 private:
@@ -812,9 +813,11 @@ public:
 };
 
 class EffectsStep;
+class UIStep;
 class RenderStep
 {
 friend class EffectsStep;
+friend class UIStep;
 protected:
 	size_t width, height;
 	VertexShader vs;
@@ -867,11 +870,11 @@ public:
 		std::vector<std::string> outputs;
 		std::vector<std::string> inputs;
 	};
-	RenderStep(size_t width, size_t height, const Descriptor& descriptor)
+	RenderStep(size_t width, size_t height, const Descriptor& descriptor, const VertexBuffer::InputElementDescription descr[] = mesh::description)
 	: width(width), height(height)
 	, vs(descriptor.vs)
 	, fs(descriptor.fs)
-	, sp(vs, fs, mesh::description)
+	, sp(vs, fs, descr)
 	{
 		sp.Use();
 		for(size_t i = 0; i < descriptor.inputs.size(); i++)
@@ -889,8 +892,6 @@ public:
 	{
 		rt->Activate();
 		sp.Use();
-		sp.Set("projection", &view.projection[0][0]);
-		sp.Set("view", &view.GetViewMatrix()[0][0]);
 		obj.Draw(sp);
 	}
 };
@@ -917,7 +918,8 @@ public:
 #include <Rocket/Core/FileInterface.h>
 #include <Rocket/Core/RenderInterface.h>
 #include <Rocket/Core/SystemInterface.h>
-#include <Rocket/Core/Core.h>
+#include <Rocket/Core.h>
+#include <Rocket/Debugger.h>
 namespace ui
 {
 class UiSystemInterface : public Rocket::Core::SystemInterface
@@ -971,30 +973,41 @@ class UiRenderer : public Rocket::Core::RenderInterface
 private:
 	size_t width, height;
 	std::map<Rocket::Core::TextureHandle, std::unique_ptr<Texture>> texmap;
+	ShaderProgram& sp;
 public:
-	UiRenderer(size_t width, size_t height)
+	static const VertexBuffer::InputElementDescription description[];
+	UiRenderer(size_t width, size_t height, ShaderProgram& sp)
 	: width(width)
 	, height(height)
+	, sp(sp)
 	{
 	}
 	void RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, const Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f& translation)
 	{
+		static bool already = false;
+		if(!already)
+		{
+			for(int i = 0; i < num_vertices; i++)
+			{
+				vertices[i].position.x = ((vertices[i].position.x / 800) * 2) - 1;
+				vertices[i].position.y = ((vertices[i].position.y / 600) * 2) - 1;
+				std::cout << "(x,y)" <<  vertices[i].position.x << "," << vertices[i].position.y;
+			}
+			std::cout << std::endl;
+			already = true;
+		}
 //		glPushMatrix();
 //		glTranslatef(translation.x, translation.y, 0);
-		static VertexBuffer::InputElementDescription description[] { { "in_position", 3, sizeof(Rocket::Core::Vector2f) },
-                                                                             { "in_color",   1, sizeof(Rocket::Core::Colourb) },
-                                                                             { "in_texcoord", 1, sizeof(Rocket::Core::Vector2f) },
-                                                                             { "", 0, 0 } };
-		VertexBuffer vb(description, vertices, num_vertices, GL_TRIANGLES);
+		VertexBuffer vb(description, vertices, num_vertices);
 
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//		glEnable(GL_BLEND);
+//		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		if(!texture) throw new std::exception();
-		texmap.find(texture)->second->Bind(0);
+//		if(!texture) throw new std::exception();
+//		texmap.find(texture)->second->Bind(0);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
+//		glActiveTexture(GL_TEXTURE0);
+//		glBindTexture(GL_TEXTURE_2D, texture);
 		vb.DrawIndexed(*indices, num_indices);
 
 
@@ -1025,8 +1038,12 @@ public:
 		texmap.erase(texture_handle);
 	}
 };
+const VertexBuffer::InputElementDescription UiRenderer::description[] { { "in_position", 2, sizeof(Rocket::Core::Vector2f), GL_FLOAT },
+                                                                      { "in_color",   4, sizeof(Rocket::Core::Colourb), GL_UNSIGNED_BYTE },
+                                                                      { "in_texcoord", 2, sizeof(Rocket::Core::Vector2f), GL_FLOAT },
+                                                                      { "", 0, 0, 0 } };
 
-class ui
+class ui 
 {
 private:
 	UiRenderer renderer;
@@ -1034,8 +1051,8 @@ private:
 	UiSystemInterface systeminterface;
 	Rocket::Core::Context* Context;
 public:
-	ui(size_t width, size_t height)
-	: renderer(width, height)
+	ui(size_t width, size_t height, ShaderProgram& sp)
+	: renderer(width, height, sp)
 	, fileinterface("resources/ui/")
 	{
 		Rocket::Core::SetSystemInterface(&systeminterface);
@@ -1052,17 +1069,17 @@ public:
 
 		Context = Rocket::Core::CreateContext("default", Rocket::Core::Vector2i(width, height));
 
-		//Rocket::Debugger::Initialise(Context);
+//		Rocket::Debugger::Initialise(Context);
 
 		Rocket::Core::ElementDocument *Document = Context->LoadDocument("demo.rml");
 
 		Document->Show();
 		Document->RemoveReference();
 	}
-	void Update()
+	void Draw() const
 	{
-		Context->Render();
 		Context->Update();
+		Context->Render();
 	}
 };
 
@@ -1110,11 +1127,30 @@ public:
 };*/
 }
 
+class UIStep
+{
+private:
+	RenderStep rs;
+	ui::ui ui_;
+public:
+	UIStep(size_t width, size_t height, const RenderStep::Descriptor& descriptor)
+	: rs(width, height, descriptor, ui::UiRenderer::description)
+	, ui_(width, height, rs.sp)
+	{
+	}
+	void Step()
+	{
+		rs.rt->Activate();
+		rs.sp.Use();
+		ui_.Draw();
+	}
+};
+
 class RenderPipeline
 {
 private:
 	std::unique_ptr<RenderStep> geometry;
-	std::unique_ptr<RenderStep> ui;
+	std::unique_ptr<UIStep> ui;
 	std::unique_ptr<EffectsStep> deferred;
 	size_t width, height;
 public:
@@ -1150,13 +1186,13 @@ public:
 		textures.push_back(Res<Texture>::load("ui", new Texture(width, height)));
 
 		geometry.reset(new RenderStep(width, height, geometrydescriptor));
-		ui.reset(new RenderStep(width, height, uidescr));
+		ui.reset(new UIStep(width, height, uidescr));
 		deferred.reset(new EffectsStep(width, height, deferreddescriptor, textures));
 	};
 	void Step(const View& view, object& obj)
 	{
 		geometry->Step(view, obj);
-		ui->Step(view, obj);
+		ui->Step();
 		deferred->Step();
 	}
 };
@@ -1253,10 +1289,8 @@ int main()
 	size_t framenr = 0;
 	size_t counter = 0;
 	timer t;
-	ui::ui ui_(width, height);
 	while(!camera.quit)
 	{
-		ui_.Update();
 		pipeline.Step(camera, s);
 		window.Swap();
 		camera.Update();
