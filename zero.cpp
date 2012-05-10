@@ -358,7 +358,7 @@ public:
 		glBindTexture(GL_TEXTURE_2D, id);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGBA, GL_FLOAT, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	}
 	// Bind for render onto primitive.
 	void Bind(int textureUnit)
@@ -478,7 +478,7 @@ public:
 		glGetError(); // mask error of failed glewInit http://www.opengl.org/discussion_boards/ubbthreads.php?ubb=showflat&Number=284912
 		glCullFace(GL_BACK);
 		glFrontFace(GL_CW);
-		glEnable(GL_CULL_FACE);
+//		glEnable(GL_CULL_FACE);
 		glClearDepth(1.0f);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
@@ -892,6 +892,8 @@ public:
 	{
 		rt->Activate();
 		sp.Use();
+		sp.Set("projection", &view.projection[0][0]);
+		sp.Set("view", &view.GetViewMatrix()[0][0]);
 		obj.Draw(sp);
 	}
 };
@@ -984,7 +986,7 @@ public:
 	}
 	void RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, const Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f& translation)
 	{
-		static bool already = false;
+/*		static bool already = false;
 		if(!already)
 		{
 			for(int i = 0; i < num_vertices; i++)
@@ -996,6 +998,7 @@ public:
 			std::cout << std::endl;
 			already = true;
 		}
+*/
 //		glPushMatrix();
 //		glTranslatef(translation.x, translation.y, 0);
 		VertexBuffer vb(description, vertices, num_vertices);
@@ -1003,11 +1006,10 @@ public:
 //		glEnable(GL_BLEND);
 //		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-//		if(!texture) throw new std::exception();
-//		texmap.find(texture)->second->Bind(0);
+		glActiveTexture(GL_TEXTURE0);
+		if(!texture) throw new std::exception();
+		texmap.find(texture)->second->Bind(0);
 
-//		glActiveTexture(GL_TEXTURE0);
-//		glBindTexture(GL_TEXTURE_2D, texture);
 		vb.DrawIndexed(*indices, num_indices);
 
 
@@ -1142,6 +1144,7 @@ public:
 	{
 		rs.rt->Activate();
 		rs.sp.Use();
+		rs.sp.Set("projection", &glm::ortho(0.0f, (float)rs.width, (float)rs.height, 0.0f, -1.0f, 1.0f)[0][0]);
 		ui_.Draw();
 	}
 };
@@ -1177,6 +1180,7 @@ public:
 		RenderStep::Descriptor uidescr;
 		uidescr.set(RenderStep::Descriptor::VS, "resources/shaders/ui.vs");
 		uidescr.set(RenderStep::Descriptor::FS, "resources/shaders/ui.fs");
+		uidescr.add(RenderStep::Descriptor::INPUT, "modeltex");
 		uidescr.add(RenderStep::Descriptor::OUTPUT, "ui");
 
 		std::vector<Texture*> textures;

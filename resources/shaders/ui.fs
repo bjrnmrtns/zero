@@ -8,6 +8,7 @@ out vec3 outColor[1];
 
 void main(void)
 {
-	outColor[0] = pass_color.xyz;
+	outColor[0] = texture2D(modeltex, pass_texcoord).xyz;
+//	outColor[0] = pass_color.xyz;
 }
 
