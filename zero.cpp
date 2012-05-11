@@ -99,6 +99,11 @@ public:
 		data.insert(std::make_pair(name, std::unique_ptr<T>(val)));
 		return val;
 	}
+	static void unload(std::string name)
+	{
+		auto it = data.find(name);
+		if(it != data.end()) data.erase(it);
+	}
 	static std::map<std::string, std::unique_ptr<T>> data;
 };
 template <typename T>
@@ -1006,9 +1011,10 @@ public:
 //		glEnable(GL_BLEND);
 //		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		glActiveTexture(GL_TEXTURE0);
-		if(!texture) throw new std::exception();
-		texmap.find(texture)->second->Bind(0);
+		if(texture) {
+			glActiveTexture(GL_TEXTURE0);
+			texmap.find(texture)->second->Bind(0);
+		}
 
 		vb.DrawIndexed(*indices, num_indices);
 
@@ -1037,7 +1043,8 @@ public:
 	}
 	void ReleaseTexture(Rocket::Core::TextureHandle texture_handle)
 	{
-		texmap.erase(texture_handle);
+		auto it = texmap.find(texture_handle);
+		if(it != texmap.end()) texmap.erase(it);
 	}
 };
 const VertexBuffer::InputElementDescription UiRenderer::description[] { { "in_position", 2, sizeof(Rocket::Core::Vector2f), GL_FLOAT },
