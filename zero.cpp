@@ -315,7 +315,7 @@ public:
 			ilSetData(data.get());
 			ImageData imagedata;
 			imagedata.type = IL_PNG;
-			imagedata.blob.size = ilSaveL(IL_PNG, data.get(), texture.width * texture.height * 3);
+			imagedata.blob.size = ilSaveL(IL_PNG, data.get(), texture.width * texture.height * 4);
 			unsigned char* savedata = (unsigned char*)malloc(imagedata.blob.size);
 			imagedata.blob.buf.reset(savedata);
 			memcpy(savedata, data.get(), imagedata.blob.size);
@@ -1006,6 +1006,7 @@ public:
 */
 //		glPushMatrix();
 //		glTranslatef(translation.x, translation.y, 0);
+
 		VertexBuffer vb(description, vertices, num_vertices);
 
 //		glEnable(GL_BLEND);
