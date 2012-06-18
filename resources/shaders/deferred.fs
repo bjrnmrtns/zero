@@ -21,6 +21,6 @@ void main(void)
 
 	vec3 color = texture2D(colortex, pass_texcoord).xyz;
 	outColor = color * (lambert + 0.1);
-	outColor = texture2D(uitex, pass_texcoord).xyz;
+//	outColor = texture2D(uitex, pass_texcoord).xyz;
 }
 
