@@ -1289,10 +1289,10 @@ int main()
 	Camera camera(width, height);
 
 	md5::anim a;
-	mesh::animfrommd5("spikes/marine.md5anim", a);
+	mesh::animfrommd5("marine.md5anim", a);
 	md5::model m; 
 	std::vector<mesh::Vertex> vertices;
-	std::unique_ptr<mesh> md5model(mesh::meshesfrommd5("spikes/marine.md5mesh", m, vertices));
+	std::unique_ptr<mesh> md5model(mesh::meshesfrommd5("marine.md5mesh", m, vertices));
 	Texture::ImageData imagedata{IL_PNG, File::read("marine.png")};
 	entity md5(*(md5model.get()), *Res<Texture>::load("marine.png", new Texture(width, height, imagedata)));
 	scene s;
