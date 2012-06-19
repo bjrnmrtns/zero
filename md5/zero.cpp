@@ -13,9 +13,9 @@
 #include <string.h>
 #include <cstdlib>
 #include <map>
+#include "md5.cpp"
 #include "Blob.cpp"
 #include "GeneralException.cpp"
-#include "md5.cpp"
 
 class timer
 {
@@ -136,7 +136,6 @@ public:
 			glVertexAttribPointer(i, description[i].numberofelements, description[i].type, GL_FALSE, stride, (void *)offset);
 			offset += description[i].elementsize;
 		}
-//		glBufferData(GL_ARRAY_BUFFER, stride * count, vertexData, GL_STATIC_DRAW);
 		glBufferData(GL_ARRAY_BUFFER, stride * count, vertexData, GL_DYNAMIC_DRAW);
 	}
 	template <typename T>
