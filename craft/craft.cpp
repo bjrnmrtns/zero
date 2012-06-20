@@ -255,9 +255,6 @@ class Window_
 public:
 	Window_(size_t width, size_t height)
 	{
-		ilInit();
-		ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
-		ilEnable(IL_ORIGIN_SET);
 		if(!glfwInit()) throw new GeneralException("glfwInit failed");
 		glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
 		glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 3);
@@ -272,7 +269,7 @@ public:
 		glGetError(); // mask error of failed glewInit http://www.opengl.org/discussion_boards/ubbthreads.php?ubb=showflat&Number=284912
 		glCullFace(GL_BACK);
 		glFrontFace(GL_CW);
-//		glEnable(GL_CULL_FACE);
+		glEnable(GL_CULL_FACE);
 		glClearDepth(1.0f);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
@@ -286,12 +283,6 @@ public:
 	{
 		glfwTerminate();
 	}
-};
-
-class object
-{
-public:
-	virtual void Draw(ShaderProgram& sp) const = 0;
 };
 
 class mesh
@@ -418,44 +409,6 @@ const VertexBuffer::InputElementDescription mesh::description[] { { "in_position
                                                                    { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT },
                                                                    { "in_texcoord", 2, sizeof(glm::vec2), GL_FLOAT },
                                                                    { "", 0, 0, 0 } };
-class scene : public object
-{
-private:
-	std::vector<object*> objs;
-public:
-	void add(object* obj)
-	{
-		objs.push_back(obj);
-	}
-	void Draw(ShaderProgram& sp) const
-	{
-		for(auto it = objs.begin(); it != objs.end(); ++it)
-		{
-			(*it)->Draw(sp);
-		}
-	}
-};
-
-class entity : public object
-{
-public:
-	mesh& model;
-	glm::vec3 position;
-	glm::quat rotation;
-	Texture& ctex;
-	entity(mesh& model, Texture& ctex)
-	: model(model)
-	, ctex(ctex)
-	{
-	}
-	void Draw(ShaderProgram& sp) const
-	{
-		sp.Set("world", &(glm::translate(glm::mat4(1.0f), position) * glm::mat4_cast(rotation))[0][0]);
-		ctex.Bind(0);
-		model.Draw();
-	}
-	
-};
 
 class View
 {
@@ -476,7 +429,7 @@ public:
 	Camera(size_t width, size_t height)
 	: View(glm::perspective(60.0f, (float)width / (float)height, 1.0f, 1000.0f), glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f)))
 	, quit(false)
-	, position(glm::vec3(40.0f, 35.0f, 100.0f))
+	, position(glm::vec3(0.0f, 0.0f, 0.0f))
 	, up(false), down(false), left(false), right(false)
 	, w(false), a(false), s(false), d(false)
 	, speed(2.0)
@@ -502,10 +455,10 @@ public:
 		if(right) MoveX(0.2 * speed);
 		if(up) MoveZ(0.2 * speed);
 		if(down) MoveZ(-0.2 * speed);
-		if(w) RotateX(1.0 * speed);
-		if(s) RotateX(-1.0 * speed);
-		if(a) RotateY(1.0 * speed);
-		if(d) RotateY(-1.0 * speed);
+		if(w) RotateX(0.2 * speed);
+		if(s) RotateX(-0.2 * speed);
+		if(a) RotateY(0.2 * speed);
+		if(d) RotateY(-0.2 * speed);
 	}
 	
 	glm::mat4 GetViewMatrix() const
@@ -548,10 +501,17 @@ int main()
 	unsigned int height = 600;
 	Window_ window(width, height);
 	Camera camera(width, height);
+	VertexShader vs("resources/shaders/null.vs");
+	FragmentShader fs("resources/shaders/null.fs");
+	ShaderProgram sp(vs, fs, mesh::description);
 
-	std::vector<mesh::Vertex> vertices;
 	while(!camera.quit)
 	{
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		sp.Use();
+                sp.Set("projection", &camera.projection[0][0]);
+                sp.Set("view", &camera.GetViewMatrix()[0][0]);
+		mesh::cube().Draw();
 		window.Swap();
 		camera.Update();
 	}
