@@ -400,6 +400,80 @@ public:
 		static mesh model(description, vertices, sizeof(vertices)/sizeof(Vertex));
 		return model;
 	}
+	static mesh* blocks()
+	{
+		static bool world[128][128][128];
+		for(size_t z = 0; z < 128; z++)
+		{
+			for(size_t y = 0; y < 128; y++)
+			{
+				for(size_t x = 0; x < 128; x++)
+				{
+					world[x][y][z] = ((x + y + z) % 3) == 0;
+				}
+			}
+		}
+		const size_t size = 16;
+		Vertex vertices[3 * 12 * size * size * size];
+		size_t i = 0;
+		for(size_t z = 0; z < size; z++)
+		{
+			for(size_t y = 0; y < size; y++)
+			{
+				for(size_t x = 0; x < size; x++)
+				{
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3(-1,  0,  0),  glm::vec2(0,  0) };
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3(-1,  0,  0),  glm::vec2(1,  1) };
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3(-1,  0,  0),  glm::vec2(1,  0) }; 
+
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3(-1,  0,  0),  glm::vec2(1,  1) };
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3(-1,  0,  0),  glm::vec2(0,  0) };
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3(-1,  0,  0),  glm::vec2(0,  1) };
+
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  0,  1),  glm::vec2(0,  0) };
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  0,  1),  glm::vec2(1,  1) };
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  0,  1),  glm::vec2(1,  0) };
+
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  0,  1),  glm::vec2(1,  1) };
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  0,  1),  glm::vec2(0,  0) };
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  0,  1),  glm::vec2(0,  1) };
+
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 1,  0,  0),  glm::vec2(0,  0) };
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 1,  0,  0),  glm::vec2(1,  1) };
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 1,  0,  0),  glm::vec2(1,  0) };
+
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 1,  0,  0),  glm::vec2(1,  1) };
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 1,  0,  0),  glm::vec2(0,  0) };
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 1,  0,  0),  glm::vec2(0,  1) };
+
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  0, -1),  glm::vec2(0,  0) };
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  0, -1),  glm::vec2(1,  1) };
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  0, -1),  glm::vec2(0,  1) };
+
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  0, -1),  glm::vec2(1,  1) };
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  0, -1),  glm::vec2(0,  0) };
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  0, -1),  glm::vec2(1,  0) };
+
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  1,  0),  glm::vec2(0,  0) };
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  1,  0),  glm::vec2(1,  1) };
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  1,  0),  glm::vec2(1,  0) };
+
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  1,  0),  glm::vec2(1,  1) };
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  1,  0),  glm::vec2(0,  0) };
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  1,  0),  glm::vec2(0,  1) };
+
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0, -1,  0),  glm::vec2(0,  0) };
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0, -1,  0),  glm::vec2(1,  1) };
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0, -1,  0),  glm::vec2(1,  0) };
+
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0, -1,  0),  glm::vec2(1,  1) };
+					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0, -1,  0),  glm::vec2(0,  0) };
+					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0, -1,  0),  glm::vec2(0,  1) } ;
+				}
+			}
+		}
+		return new mesh(description, vertices, sizeof(vertices)/sizeof(Vertex));
+	}
 	void Draw() const
 	{
 		vb.Draw();
@@ -455,10 +529,10 @@ public:
 		if(right) MoveX(0.2 * speed);
 		if(up) MoveZ(0.2 * speed);
 		if(down) MoveZ(-0.2 * speed);
-		if(w) RotateX(0.2 * speed);
-		if(s) RotateX(-0.2 * speed);
-		if(a) RotateY(0.2 * speed);
-		if(d) RotateY(-0.2 * speed);
+		if(w) RotateX(0.05 * speed);
+		if(s) RotateX(-0.05 * speed);
+		if(a) RotateY(0.05 * speed);
+		if(d) RotateY(-0.05 * speed);
 	}
 	
 	glm::mat4 GetViewMatrix() const
@@ -505,13 +579,14 @@ int main()
 	FragmentShader fs("resources/shaders/null.fs");
 	ShaderProgram sp(vs, fs, mesh::description);
 
+	std::unique_ptr<mesh> m(mesh::blocks());
 	while(!camera.quit)
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		sp.Use();
                 sp.Set("projection", &camera.projection[0][0]);
                 sp.Set("view", &camera.GetViewMatrix()[0][0]);
-		mesh::cube().Draw();
+		m->Draw();
 		window.Swap();
 		camera.Update();
 	}
