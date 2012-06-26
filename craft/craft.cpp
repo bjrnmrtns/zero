@@ -293,6 +293,7 @@ public:
 		glm::vec3 pos;
 		glm::vec3 normal;
 		glm::vec2 texcoord;
+		glm::vec3 color;
 	};
 private:
 	VertexBuffer vb;
@@ -409,7 +410,7 @@ public:
 			{
 				for(size_t x = 0; x < 128; x++)
 				{
-					world[x][y][z] = ((x + y + z) % 3) == 0;
+					world[x][y][z] = ((x + y + z) % 2) == 0;
 				}
 			}
 		}
@@ -422,57 +423,61 @@ public:
 			{
 				for(size_t x = 0; x < size; x++)
 				{
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3(-1,  0,  0),  glm::vec2(0,  0) };
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3(-1,  0,  0),  glm::vec2(1,  1) };
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3(-1,  0,  0),  glm::vec2(1,  0) }; 
+					glm::vec3 color(1.0f, 0.0f, 1.0f);
+					if(world[x][y][z])
+					{
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3(-1,  0,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3(-1,  0,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3(-1,  0,  0),  glm::vec2(1,  0), color }; 
 
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3(-1,  0,  0),  glm::vec2(1,  1) };
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3(-1,  0,  0),  glm::vec2(0,  0) };
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3(-1,  0,  0),  glm::vec2(0,  1) };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3(-1,  0,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3(-1,  0,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3(-1,  0,  0),  glm::vec2(0,  1), color };
 
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  0,  1),  glm::vec2(0,  0) };
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  0,  1),  glm::vec2(1,  1) };
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  0,  1),  glm::vec2(1,  0) };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  0,  1),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  0,  1),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  0,  1),  glm::vec2(1,  0), color };
 
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  0,  1),  glm::vec2(1,  1) };
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  0,  1),  glm::vec2(0,  0) };
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  0,  1),  glm::vec2(0,  1) };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  0,  1),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  0,  1),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  0,  1),  glm::vec2(0,  1), color };
 
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 1,  0,  0),  glm::vec2(0,  0) };
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 1,  0,  0),  glm::vec2(1,  1) };
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 1,  0,  0),  glm::vec2(1,  0) };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 1,  0,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 1,  0,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 1,  0,  0),  glm::vec2(1,  0), color };
 
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 1,  0,  0),  glm::vec2(1,  1) };
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 1,  0,  0),  glm::vec2(0,  0) };
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 1,  0,  0),  glm::vec2(0,  1) };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 1,  0,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 1,  0,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 1,  0,  0),  glm::vec2(0,  1), color };
 
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  0, -1),  glm::vec2(0,  0) };
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  0, -1),  glm::vec2(1,  1) };
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  0, -1),  glm::vec2(0,  1) };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  0, -1),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  0, -1),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  0, -1),  glm::vec2(0,  1), color };
 
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  0, -1),  glm::vec2(1,  1) };
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  0, -1),  glm::vec2(0,  0) };
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  0, -1),  glm::vec2(1,  0) };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  0, -1),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  0, -1),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  0, -1),  glm::vec2(1,  0), color };
 
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  1,  0),  glm::vec2(0,  0) };
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  1,  0),  glm::vec2(1,  1) };
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  1,  0),  glm::vec2(1,  0) };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  1,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  1,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  1,  0),  glm::vec2(1,  0), color };
 
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0,  1,  0),  glm::vec2(1,  1) };
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  1,  0),  glm::vec2(0,  0) };
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x,  1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0,  1,  0),  glm::vec2(0,  1) };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  1,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  1,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  1,  0),  glm::vec2(0,  1), color };
 
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0, -1,  0),  glm::vec2(0,  0) };
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0, -1,  0),  glm::vec2(1,  1) };
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0, -1,  0),  glm::vec2(1,  0) };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0, -1,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0, -1,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0, -1,  0),  glm::vec2(1,  0), color };
 
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y,  1.0 + (float)3*z), glm::vec3( 0, -1,  0),  glm::vec2(1,  1) };
-					vertices[i++] = { glm::vec3( 1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0, -1,  0),  glm::vec2(0,  0) };
-					vertices[i++] = { glm::vec3(-1.0 + (float)3*x, -1.0 + (float)3*y, -1.0 + (float)3*z), glm::vec3( 0, -1,  0),  glm::vec2(0,  1) } ;
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0, -1,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0, -1,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0, -1,  0),  glm::vec2(0,  1), color } ;
+					}
 				}
 			}
 		}
-		return new mesh(description, vertices, sizeof(vertices)/sizeof(Vertex));
+		return new mesh(description, vertices, size * size * size * 3 * 12);
 	}
 	void Draw() const
 	{
@@ -480,9 +485,10 @@ public:
 	}
 };
 const VertexBuffer::InputElementDescription mesh::description[] { { "in_position", 3, sizeof(glm::vec3), GL_FLOAT },
-                                                                   { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT },
-                                                                   { "in_texcoord", 2, sizeof(glm::vec2), GL_FLOAT },
-                                                                   { "", 0, 0, 0 } };
+                                                                  { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT },
+                                                                  { "in_texcoord", 2, sizeof(glm::vec2), GL_FLOAT },
+                                                                  { "in_color",    3, sizeof(glm::vec3), GL_FLOAT },
+                                                                  { "", 0, 0, 0 } };
 
 class View
 {
