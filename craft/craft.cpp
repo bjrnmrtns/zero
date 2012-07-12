@@ -14,6 +14,8 @@
 #include <map>
 #include "GeneralException.cpp"
 #include "Blob.cpp"
+		
+static int theworld[128][128][128];
 
 class File
 {
@@ -264,6 +266,7 @@ public:
 			glfwTerminate();
 			throw new GeneralException("glfwOpenWindow failed");
 		}
+		glfwDisable(GLFW_MOUSE_CURSOR);
 		glewExperimental = GL_TRUE;
 		if(glewInit() != GLEW_OK) throw new GeneralException("glewInit failed");
 		glGetError(); // mask error of failed glewInit http://www.opengl.org/discussion_boards/ubbthreads.php?ubb=showflat&Number=284912
@@ -303,181 +306,156 @@ public:
 	: vb(description, vertices, size, mode)
 	{
 	}
-	static mesh& heightmap()
-	{
-		const size_t size = 128;
-		const size_t spacing = 1.0f;
-		static Vertex vertices[size * size * 6];
-		for(size_t x = 0; x < size; x++)
-		{
-			for(size_t z = 0; z < size; z++)
-			{
-				int xw =  (2 * x * spacing) - (size * spacing);
-				int zw =  (2 * z * spacing) - (size * spacing);
-				vertices[6 * ((z * size) + x) + 0].pos = glm::vec3(xw - spacing, 0, zw - spacing);
-				vertices[6 * ((z * size) + x) + 0].normal = glm::vec3(0, 1, 0);
-				vertices[6 * ((z * size) + x) + 0].texcoord = glm::vec2(0, 0);
-				vertices[6 * ((z * size) + x) + 1].pos = glm::vec3(xw - spacing, 0, zw + spacing);
-				vertices[6 * ((z * size) + x) + 1].normal = glm::vec3(0, 1, 0);
-				vertices[6 * ((z * size) + x) + 1].texcoord = glm::vec2(-1, -1);
-				vertices[6 * ((z * size) + x) + 2].pos = glm::vec3(xw + spacing, 0, zw - spacing);
-				vertices[6 * ((z * size) + x) + 2].normal = glm::vec3(0, 1, 0);
-				vertices[6 * ((z * size) + x) + 2].texcoord = glm::vec2(-1, -1);
-				vertices[6 * ((z * size) + x) + 3].pos = glm::vec3(xw - spacing, 0, zw + spacing);
-				vertices[6 * ((z * size) + x) + 3].normal = glm::vec3(0, 1, 0);
-				vertices[6 * ((z * size) + x) + 3].texcoord = glm::vec2(-1, -1);
-				vertices[6 * ((z * size) + x) + 4].pos = glm::vec3(xw + spacing, 0, zw + spacing);
-				vertices[6 * ((z * size) + x) + 4].normal = glm::vec3(0, 1, 0);
-				vertices[6 * ((z * size) + x) + 4].texcoord = glm::vec2(-1, -1);
-				vertices[6 * ((z * size) + x) + 5].pos = glm::vec3(xw + spacing, 0, zw - spacing);
-				vertices[6 * ((z * size) + x) + 5].normal = glm::vec3(0, 1, 0);
-				vertices[6 * ((z * size) + x) + 5].texcoord = glm::vec2(-1, -1);
-			}
-		}
-		static mesh model(description, vertices, sizeof(vertices)/sizeof(Vertex));
-		return model;
-	};
 	static mesh& square()
 	{
-		static const Vertex vertices[] { { glm::vec3(-1, -1, 1), glm::vec3(0, 0, 1), glm::vec2(0, 0) },
-		                                 { glm::vec3(-1,  1, 1), glm::vec3(0, 0, 1), glm::vec2(0, 1) },
-		                                 { glm::vec3( 1, -1, 1), glm::vec3(0, 0, 1), glm::vec2(1, 0) },
-		                                 { glm::vec3(-1,  1, 1), glm::vec3(0, 0,-1), glm::vec2(0, 1) },
-		                                 { glm::vec3( 1,  1, 1), glm::vec3(0, 0,-1), glm::vec2(1, 1) },
-		                                 { glm::vec3( 1, -1, 1), glm::vec3(0, 0,-1), glm::vec2(1, 0) } };
+		static const Vertex vertices[] { { glm::vec3( 0, 0, 1), glm::vec3(0, 0, 1), glm::vec2(0, 0) },
+		                                 { glm::vec3( 0, 1, 1), glm::vec3(0, 0, 1), glm::vec2(0, 1) },
+		                                 { glm::vec3( 1, 0, 1), glm::vec3(0, 0, 1), glm::vec2(1, 0) },
+		                                 { glm::vec3( 0, 1, 1), glm::vec3(0, 0,-1), glm::vec2(0, 1) },
+		                                 { glm::vec3( 1, 1, 1), glm::vec3(0, 0,-1), glm::vec2(1, 1) },
+		                                 { glm::vec3( 1, 0, 1), glm::vec3(0, 0,-1), glm::vec2(1, 0) } };
 		static mesh model(description, vertices, sizeof(vertices)/sizeof(Vertex));
 		return model;
 	};
 	static mesh& cube()
 	{
-	static Vertex vertices[] = { { glm::vec3(-1,  1, -1), glm::vec3(-1,  0,  0),  glm::vec2(0,  0) },
-	                             { glm::vec3(-1, -1,  1), glm::vec3(-1,  0,  0),  glm::vec2(1,  1) },
-	                             { glm::vec3(-1, -1, -1), glm::vec3(-1,  0,  0),  glm::vec2(1,  0) }, 
+	glm::vec3 color(0.0f, 0.0f, 1.0f);
+	static Vertex vertices[] = { { glm::vec3( 0,  1,  0), glm::vec3(-1,  0,  0),  glm::vec2(0,  0), color },
+	                             { glm::vec3( 0,  0,  1), glm::vec3(-1,  0,  0),  glm::vec2(1,  1), color },
+	                             { glm::vec3( 0,  0,  0), glm::vec3(-1,  0,  0),  glm::vec2(1,  0), color }, 
 
-	                             { glm::vec3(-1, -1,  1), glm::vec3(-1,  0,  0),  glm::vec2(1,  1) },
-	                             { glm::vec3(-1,  1, -1), glm::vec3(-1,  0,  0),  glm::vec2(0,  0) },
-	                             { glm::vec3(-1,  1,  1), glm::vec3(-1,  0,  0),  glm::vec2(0,  1) },
+	                             { glm::vec3( 0,  0,  1), glm::vec3(-1,  0,  0),  glm::vec2(1,  1), color },
+	                             { glm::vec3( 0,  1,  0), glm::vec3(-1,  0,  0),  glm::vec2(0,  0), color },
+	                             { glm::vec3( 0,  1,  1), glm::vec3(-1,  0,  0),  glm::vec2(0,  1), color },
 
-	                             { glm::vec3(-1,  1,  1), glm::vec3( 0,  0,  1),  glm::vec2(0,  0) },
-	                             { glm::vec3( 1, -1,  1), glm::vec3( 0,  0,  1),  glm::vec2(1,  1) },
-	                             { glm::vec3(-1, -1,  1), glm::vec3( 0,  0,  1),  glm::vec2(1,  0) },
+	                             { glm::vec3( 0,  1,  1), glm::vec3( 0,  0,  1),  glm::vec2(0,  0), color },
+	                             { glm::vec3( 1,  0,  1), glm::vec3( 0,  0,  1),  glm::vec2(1,  1), color },
+	                             { glm::vec3( 0,  0,  1), glm::vec3( 0,  0,  1),  glm::vec2(1,  0), color },
 
-	                             { glm::vec3( 1, -1,  1), glm::vec3( 0,  0,  1),  glm::vec2(1,  1) },
-	                             { glm::vec3(-1,  1,  1), glm::vec3( 0,  0,  1),  glm::vec2(0,  0) },
-	                             { glm::vec3( 1,  1,  1), glm::vec3( 0,  0,  1),  glm::vec2(0,  1) },
+	                             { glm::vec3( 1,  0,  1), glm::vec3( 0,  0,  1),  glm::vec2(1,  1), color },
+	                             { glm::vec3( 0,  1,  1), glm::vec3( 0,  0,  1),  glm::vec2(0,  0), color },
+	                             { glm::vec3( 1,  1,  1), glm::vec3( 0,  0,  1),  glm::vec2(0,  1), color },
 
-	                             { glm::vec3( 1, -1,  1), glm::vec3( 1,  0,  0),  glm::vec2(0,  0) },
-	                             { glm::vec3( 1,  1, -1), glm::vec3( 1,  0,  0),  glm::vec2(1,  1) },
-	                             { glm::vec3( 1, -1, -1), glm::vec3( 1,  0,  0),  glm::vec2(1,  0) },
+	                             { glm::vec3( 1,  0,  1), glm::vec3( 1,  0,  0),  glm::vec2(0,  0), color },
+	                             { glm::vec3( 1,  1,  0), glm::vec3( 1,  0,  0),  glm::vec2(1,  1), color },
+	                             { glm::vec3( 1,  0,  0), glm::vec3( 1,  0,  0),  glm::vec2(1,  0), color },
 
-	                             { glm::vec3( 1,  1, -1), glm::vec3( 1,  0,  0),  glm::vec2(1,  1) },
-	                             { glm::vec3( 1, -1,  1), glm::vec3( 1,  0,  0),  glm::vec2(0,  0) },
-	                             { glm::vec3( 1,  1,  1), glm::vec3( 1,  0,  0),  glm::vec2(0,  1) },
+	                             { glm::vec3( 1,  1,  0), glm::vec3( 1,  0,  0),  glm::vec2(1,  1), color },
+	                             { glm::vec3( 1,  0,  1), glm::vec3( 1,  0,  0),  glm::vec2(0,  0), color },
+	                             { glm::vec3( 1,  1,  1), glm::vec3( 1,  0,  0),  glm::vec2(0,  1), color },
 
-	                             { glm::vec3( 1,  1, -1), glm::vec3( 0,  0, -1),  glm::vec2(0,  0) },
-	                             { glm::vec3(-1, -1, -1), glm::vec3( 0,  0, -1),  glm::vec2(1,  1) },
-	                             { glm::vec3( 1, -1, -1), glm::vec3( 0,  0, -1),  glm::vec2(0,  1) },
+	                             { glm::vec3( 1,  1,  0), glm::vec3( 0,  0, -1),  glm::vec2(0,  0), color },
+	                             { glm::vec3( 0,  0,  0), glm::vec3( 0,  0, -1),  glm::vec2(1,  1), color },
+	                             { glm::vec3( 1,  0,  0), glm::vec3( 0,  0, -1),  glm::vec2(0,  1), color },
 
-	                             { glm::vec3(-1, -1, -1), glm::vec3( 0,  0, -1),  glm::vec2(1,  1) },
-	                             { glm::vec3( 1,  1, -1), glm::vec3( 0,  0, -1),  glm::vec2(0,  0) },
-	                             { glm::vec3(-1,  1, -1), glm::vec3( 0,  0, -1),  glm::vec2(1,  0) },
+	                             { glm::vec3( 0,  0,  0), glm::vec3( 0,  0, -1),  glm::vec2(1,  1), color },
+	                             { glm::vec3( 1,  1,  0), glm::vec3( 0,  0, -1),  glm::vec2(0,  0), color },
+	                             { glm::vec3( 0,  1,  0), glm::vec3( 0,  0, -1),  glm::vec2(1,  0), color },
 
-	                             { glm::vec3(-1,  1, -1), glm::vec3( 0,  1,  0),  glm::vec2(0,  0) },
-	                             { glm::vec3( 1,  1,  1), glm::vec3( 0,  1,  0),  glm::vec2(1,  1) },
-	                             { glm::vec3(-1,  1,  1), glm::vec3( 0,  1,  0),  glm::vec2(1,  0) },
+	                             { glm::vec3( 0,  1,  0), glm::vec3( 0,  1,  0),  glm::vec2(0,  0), color },
+	                             { glm::vec3( 1,  1,  1), glm::vec3( 0,  1,  0),  glm::vec2(1,  1), color },
+	                             { glm::vec3( 0,  1,  1), glm::vec3( 0,  1,  0),  glm::vec2(1,  0), color },
 
-	                             { glm::vec3( 1,  1,  1), glm::vec3( 0,  1,  0),  glm::vec2(1,  1) },
-	                             { glm::vec3(-1,  1, -1), glm::vec3( 0,  1,  0),  glm::vec2(0,  0) },
-	                             { glm::vec3( 1,  1, -1), glm::vec3( 0,  1,  0),  glm::vec2(0,  1) },
+	                             { glm::vec3( 1,  1,  1), glm::vec3( 0,  1,  0),  glm::vec2(1,  1), color },
+	                             { glm::vec3( 0,  1,  0), glm::vec3( 0,  1,  0),  glm::vec2(0,  0), color },
+	                             { glm::vec3( 1,  1,  0), glm::vec3( 0,  1,  0),  glm::vec2(0,  1), color },
 
-	                             { glm::vec3( 1, -1, -1), glm::vec3( 0, -1,  0),  glm::vec2(0,  0) },
-	                             { glm::vec3(-1, -1,  1), glm::vec3( 0, -1,  0),  glm::vec2(1,  1) },
-	                             { glm::vec3( 1, -1,  1), glm::vec3( 0, -1,  0),  glm::vec2(1,  0) },
+	                             { glm::vec3( 1,  0,  0), glm::vec3( 0, -1,  0),  glm::vec2(0,  0), color },
+	                             { glm::vec3( 0,  0,  1), glm::vec3( 0, -1,  0),  glm::vec2(1,  1), color },
+	                             { glm::vec3( 1,  0,  1), glm::vec3( 0, -1,  0),  glm::vec2(1,  0), color },
 
-	                             { glm::vec3(-1, -1,  1), glm::vec3( 0, -1,  0),  glm::vec2(1,  1) },
-	                             { glm::vec3( 1, -1, -1), glm::vec3( 0, -1,  0),  glm::vec2(0,  0) },
-	                             { glm::vec3(-1, -1, -1), glm::vec3( 0, -1,  0),  glm::vec2(0,  1) }
+	                             { glm::vec3( 0,  0,  1), glm::vec3( 0, -1,  0),  glm::vec2(1,  1), color },
+	                             { glm::vec3( 1,  0,  0), glm::vec3( 0, -1,  0),  glm::vec2(0,  0), color },
+	                             { glm::vec3( 0,  0,  0), glm::vec3( 0, -1,  0),  glm::vec2(0,  1), color }
 		};
 		static mesh model(description, vertices, sizeof(vertices)/sizeof(Vertex));
 		return model;
 	}
 	static mesh* blocks()
 	{
-		static bool world[128][128][128];
+		glm::vec3 colors[] { glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 1.0f) };
+		size_t N = 0;
 		for(size_t z = 0; z < 128; z++)
 		{
 			for(size_t y = 0; y < 128; y++)
 			{
 				for(size_t x = 0; x < 128; x++)
 				{
-					world[x][y][z] = ((x + y + z) % 2) == 0;
+					if((y == 0) || ((y == 1) && x == 3))
+					{
+						theworld[x][y][z] = 1;
+						N++;
+					}
 				}
 			}
 		}
-		const size_t size = 16;
-		Vertex vertices[3 * 12 * size * size * size];
+		const size_t size = 64;
+		Vertex *vertices = new Vertex[3 * 12 * N];
 		size_t i = 0;
+		std::srand(time(0));
 		for(size_t z = 0; z < size; z++)
 		{
 			for(size_t y = 0; y < size; y++)
 			{
 				for(size_t x = 0; x < size; x++)
 				{
-					glm::vec3 color(1.0f, 0.0f, 1.0f);
-					if(world[x][y][z])
+					glm::vec3 color = colors[std::rand() % (sizeof(colors)/sizeof(glm::vec3))];
+					if(theworld[x][y][z])
 					{
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3(-1,  0,  0),  glm::vec2(0,  0), color };
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3(-1,  0,  0),  glm::vec2(1,  1), color };
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3(-1,  0,  0),  glm::vec2(1,  0), color }; 
+						vertices[i++] = { glm::vec3( 0 + x,  1 + y,  0 + z), glm::vec3(-1,  0,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 0 + x,  0 + y,  1 + z), glm::vec3(-1,  0,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 0 + x,  0 + y,  0 + z), glm::vec3(-1,  0,  0),  glm::vec2(1,  0), color }; 
 
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3(-1,  0,  0),  glm::vec2(1,  1), color };
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3(-1,  0,  0),  glm::vec2(0,  0), color };
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3(-1,  0,  0),  glm::vec2(0,  1), color };
+						vertices[i++] = { glm::vec3( 0 + x,  0 + y,  1 + z), glm::vec3(-1,  0,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 0 + x,  1 + y,  0 + z), glm::vec3(-1,  0,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 0 + x,  1 + y,  1 + z), glm::vec3(-1,  0,  0),  glm::vec2(0,  1), color };
 
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  0,  1),  glm::vec2(0,  0), color };
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  0,  1),  glm::vec2(1,  1), color };
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  0,  1),  glm::vec2(1,  0), color };
+						vertices[i++] = { glm::vec3( 0 + x,  1 + y,  1 + z), glm::vec3( 0,  0,  1),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 1 + x,  0 + y,  1 + z), glm::vec3( 0,  0,  1),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 0 + x,  0 + y,  1 + z), glm::vec3( 0,  0,  1),  glm::vec2(1,  0), color };
 
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  0,  1),  glm::vec2(1,  1), color };
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  0,  1),  glm::vec2(0,  0), color };
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  0,  1),  glm::vec2(0,  1), color };
+						vertices[i++] = { glm::vec3( 1 + x,  0 + y,  1 + z), glm::vec3( 0,  0,  1),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 0 + x,  1 + y,  1 + z), glm::vec3( 0,  0,  1),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 1 + x,  1 + y,  1 + z), glm::vec3( 0,  0,  1),  glm::vec2(0,  1), color };
 
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 1,  0,  0),  glm::vec2(0,  0), color };
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 1,  0,  0),  glm::vec2(1,  1), color };
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 1,  0,  0),  glm::vec2(1,  0), color };
+						vertices[i++] = { glm::vec3( 1 + x,  0 + y,  1 + z), glm::vec3( 1,  0,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 1 + x,  1 + y,  0 + z), glm::vec3( 1,  0,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 1 + x,  0 + y,  0 + z), glm::vec3( 1,  0,  0),  glm::vec2(1,  0), color };
 
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 1,  0,  0),  glm::vec2(1,  1), color };
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 1,  0,  0),  glm::vec2(0,  0), color };
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 1,  0,  0),  glm::vec2(0,  1), color };
+						vertices[i++] = { glm::vec3( 1 + x,  1 + y,  0 + z), glm::vec3( 1,  0,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 1 + x,  0 + y,  1 + z), glm::vec3( 1,  0,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 1 + x,  1 + y,  1 + z), glm::vec3( 1,  0,  0),  glm::vec2(0,  1), color };
 
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  0, -1),  glm::vec2(0,  0), color };
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  0, -1),  glm::vec2(1,  1), color };
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  0, -1),  glm::vec2(0,  1), color };
+						vertices[i++] = { glm::vec3( 1 + x,  1 + y,  0 + z), glm::vec3( 0,  0, -1),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 0 + x,  0 + y,  0 + z), glm::vec3( 0,  0, -1),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 1 + x,  0 + y,  0 + z), glm::vec3( 0,  0, -1),  glm::vec2(0,  1), color };
 
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  0, -1),  glm::vec2(1,  1), color };
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  0, -1),  glm::vec2(0,  0), color };
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  0, -1),  glm::vec2(1,  0), color };
+						vertices[i++] = { glm::vec3( 0 + x,  0 + y,  0 + z), glm::vec3( 0,  0, -1),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 1 + x,  1 + y,  0 + z), glm::vec3( 0,  0, -1),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 0 + x,  1 + y,  0 + z), glm::vec3( 0,  0, -1),  glm::vec2(1,  0), color };
 
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  1,  0),  glm::vec2(0,  0), color };
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  1,  0),  glm::vec2(1,  1), color };
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  1,  0),  glm::vec2(1,  0), color };
+						vertices[i++] = { glm::vec3( 0 + x,  1 + y,  0 + z), glm::vec3( 0,  1,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 1 + x,  1 + y,  1 + z), glm::vec3( 0,  1,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 0 + x,  1 + y,  1 + z), glm::vec3( 0,  1,  0),  glm::vec2(1,  0), color };
 
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0,  1,  0),  glm::vec2(1,  1), color };
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  1,  0),  glm::vec2(0,  0), color };
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x,  1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0,  1,  0),  glm::vec2(0,  1), color };
+						vertices[i++] = { glm::vec3( 1 + x,  1 + y,  1 + z), glm::vec3( 0,  1,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 0 + x,  1 + y,  0 + z), glm::vec3( 0,  1,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 1 + x,  1 + y,  0 + z), glm::vec3( 0,  1,  0),  glm::vec2(0,  1), color };
 
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0, -1,  0),  glm::vec2(0,  0), color };
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0, -1,  0),  glm::vec2(1,  1), color };
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0, -1,  0),  glm::vec2(1,  0), color };
+						vertices[i++] = { glm::vec3( 1 + x,  0 + y,  0 + z), glm::vec3( 0, -1,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 0 + x,  0 + y,  1 + z), glm::vec3( 0, -1,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 1 + x,  0 + y,  1 + z), glm::vec3( 0, -1,  0),  glm::vec2(1,  0), color };
 
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y,  1.0 + (float)2*z), glm::vec3( 0, -1,  0),  glm::vec2(1,  1), color };
-						vertices[i++] = { glm::vec3( 1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0, -1,  0),  glm::vec2(0,  0), color };
-						vertices[i++] = { glm::vec3(-1.0 + (float)2*x, -1.0 + (float)2*y, -1.0 + (float)2*z), glm::vec3( 0, -1,  0),  glm::vec2(0,  1), color } ;
+						vertices[i++] = { glm::vec3( 0 + x,  0 + y,  1 + z), glm::vec3( 0, -1,  0),  glm::vec2(1,  1), color };
+						vertices[i++] = { glm::vec3( 1 + x,  0 + y,  0 + z), glm::vec3( 0, -1,  0),  glm::vec2(0,  0), color };
+						vertices[i++] = { glm::vec3( 0 + x,  0 + y,  0 + z), glm::vec3( 0, -1,  0),  glm::vec2(0,  1), color } ;
 					}
 				}
 			}
 		}
-		return new mesh(description, vertices, size * size * size * 3 * 12);
+		mesh *m = new mesh(description, vertices, i);
+		delete vertices;
+		return m;
 	}
 	void Draw() const
 	{
@@ -509,11 +487,18 @@ public:
 	Camera(size_t width, size_t height)
 	: View(glm::perspective(60.0f, (float)width / (float)height, 1.0f, 1000.0f), glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f)))
 	, quit(false)
-	, position(glm::vec3(0.0f, 0.0f, 0.0f))
+	, position(glm::vec3(1.0f, 3.0f, 12.0f))
 	, up(false), down(false), left(false), right(false)
 	, w(false), a(false), s(false), d(false)
-	, speed(2.0)
+	, i(false), j(false), k(false), l(false)
+	, speed(1.0)
+	, space(false)
+	, diffx(0)
+	, diffy(0)
+	, width(width)
+	, height(height)
 	{
+		glfwSetMousePos(width/2, height/2);
 	}
 	void Update()
 	{
@@ -525,20 +510,30 @@ public:
 		a = glfwGetKey('A') == GLFW_PRESS;
 		s = glfwGetKey('S') == GLFW_PRESS;
 		d = glfwGetKey('D') == GLFW_PRESS;
+		i = glfwGetKey('I') == GLFW_PRESS;
+		j = glfwGetKey('J') == GLFW_PRESS;
+		k = glfwGetKey('K') == GLFW_PRESS;
+		l = glfwGetKey('L') == GLFW_PRESS;
+		int xMouse;
+		int yMouse;
+		glfwGetMousePos(&xMouse, &yMouse);
+		diffx = (width/2) - xMouse;
+		diffy = (height/2) - yMouse;
+		std::cout << diffx <<  " " << diffy << std::endl;
+		space = glfwGetKey(GLFW_KEY_SPACE) == GLFW_PRESS;
 		quit = glfwGetKey(GLFW_KEY_ESC) || !glfwGetWindowParam(GLFW_OPENED);
 		Recalculate();
+		glfwSetMousePos(width/2, height/2);
 	}
 
 	void Recalculate()
 	{
-		if(left) MoveX(-0.2 * speed);
-		if(right) MoveX(0.2 * speed);
-		if(up) MoveZ(0.2 * speed);
-		if(down) MoveZ(-0.2 * speed);
-		if(w) RotateX(0.05 * speed);
-		if(s) RotateX(-0.05 * speed);
-		if(a) RotateY(0.05 * speed);
-		if(d) RotateY(-0.05 * speed);
+		if(a) MoveX(-0.2 * speed);
+		if(d) MoveX(0.2 * speed);
+		if(w) MoveZ(0.2 * speed);
+		if(s) MoveZ(-0.2 * speed);
+		RotateX(((float)diffy / 10.0) * speed);
+		RotateY(((float)diffx / 10.0) * speed);
 	}
 	
 	glm::mat4 GetViewMatrix() const
@@ -567,12 +562,30 @@ public:
 	}
 public:
 	bool quit;
+	bool i, j, k, l;
+	bool space;
 private:
 	glm::vec3 position;
 	glm::quat orientation;
 	bool up, down, left, right;
 	bool w, a, s, d;
 	float speed;
+	int diffx, diffy;
+	size_t width, height;
+};
+
+class Player
+{
+public:
+	mesh& cube;
+	glm::vec3 position;
+	float dy;
+	Player()
+	: cube(mesh::cube())
+	, position(0.0f, 10.0f, 0.0f)
+	{
+	}
+	
 };
 
 int main()
@@ -585,6 +598,7 @@ int main()
 	FragmentShader fs("resources/shaders/null.fs");
 	ShaderProgram sp(vs, fs, mesh::description);
 
+	Player player;
 	std::unique_ptr<mesh> m(mesh::blocks());
 	while(!camera.quit)
 	{
@@ -592,7 +606,103 @@ int main()
 		sp.Use();
                 sp.Set("projection", &camera.projection[0][0]);
                 sp.Set("view", &camera.GetViewMatrix()[0][0]);
+		sp.Set("world", &glm::mat4(1.0f)[0][0]);
 		m->Draw();
+
+		//
+		static bool lastFrameWasStanding = false;
+		glm::vec3 old = player.position;
+		if (camera.space && lastFrameWasStanding) player.dy = 0.05;
+		player.dy += -0.001;
+		if (player.dy > 0.5) player.dy = 0.5;
+		if (player.dy < -0.5) player.dy = -0.5;
+		player.position.y += player.dy;
+
+		if(camera.i) player.position.x += 0.02f;
+		if(camera.k) player.position.x -= 0.02f;
+		if(camera.j) player.position.z += 0.02f;
+		if(camera.l) player.position.z -= 0.02f;
+		
+
+		// clip when going below zero or above 127
+		if(player.position.x < 0.0) player.position.x = 0;
+		if(player.position.y < 0.0) player.position.y = 0;
+		if(player.position.z < 0.0) player.position.z = 0;
+		if(player.position.x > 127.0) player.position.x = 127;
+		if(player.position.y > 127.0) player.position.y = 127;
+		if(player.position.z > 127.0) player.position.z = 127;
+
+		glm::vec3 diff = player.position - old;
+		static const int eps = 0.000001;
+		lastFrameWasStanding = false;
+		if(diff.y > eps)
+		{
+			if(theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0
+			|| theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0)
+			{
+				player.position.y = old.y;
+				player.dy = 0;
+			}
+		}
+		if(diff.y < -eps)
+		{
+			if(theworld[(int)(player.position.x)][(int)(player.position.y)][(int)(player.position.z)] > 0
+			|| theworld[(int)(player.position.x)][(int)(player.position.y)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y)][(int)(player.position.z)] > 0)
+			{
+				player.position.y = old.y;
+				player.dy = 0;
+				lastFrameWasStanding = true;
+			}
+		}
+		if(diff.x > eps)
+		{
+			if(theworld[(int)(player.position.x + 0.8)][(int)(player.position.y)][(int)(player.position.z)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0)
+			{
+				player.position.x = old.x;
+			}
+		}
+		if(diff.z > eps)
+		{
+			if(theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0)
+			{
+				player.position.z = old.z;
+			}
+		}
+		if(diff.x < -eps)
+		{
+			if(theworld[(int)(player.position.x)][(int)(player.position.y)][(int)(player.position.z)] > 0
+			|| theworld[(int)(player.position.x)][(int)(player.position.y)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0)
+			{
+				player.position.x = old.x;
+			}
+		}
+		if(diff.z < -eps)
+		{
+			if(theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0
+			|| theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0)
+			{
+				player.position.z = old.z;
+			}
+		}
+		//
+
+		glm::mat4 world = glm::translate(glm::mat4(1.0f), player.position);
+		sp.Set("world", &world[0][0]);
+		player.cube.Draw();
 		window.Swap();
 		camera.Update();
 	}

@@ -15,7 +15,7 @@ out vec3 pass_color;
 
 void main(void)
 {
-	gl_Position = projection * view * vec4(in_position, 1.0);
+	gl_Position = projection * view * world * vec4(in_position, 1.0);
 	pass_position = in_position;
 	pass_normal = in_normal;
 	pass_texcoord = in_texcoord;
