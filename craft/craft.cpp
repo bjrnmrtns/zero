@@ -306,17 +306,6 @@ public:
 	: vb(description, vertices, size, mode)
 	{
 	}
-	static mesh& square()
-	{
-		static const Vertex vertices[] { { glm::vec3( 0, 0, 1), glm::vec3(0, 0, 1), glm::vec2(0, 0) },
-		                                 { glm::vec3( 0, 1, 1), glm::vec3(0, 0, 1), glm::vec2(0, 1) },
-		                                 { glm::vec3( 1, 0, 1), glm::vec3(0, 0, 1), glm::vec2(1, 0) },
-		                                 { glm::vec3( 0, 1, 1), glm::vec3(0, 0,-1), glm::vec2(0, 1) },
-		                                 { glm::vec3( 1, 1, 1), glm::vec3(0, 0,-1), glm::vec2(1, 1) },
-		                                 { glm::vec3( 1, 0, 1), glm::vec3(0, 0,-1), glm::vec2(1, 0) } };
-		static mesh model(description, vertices, sizeof(vertices)/sizeof(Vertex));
-		return model;
-	};
 	static mesh& cube()
 	{
 	glm::vec3 color(0.0f, 0.0f, 1.0f);
@@ -481,18 +470,111 @@ public:
 	virtual glm::mat4 GetViewMatrix() const = 0;
 };
 
-class Camera : public View
+class ThirdPersonCamera : public View
 {
 public:
-	Camera(size_t width, size_t height)
+	ThirdPersonCamera(size_t width, size_t height)
 	: View(glm::perspective(60.0f, (float)width / (float)height, 1.0f, 1000.0f), glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f)))
 	, quit(false)
+	, i(false), j(false), k(false), l(false)
+	, space(false)
 	, position(glm::vec3(1.0f, 3.0f, 12.0f))
 	, up(false), down(false), left(false), right(false)
 	, w(false), a(false), s(false), d(false)
-	, i(false), j(false), k(false), l(false)
 	, speed(1.0)
+	, diffx(0)
+	, diffy(0)
+	, width(width)
+	, height(height)
+	{
+		glfwSetMousePos(width/2, height/2);
+	}
+	void Update()
+	{
+		left = glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS;
+		right = glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS;
+		up = glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS;
+		down = glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS;
+		w = glfwGetKey('W') == GLFW_PRESS;
+		a = glfwGetKey('A') == GLFW_PRESS;
+		s = glfwGetKey('S') == GLFW_PRESS;
+		d = glfwGetKey('D') == GLFW_PRESS;
+		i = glfwGetKey('I') == GLFW_PRESS;
+		j = glfwGetKey('J') == GLFW_PRESS;
+		k = glfwGetKey('K') == GLFW_PRESS;
+		l = glfwGetKey('L') == GLFW_PRESS;
+		int xMouse;
+		int yMouse;
+		glfwGetMousePos(&xMouse, &yMouse);
+		diffx = (width/2) - xMouse;
+		diffy = (height/2) - yMouse;
+		std::cout << diffx <<  " " << diffy << std::endl;
+		space = glfwGetKey(GLFW_KEY_SPACE) == GLFW_PRESS;
+		quit = glfwGetKey(GLFW_KEY_ESC) || !glfwGetWindowParam(GLFW_OPENED);
+		Recalculate();
+		glfwSetMousePos(width/2, height/2);
+	}
+
+	void Recalculate()
+	{
+		if(a) MoveX(-0.2 * speed);
+		if(d) MoveX(0.2 * speed);
+		if(w) MoveZ(0.2 * speed);
+		if(s) MoveZ(-0.2 * speed);
+		RotateX(((float)diffy / 10.0) * speed);
+		RotateY(((float)diffx / 10.0) * speed);
+	}
+	
+	glm::mat4 GetViewMatrix() const
+	{
+		return glm::inverse(glm::translate(glm::mat4(1.0f), position) * glm::toMat4(orientation));
+	}
+
+	void MoveX(float xmmod)
+	{
+		position += orientation * glm::vec3(xmmod, 0.0f, 0.0f);
+	}
+	 
+	void MoveZ(float zmmod)
+	{
+		position += orientation * glm::vec3(0.0f, 0.0f, -zmmod);
+	}
+	 
+	void RotateX(float xrmod)
+	{
+		orientation = orientation * glm::angleAxis(xrmod, glm::vec3(1.0f, 0.0f, 0.0f));
+	}
+	 
+	void RotateY(float yrmod)
+	{
+		orientation = orientation * glm::angleAxis(yrmod, glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+public:
+	bool quit;
+	bool i, j, k, l;
+	bool space;
+private:
+	glm::vec3 position;
+	glm::quat orientation;
+	bool up, down, left, right;
+	bool w, a, s, d;
+	float speed;
+	int diffx, diffy;
+	size_t width, height;
+};
+
+class FreeLookCamera : public View
+{
+public:
+	FreeLookCamera(size_t width, size_t height)
+	: View(glm::perspective(60.0f, (float)width / (float)height, 1.0f, 1000.0f), glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f)))
+	, quit(false)
+	, i(false), j(false), k(false), l(false)
 	, space(false)
+	, position(glm::vec3(1.0f, 3.0f, 12.0f))
+	, up(false), down(false), left(false), right(false)
+	, w(false), a(false), s(false), d(false)
+	, speed(1.0)
 	, diffx(0)
 	, diffy(0)
 	, width(width)
@@ -593,7 +675,7 @@ int main()
 	unsigned int width = 800;
 	unsigned int height = 600;
 	Window_ window(width, height);
-	Camera camera(width, height);
+	ThirdPersonCamera camera(width, height);
 	VertexShader vs("resources/shaders/null.vs");
 	FragmentShader fs("resources/shaders/null.fs");
 	ShaderProgram sp(vs, fs, mesh::description);
