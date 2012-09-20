@@ -470,192 +470,6 @@ public:
 	virtual glm::mat4 GetViewMatrix() const = 0;
 };
 
-class ThirdPersonCamera : public View
-{
-public:
-	ThirdPersonCamera(size_t width, size_t height)
-	: View(glm::perspective(60.0f, (float)width / (float)height, 1.0f, 1000.0f), glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f)))
-	, quit(false)
-	, i(false), j(false), k(false), l(false)
-	, space(false)
-	, position(glm::vec3(1.0f, 3.0f, 12.0f))
-	, up(false), down(false), left(false), right(false)
-	, w(false), a(false), s(false), d(false)
-	, speed(1.0)
-	, diffx(0)
-	, diffy(0)
-	, width(width)
-	, height(height)
-	{
-		glfwSetMousePos(width/2, height/2);
-	}
-	void Update()
-	{
-		left = glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS;
-		right = glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS;
-		up = glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS;
-		down = glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS;
-		w = glfwGetKey('W') == GLFW_PRESS;
-		a = glfwGetKey('A') == GLFW_PRESS;
-		s = glfwGetKey('S') == GLFW_PRESS;
-		d = glfwGetKey('D') == GLFW_PRESS;
-		i = glfwGetKey('I') == GLFW_PRESS;
-		j = glfwGetKey('J') == GLFW_PRESS;
-		k = glfwGetKey('K') == GLFW_PRESS;
-		l = glfwGetKey('L') == GLFW_PRESS;
-		int xMouse;
-		int yMouse;
-		glfwGetMousePos(&xMouse, &yMouse);
-		diffx = (width/2) - xMouse;
-		diffy = (height/2) - yMouse;
-		std::cout << diffx <<  " " << diffy << std::endl;
-		space = glfwGetKey(GLFW_KEY_SPACE) == GLFW_PRESS;
-		quit = glfwGetKey(GLFW_KEY_ESC) || !glfwGetWindowParam(GLFW_OPENED);
-		Recalculate();
-		glfwSetMousePos(width/2, height/2);
-	}
-
-	void Recalculate()
-	{
-		if(a) MoveX(-0.2 * speed);
-		if(d) MoveX(0.2 * speed);
-		if(w) MoveZ(0.2 * speed);
-		if(s) MoveZ(-0.2 * speed);
-		RotateX(((float)diffy / 10.0) * speed);
-		RotateY(((float)diffx / 10.0) * speed);
-	}
-	
-	glm::mat4 GetViewMatrix() const
-	{
-		return glm::inverse(glm::translate(glm::mat4(1.0f), position) * glm::toMat4(orientation));
-	}
-
-	void MoveX(float xmmod)
-	{
-		position += orientation * glm::vec3(xmmod, 0.0f, 0.0f);
-	}
-	 
-	void MoveZ(float zmmod)
-	{
-		position += orientation * glm::vec3(0.0f, 0.0f, -zmmod);
-	}
-	 
-	void RotateX(float xrmod)
-	{
-		orientation = orientation * glm::angleAxis(xrmod, glm::vec3(1.0f, 0.0f, 0.0f));
-	}
-	 
-	void RotateY(float yrmod)
-	{
-		orientation = orientation * glm::angleAxis(yrmod, glm::vec3(0.0f, 1.0f, 0.0f));
-	}
-public:
-	bool quit;
-	bool i, j, k, l;
-	bool space;
-private:
-	glm::vec3 position;
-	glm::quat orientation;
-	bool up, down, left, right;
-	bool w, a, s, d;
-	float speed;
-	int diffx, diffy;
-	size_t width, height;
-};
-
-class FreeLookCamera : public View
-{
-public:
-	FreeLookCamera(size_t width, size_t height)
-	: View(glm::perspective(60.0f, (float)width / (float)height, 1.0f, 1000.0f), glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f)))
-	, quit(false)
-	, i(false), j(false), k(false), l(false)
-	, space(false)
-	, position(glm::vec3(1.0f, 3.0f, 12.0f))
-	, up(false), down(false), left(false), right(false)
-	, w(false), a(false), s(false), d(false)
-	, speed(1.0)
-	, diffx(0)
-	, diffy(0)
-	, width(width)
-	, height(height)
-	{
-		glfwSetMousePos(width/2, height/2);
-	}
-	void Update()
-	{
-		left = glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS;
-		right = glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS;
-		up = glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS;
-		down = glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS;
-		w = glfwGetKey('W') == GLFW_PRESS;
-		a = glfwGetKey('A') == GLFW_PRESS;
-		s = glfwGetKey('S') == GLFW_PRESS;
-		d = glfwGetKey('D') == GLFW_PRESS;
-		i = glfwGetKey('I') == GLFW_PRESS;
-		j = glfwGetKey('J') == GLFW_PRESS;
-		k = glfwGetKey('K') == GLFW_PRESS;
-		l = glfwGetKey('L') == GLFW_PRESS;
-		int xMouse;
-		int yMouse;
-		glfwGetMousePos(&xMouse, &yMouse);
-		diffx = (width/2) - xMouse;
-		diffy = (height/2) - yMouse;
-		std::cout << diffx <<  " " << diffy << std::endl;
-		space = glfwGetKey(GLFW_KEY_SPACE) == GLFW_PRESS;
-		quit = glfwGetKey(GLFW_KEY_ESC) || !glfwGetWindowParam(GLFW_OPENED);
-		Recalculate();
-		glfwSetMousePos(width/2, height/2);
-	}
-
-	void Recalculate()
-	{
-		if(a) MoveX(-0.2 * speed);
-		if(d) MoveX(0.2 * speed);
-		if(w) MoveZ(0.2 * speed);
-		if(s) MoveZ(-0.2 * speed);
-		RotateX(((float)diffy / 10.0) * speed);
-		RotateY(((float)diffx / 10.0) * speed);
-	}
-	
-	glm::mat4 GetViewMatrix() const
-	{
-		return glm::inverse(glm::translate(glm::mat4(1.0f), position) * glm::toMat4(orientation));
-	}
-
-	void MoveX(float xmmod)
-	{
-		position += orientation * glm::vec3(xmmod, 0.0f, 0.0f);
-	}
-	 
-	void MoveZ(float zmmod)
-	{
-		position += orientation * glm::vec3(0.0f, 0.0f, -zmmod);
-	}
-	 
-	void RotateX(float xrmod)
-	{
-		orientation = orientation * glm::angleAxis(xrmod, glm::vec3(1.0f, 0.0f, 0.0f));
-	}
-	 
-	void RotateY(float yrmod)
-	{
-		orientation = orientation * glm::angleAxis(yrmod, glm::vec3(0.0f, 1.0f, 0.0f));
-	}
-public:
-	bool quit;
-	bool i, j, k, l;
-	bool space;
-private:
-	glm::vec3 position;
-	glm::quat orientation;
-	bool up, down, left, right;
-	bool w, a, s, d;
-	float speed;
-	int diffx, diffy;
-	size_t width, height;
-};
-
 class Player
 {
 public:
@@ -670,40 +484,73 @@ public:
 	
 };
 
-int main()
+class ThirdPersonCamera : public View
 {
-	unsigned int width = 800;
-	unsigned int height = 600;
-	Window_ window(width, height);
-	ThirdPersonCamera camera(width, height);
-	VertexShader vs("resources/shaders/null.vs");
-	FragmentShader fs("resources/shaders/null.fs");
-	ShaderProgram sp(vs, fs, mesh::description);
-
-	Player player;
-	std::unique_ptr<mesh> m(mesh::blocks());
-	while(!camera.quit)
+public:
+	ThirdPersonCamera(size_t width, size_t height, Player& player)
+	: View(glm::perspective(60.0f, (float)width / (float)height, 1.0f, 1000.0f), glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f)))
+	, quit(false)
+	, i(false), j(false), k(false), l(false)
+	, space(false)
+	, position(glm::vec3(1.0f, 3.0f, 12.0f))
+	, up(false), down(false), left(false), right(false)
+	, w(false), a(false), s(false), d(false)
+	, speed(1.0)
+	, diffx(0)
+	, diffy(0)
+	, width(width)
+	, height(height)
+	, player(player)
 	{
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		sp.Use();
-                sp.Set("projection", &camera.projection[0][0]);
-                sp.Set("view", &camera.GetViewMatrix()[0][0]);
-		sp.Set("world", &glm::mat4(1.0f)[0][0]);
-		m->Draw();
+		glfwSetMousePos(width/2, height/2);
+	}
+	void Update()
+	{
+		left = glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS;
+		right = glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS;
+		up = glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS;
+		down = glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS;
+		w = glfwGetKey('W') == GLFW_PRESS;
+		a = glfwGetKey('A') == GLFW_PRESS;
+		s = glfwGetKey('S') == GLFW_PRESS;
+		d = glfwGetKey('D') == GLFW_PRESS;
+		i = glfwGetKey('I') == GLFW_PRESS;
+		j = glfwGetKey('J') == GLFW_PRESS;
+		k = glfwGetKey('K') == GLFW_PRESS;
+		l = glfwGetKey('L') == GLFW_PRESS;
+		int xMouse;
+		int yMouse;
+		glfwGetMousePos(&xMouse, &yMouse);
+		diffx = (width/2) - xMouse;
+		diffy = (height/2) - yMouse;
+		space = glfwGetKey(GLFW_KEY_SPACE) == GLFW_PRESS;
+		quit = glfwGetKey(GLFW_KEY_ESC) || !glfwGetWindowParam(GLFW_OPENED);
+		Recalculate();
+		glfwSetMousePos(width/2, height/2);
+	}
 
+	void Recalculate()
+	{
+		position = player.position + 1.0f;
+		/*if(a) MoveX(-0.2 * speed);
+		if(d) MoveX(0.2 * speed);
+		if(w) MoveZ(0.2 * speed);
+		if(s) MoveZ(-0.2 * speed);*/
+		RotateX(((float)diffy / 10.0) * speed);
+		RotateY(((float)diffx / 10.0) * speed);
 		//
 		static bool lastFrameWasStanding = false;
 		glm::vec3 old = player.position;
-		if (camera.space && lastFrameWasStanding) player.dy = 0.05;
+		if (space && lastFrameWasStanding) player.dy = 0.05;
 		player.dy += -0.001;
 		if (player.dy > 0.5) player.dy = 0.5;
 		if (player.dy < -0.5) player.dy = -0.5;
 		player.position.y += player.dy;
 
-		if(camera.i) player.position.x += 0.02f;
-		if(camera.k) player.position.x -= 0.02f;
-		if(camera.j) player.position.z += 0.02f;
-		if(camera.l) player.position.z -= 0.02f;
+		if(i) player.position.x += 0.02f;
+		if(k) player.position.x -= 0.02f;
+		if(j) player.position.z -= 0.02f;
+		if(l) player.position.z += 0.02f;
 		
 
 		// clip when going below zero or above 127
@@ -780,7 +627,252 @@ int main()
 				player.position.z = old.z;
 			}
 		}
-		//
+	}
+	
+	glm::mat4 GetViewMatrix() const
+	{
+//		return glm::lookAt(glm::vec3(1.0f, 3.0f, 12.0f), player.position, glm::vec3(0.0f, 1.0f, 0.0f));
+		return glm::lookAt(player.position + glm::vec3(1.0f, 12.0f, 12.0f), player.position,  glm::vec3(0.0f, 1.0f, 0.0f));
+}
+
+	void MoveX(float xmmod)
+	{
+		position += orientation * glm::vec3(xmmod, 0.0f, 0.0f);
+	}
+	 
+	void MoveZ(float zmmod)
+	{
+		position += orientation * glm::vec3(0.0f, 0.0f, -zmmod);
+	}
+	 
+	void RotateX(float xrmod)
+	{
+		orientation = orientation * glm::angleAxis(xrmod, glm::vec3(1.0f, 0.0f, 0.0f));
+	}
+	 
+	void RotateY(float yrmod)
+	{
+		orientation = orientation * glm::angleAxis(yrmod, glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+public:
+	bool quit;
+	bool i, j, k, l;
+	bool space;
+private:
+	glm::vec3 position;
+	glm::quat orientation;
+	bool up, down, left, right;
+	bool w, a, s, d;
+	float speed;
+	int diffx, diffy;
+	size_t width, height;
+	Player& player;
+};
+
+class FreeLookCamera : public View
+{
+public:
+	FreeLookCamera(size_t width, size_t height, Player& player)
+	: View(glm::perspective(60.0f, (float)width / (float)height, 1.0f, 1000.0f), glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f)))
+	, quit(false)
+	, i(false), j(false), k(false), l(false)
+	, space(false)
+	, position(glm::vec3(1.0f, 3.0f, 12.0f))
+	, up(false), down(false), left(false), right(false)
+	, w(false), a(false), s(false), d(false)
+	, speed(1.0)
+	, diffx(0)
+	, diffy(0)
+	, width(width)
+	, height(height)
+	, player(player)
+	{
+		glfwSetMousePos(width/2, height/2);
+	}
+	void Update()
+	{
+		left = glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS;
+		right = glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS;
+		up = glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS;
+		down = glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS;
+		w = glfwGetKey('W') == GLFW_PRESS;
+		a = glfwGetKey('A') == GLFW_PRESS;
+		s = glfwGetKey('S') == GLFW_PRESS;
+		d = glfwGetKey('D') == GLFW_PRESS;
+		i = glfwGetKey('I') == GLFW_PRESS;
+		j = glfwGetKey('J') == GLFW_PRESS;
+		k = glfwGetKey('K') == GLFW_PRESS;
+		l = glfwGetKey('L') == GLFW_PRESS;
+		int xMouse;
+		int yMouse;
+		glfwGetMousePos(&xMouse, &yMouse);
+		diffx = (width/2) - xMouse;
+		diffy = (height/2) - yMouse;
+		std::cout << diffx <<  " " << diffy << std::endl;
+		space = glfwGetKey(GLFW_KEY_SPACE) == GLFW_PRESS;
+		quit = glfwGetKey(GLFW_KEY_ESC) || !glfwGetWindowParam(GLFW_OPENED);
+		Recalculate();
+		glfwSetMousePos(width/2, height/2);
+	}
+
+	void Recalculate()
+	{
+		if(a) MoveX(-0.2 * speed);
+		if(d) MoveX(0.2 * speed);
+		if(w) MoveZ(0.2 * speed);
+		if(s) MoveZ(-0.2 * speed);
+		RotateX(((float)diffy / 10.0) * speed);
+		RotateY(((float)diffx / 10.0) * speed);
+
+		static bool lastFrameWasStanding = false;
+		glm::vec3 old = player.position;
+		if (space && lastFrameWasStanding) player.dy = 0.05;
+		player.dy += -0.001;
+		if (player.dy > 0.5) player.dy = 0.5;
+		if (player.dy < -0.5) player.dy = -0.5;
+		player.position.y += player.dy;
+
+		if(i) player.position.x += 0.02f;
+		if(k) player.position.x -= 0.02f;
+		if(j) player.position.z -= 0.02f;
+		if(l) player.position.z += 0.02f;
+		
+
+		// clip when going below zero or above 127
+		if(player.position.x < 0.0) player.position.x = 0;
+		if(player.position.y < 0.0) player.position.y = 0;
+		if(player.position.z < 0.0) player.position.z = 0;
+		if(player.position.x > 127.0) player.position.x = 127;
+		if(player.position.y > 127.0) player.position.y = 127;
+		if(player.position.z > 127.0) player.position.z = 127;
+
+		glm::vec3 diff = player.position - old;
+		static const int eps = 0.000001;
+		lastFrameWasStanding = false;
+		if(diff.y > eps)
+		{
+			if(theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0
+			|| theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0)
+			{
+				player.position.y = old.y;
+				player.dy = 0;
+			}
+		}
+		if(diff.y < -eps)
+		{
+			if(theworld[(int)(player.position.x)][(int)(player.position.y)][(int)(player.position.z)] > 0
+			|| theworld[(int)(player.position.x)][(int)(player.position.y)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y)][(int)(player.position.z)] > 0)
+			{
+				player.position.y = old.y;
+				player.dy = 0;
+				lastFrameWasStanding = true;
+			}
+		}
+		if(diff.x > eps)
+		{
+			if(theworld[(int)(player.position.x + 0.8)][(int)(player.position.y)][(int)(player.position.z)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0)
+			{
+				player.position.x = old.x;
+			}
+		}
+		if(diff.z > eps)
+		{
+			if(theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0)
+			{
+				player.position.z = old.z;
+			}
+		}
+		if(diff.x < -eps)
+		{
+			if(theworld[(int)(player.position.x)][(int)(player.position.y)][(int)(player.position.z)] > 0
+			|| theworld[(int)(player.position.x)][(int)(player.position.y)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z + 0.8)] > 0
+			|| theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0)
+			{
+				player.position.x = old.x;
+			}
+		}
+		if(diff.z < -eps)
+		{
+			if(theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0
+			|| theworld[(int)(player.position.x)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0
+			|| theworld[(int)(player.position.x + 0.8)][(int)(player.position.y + 0.8)][(int)(player.position.z)] > 0)
+			{
+				player.position.z = old.z;
+			}
+		}
+	}
+	
+	glm::mat4 GetViewMatrix() const
+	{
+		return glm::inverse(glm::translate(glm::mat4(1.0f), position) * glm::toMat4(orientation));
+	}
+
+	void MoveX(float xmmod)
+	{
+		position += orientation * glm::vec3(xmmod, 0.0f, 0.0f);
+	}
+	 
+	void MoveZ(float zmmod)
+	{
+		position += orientation * glm::vec3(0.0f, 0.0f, -zmmod);
+	}
+	 
+	void RotateX(float xrmod)
+	{
+		orientation = orientation * glm::angleAxis(xrmod, glm::vec3(1.0f, 0.0f, 0.0f));
+	}
+	 
+	void RotateY(float yrmod)
+	{
+		orientation = orientation * glm::angleAxis(yrmod, glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+public:
+	bool quit;
+	bool i, j, k, l;
+	bool space;
+private:
+	glm::vec3 position;
+	glm::quat orientation;
+	bool up, down, left, right;
+	bool w, a, s, d;
+	float speed;
+	int diffx, diffy;
+	size_t width, height;
+	Player& player;
+};
+
+int main()
+{
+	unsigned int width = 800;
+	unsigned int height = 600;
+	Window_ window(width, height);
+	Player player;
+	ThirdPersonCamera camera(width, height, player);
+	VertexShader vs("resources/shaders/null.vs");
+	FragmentShader fs("resources/shaders/null.fs");
+	ShaderProgram sp(vs, fs, mesh::description);
+
+	std::unique_ptr<mesh> m(mesh::blocks());
+	while(!camera.quit)
+	{
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		sp.Use();
+                sp.Set("projection", &camera.projection[0][0]);
+                sp.Set("view", &camera.GetViewMatrix()[0][0]);
+		sp.Set("world", &glm::mat4(1.0f)[0][0]);
+		m->Draw();
 
 		glm::mat4 world = glm::translate(glm::mat4(1.0f), player.position);
 		sp.Set("world", &world[0][0]);
