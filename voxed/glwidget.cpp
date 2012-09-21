@@ -15,7 +15,8 @@ GLWidget::GLWidget(QWidget *parent)
                     {
                             for(size_t x = 0; x < size; x++)
                             {
-                                colors[x][y][z] = (float)std::rand() / RAND_MAX;
+//                                colors[x][y][z] = (float)std::rand() / RAND_MAX;
+                                colors[x][y][z] = true;
                             }
                     }
         }
@@ -54,10 +55,11 @@ void GLWidget::paintGL() {
                     {
                             for(size_t x = 0; x < size; x++)
                             {
-                                    if(true)
+                                    if(colors[x][y][z])
                                     {
                                     //        glColor3f(colors[x][y][z], colors[x][y][z], colors[x][y][z]);
-                                            glColor3f((x + 1) / (float)(size - 1), (y + 1) / (float)(size - 1), (z + 1) / (float)(size - 1));
+                                            //glColor3f((x + 1) / (float)(size - 1), (y + 1) / (float)(size - 1), (z + 1) / (float)(size - 1));
+                                            glColor3f((x + 1) / (float)255, (y + 1) / (float)255, (z + 1) / (float)255);
                                             glVertex3f( 0 + x,  1 + y,  0 + z);
                                             glVertex3f( 0 + x,  0 + y,  1 + z);
                                             glVertex3f( 0 + x,  0 + y,  0 + z);
@@ -119,9 +121,11 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
         if(event->buttons() & Qt::LeftButton)
         {
                 QRgb point = grabFrameBuffer().pixel(QPoint(event->x(), event->y()));
-                qDebug() << qRed(point) / (size / 4);
-                qDebug() << qGreen(point) / (size / 4);
-                qDebug() << qBlue(point) / (size / 4);
+                size_t x = qRed(point) - 1;
+                size_t y = qGreen(point) - 1;
+                size_t z = qBlue(point) - 1;
+                colors[x][y][z] = false;
+                qDebug() << x << ", " << y << ", " << z;
         }
 }
 
