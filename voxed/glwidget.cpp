@@ -6,6 +6,7 @@
 GLWidget::GLWidget(QWidget *parent)
 : xrot(0.0)
 , QGLWidget(parent)
+, renderidmap(false)
 {
     setMouseTracking(true);
     std::srand(time(0));
@@ -15,8 +16,8 @@ GLWidget::GLWidget(QWidget *parent)
                     {
                             for(size_t x = 0; x < size; x++)
                             {
-//                                colors[x][y][z] = (float)std::rand() / RAND_MAX;
-                                colors[x][y][z] = true;
+                                colors[x][y][z] = (float)std::rand() / RAND_MAX;
+                                cellenabled[x][y][z] = true;
                             }
                     }
         }
@@ -27,8 +28,31 @@ void GLWidget::initializeGL() {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glClearDepth(1.0f);
-    glDisable(GL_BLEND);
     glEnable(GL_POLYGON_SMOOTH);
+
+    glShadeModel(GL_SMOOTH);
+
+/*            glEnable(GL_COLOR_MATERIAL);
+            glEnable(GL_LIGHTING);
+            glEnable(GL_LIGHT0);
+
+            // Create light components
+            float ambientLight[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+            float diffuseLight[] = { 0.8f, 0.8f, 0.8, 1.0f };
+            float specularLight[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+            float position[] = { -1.5f, 1.0f, -4.0f, 1.0f };
+
+            // Assign created components to GL_LIGHT0
+            glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
+            glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
+            glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
+            glLightfv(GL_LIGHT0, GL_POSITION, position);
+            glEnable(GL_LIGHT0);*/
+
+
+
+
+
     glClearColor(0, 0, 0, 0);
 }
 
@@ -55,11 +79,16 @@ void GLWidget::paintGL() {
                     {
                             for(size_t x = 0; x < size; x++)
                             {
-                                    if(colors[x][y][z])
+                                    if(cellenabled[x][y][z])
                                     {
-                                    //        glColor3f(colors[x][y][z], colors[x][y][z], colors[x][y][z]);
-                                            //glColor3f((x + 1) / (float)(size - 1), (y + 1) / (float)(size - 1), (z + 1) / (float)(size - 1));
-                                            glColor3f((x + 1) / (float)255, (y + 1) / (float)255, (z + 1) / (float)255);
+                                                if(!renderidmap)
+                                                {
+                                                        glColor3f(colors[x][y][z], colors[x][y][z], colors[x][y][z]);
+                                                }
+                                                else
+                                                {
+                                                        glColor3f((x + 1) / (float)255, (y + 1) / (float)255, (z + 1) / (float)255);
+                                                }
                                             glVertex3f( 0 + x,  1 + y,  0 + z);
                                             glVertex3f( 0 + x,  0 + y,  1 + z);
                                             glVertex3f( 0 + x,  0 + y,  0 + z);
@@ -120,12 +149,15 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
         yWhenPressed = event->y();
         if(event->buttons() & Qt::LeftButton)
         {
+                renderidmap = true;
+                paintGL();
                 QRgb point = grabFrameBuffer().pixel(QPoint(event->x(), event->y()));
                 size_t x = qRed(point) - 1;
                 size_t y = qGreen(point) - 1;
                 size_t z = qBlue(point) - 1;
-                colors[x][y][z] = false;
+                if( x < size && y < size && z << size) cellenabled[x][y][z] = false;
                 qDebug() << x << ", " << y << ", " << z;
+                renderidmap = false;
         }
 }
 

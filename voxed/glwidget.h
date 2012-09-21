@@ -9,7 +9,9 @@ class GLWidget : public QGLWidget {
 public:
 static const int size = 32;
 
-    bool colors[size][size][size];
+    bool cellenabled[size][size][size];
+    float colors[size][size][size];
+    bool renderidmap;
 
         float xrot, yrot;
         float accumulatedRotx, accumulatedRoty;
