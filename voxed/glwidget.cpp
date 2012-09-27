@@ -6,11 +6,17 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 GLWidget::GLWidget(QWidget *parent)
-: xrot(0.0)
+: add(false)
+, del(false)
+, color(false)
+, xrot(0.0)
 , QGLWidget(parent)
 , zoom(0.0f)
+, selectedcolor(glm::vec3(0.0f, 0.0f, 1.0f))
 {
         setMouseTracking(true);
+        // Next line is used to get keyboard events to this Widget.
+        setFocusPolicy(Qt::StrongFocus);
         std::srand(time(0));
         for(size_t z = 0; z < size; z++)
         {
@@ -18,7 +24,9 @@ GLWidget::GLWidget(QWidget *parent)
                 {
                         for(size_t x = 0; x < size; x++)
                         {
-                                colors[x][y][z] = (float)std::rand() / RAND_MAX;
+                                colors[x][y][z].x = (float)std::rand() / RAND_MAX;
+                                colors[x][y][z].y = (float)std::rand() / RAND_MAX;
+                                colors[x][y][z].z = (float)std::rand() / RAND_MAX;
                                 cellenabled[x][y][z] = true;
                         }
                 }
@@ -79,7 +87,7 @@ void GLWidget::paintGL() {
                         {
                                 if(cellenabled[x][y][z])
                                 {
-                                        glColor3f(colors[x][y][z], colors[x][y][z], colors[x][y][z]);
+                                        glColor3f(colors[x][y][z].x, colors[x][y][z].y, colors[x][y][z].z);
                                         glVertex3f( 0 + x,  1 + y,  0 + z);
                                         glVertex3f( 0 + x,  0 + y,  1 + z);
                                         glVertex3f( 0 + x,  0 + y,  0 + z);
@@ -227,53 +235,49 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
                 size_t x = qRed(point) - 1;
                 size_t y = qGreen(point) - 1;
                 size_t z = qBlue(point) - 1;
-                selectionRender(true);
-                QRgb sideinfo = grabFrameBuffer().pixel(QPoint(event->x(), event->y()));
-                size_t side = qRed(sideinfo) - 1;
-
-                if( x < size && y < size && z << size) cellenabled[x][y][z] = false;
-                qDebug() << x << ", " << y << ", " << z << ", " << side;
-        }
-        if(event->buttons() & Qt::MiddleButton)
-        {
-                selectionRender(false);
-                QRgb point = grabFrameBuffer().pixel(QPoint(event->x(), event->y()));
-                size_t x = qRed(point) - 1;
-                size_t y = qGreen(point) - 1;
-                size_t z = qBlue(point) - 1;
                 if( x < size && y < size && z << size)
                 {
                         selectionRender(true);
                         QRgb sideinfo = grabFrameBuffer().pixel(QPoint(event->x(), event->y()));
                         size_t side = qRed(sideinfo) - 1;
-
-                        switch (side)
+                        if(add)
                         {
-                                //x-1 case;
-                                case 0:
-                                        cellenabled[x-1][y][z] = true;
-                                break;
-                                //z+1 case;
-                                case 1:
-                                        cellenabled[x][y][z+1] = true;
-                                break;
-                                //x+1 case;
-                                case 2:
-                                        cellenabled[x+1][y][z] = true;
-                                break;
-                                //z-1 case;
-                                case 3:
-                                        cellenabled[x][y][z-1] = true;
-                                break;
-                                //y+1 case;
-                                case 4:
-                                        cellenabled[x][y+1][z] = true;
-                                break;
-                                //y-1 case;
-                                case 5:
-                                        cellenabled[x][y-1][z] = true;
-                                break;
-                        };
+                                switch (side)
+                                {
+                                        //x-1 case;
+                                        case 0:
+                                                if(x-1 >= 0) cellenabled[x-1][y][z] = true;
+                                        break;
+                                        //z+1 case;
+                                        case 1:
+                                                if(z < size) cellenabled[x][y][z+1] = true;
+                                        break;
+                                        //x+1 case;
+                                        case 2:
+                                                if(x < size) cellenabled[x+1][y][z] = true;
+                                        break;
+                                        //z-1 case;
+                                        case 3:
+                                                if(z-1 >= 0) cellenabled[x][y][z-1] = true;
+                                        break;
+                                        //y+1 case;
+                                        case 4:
+                                                if(y < size) cellenabled[x][y+1][z] = true;
+                                        break;
+                                        //y-1 case;
+                                        case 5:
+                                                if(y-1 >= 0) cellenabled[x][y-1][z] = true;
+                                        break;
+                                };
+                        }
+                        else if(del)
+                        {
+                                if( x < size && y < size && z << size) cellenabled[x][y][z] = false;
+                        }
+                        else if(color)
+                        {
+                                if( x < size && y < size && z << size) colors[x][y][z] = selectedcolor;
+                        }
                         qDebug() << x << ", " << y << ", " << z << ", " << side;
                 }
         }
@@ -302,3 +306,18 @@ void GLWidget::wheelEvent(QWheelEvent *event)
         zoom -= event->delta() / (float)512;
         updateGL();
 }
+
+void GLWidget::keyPressEvent (QKeyEvent *event)
+{
+        if(event->key() == Qt::Key_A) add = true;
+        if(event->key() == Qt::Key_S) color = true;
+        if(event->key() == Qt::Key_D) del = true;
+}
+
+void GLWidget::keyReleaseEvent(QKeyEvent *event)
+{
+        if(event->key() == Qt::Key_A) add = false;
+        if(event->key() == Qt::Key_S) color = false;
+        if(event->key() == Qt::Key_D) del = false;
+}
+

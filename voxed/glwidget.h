@@ -4,6 +4,7 @@
 
 #include <QtOpenGL/QGLWidget>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/glm.hpp>
 
 class GLWidget : public QGLWidget
 {
@@ -11,8 +12,10 @@ class GLWidget : public QGLWidget
 public:
         static const int size = 16;
 
+        bool add, del, color;
         bool cellenabled[size][size][size];
-        float colors[size][size][size];
+        glm::vec3 colors[size][size][size];
+        glm::vec3 selectedcolor;
         float zoom;
 
         float xrot, yrot;
@@ -30,6 +33,8 @@ protected:
         void mouseReleaseEvent(QMouseEvent *event);
         void mouseMoveEvent(QMouseEvent *event);
         void wheelEvent(QWheelEvent *event);
+        void keyPressEvent (QKeyEvent *event);
+        void keyReleaseEvent(QKeyEvent *event);
 };
 
 #endif // GLWIDGET_H
