@@ -3,29 +3,33 @@
 #include <QGLWidget>
 
 #include <QtOpenGL/QGLWidget>
+#include <glm/gtx/quaternion.hpp>
 
-class GLWidget : public QGLWidget {
-    Q_OBJECT // must include this if you use Qt signals/slots
+class GLWidget : public QGLWidget
+{
+        Q_OBJECT // must include this if you use Qt signals/slots
 public:
-static const int size = 32;
+        static const int size = 16;
 
-    bool cellenabled[size][size][size];
-    float colors[size][size][size];
-    bool renderidmap;
+        bool cellenabled[size][size][size];
+        float colors[size][size][size];
+        float zoom;
 
         float xrot, yrot;
         float accumulatedRotx, accumulatedRoty;
         int xWhenPressed, yWhenPressed;
 
-    GLWidget(QWidget *parent = NULL);
+        GLWidget(QWidget *parent = NULL);
 
 protected:
-    void initializeGL();
-    void resizeGL(int w, int h);
-    void paintGL();
-    void mousePressEvent(QMouseEvent *event);
-    void mouseReleaseEvent(QMouseEvent *event);
+        void initializeGL();
+        void resizeGL(int w, int h);
+        void paintGL();
+        void selectionRender(bool sides = false);
+        void mousePressEvent(QMouseEvent *event);
+        void mouseReleaseEvent(QMouseEvent *event);
         void mouseMoveEvent(QMouseEvent *event);
+        void wheelEvent(QWheelEvent *event);
 };
 
 #endif // GLWIDGET_H
