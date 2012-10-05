@@ -26,6 +26,7 @@ GLWidget::GLWidget(QWidget *parent)
                 {
                         for(size_t x = 0; x < size; x++)
                         {
+                                cellenabled[x][y][z] = false;
                                 colors[x][y][z].x = (float)std::rand() / RAND_MAX;
                                 colors[x][y][z].y = (float)std::rand() / RAND_MAX;
                                 colors[x][y][z].z = (float)std::rand() / RAND_MAX;
