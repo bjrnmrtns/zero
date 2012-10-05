@@ -13,6 +13,8 @@ GLWidget::GLWidget(QWidget *parent)
 , QGLWidget(parent)
 , zoom(0.0f)
 , selectedcolor(glm::vec3(0.0f, 0.0f, 1.0f))
+, extrudedirection(0)
+, extrudesize(0)
 {
         setMouseTracking(true);
         // Next line is used to get keyboard events to this Widget.
@@ -27,10 +29,11 @@ GLWidget::GLWidget(QWidget *parent)
                                 colors[x][y][z].x = (float)std::rand() / RAND_MAX;
                                 colors[x][y][z].y = (float)std::rand() / RAND_MAX;
                                 colors[x][y][z].z = (float)std::rand() / RAND_MAX;
-                                cellenabled[x][y][z] = true;
+                                selected[x][y][z] = false;
                         }
                 }
         }
+        cellenabled[size/2][size/2][size/2] = true;
 }
 
 void GLWidget::initializeGL()
@@ -51,11 +54,13 @@ void GLWidget::initializeGL()
         float ambientLight[] = { 0.2f, 0.2f, 0.2f, 1.0f };
         float diffuseLight[] = { 0.8f, 0.8f, 0.8, 1.0f };
         float specularLight[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+        float position[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
         // Assign created components to GL_LIGHT0
         glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
         glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
         glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
+        glLightfv(GL_LIGHT0, GL_POSITION, position);
         glEnable(GL_LIGHT0);
         glClearColor(0, 0, 0, 0);
 }
@@ -74,8 +79,6 @@ void GLWidget::paintGL() {
         glm::mat4 view  = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -((1.6 + zoom) * size)));
         glm::mat4 model = glm::rotate(glm::mat4(1.0f), xrot, glm::vec3(0.0f, -1.0f, 0.0f)) * glm::rotate(glm::mat4(1.0f), yrot, glm::vec3(-1.0f, 0.0f, 0.0f)) * glm::translate(glm::mat4(1.0f), glm::vec3(-size/2.0f, -size/2.0f, -size/2.0f));
         glLoadMatrixf(&(view * model)[0][0]);
-        float position[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-        glLightfv(GL_LIGHT0, GL_POSITION, position);
         glEnable(GL_LIGHTING);
 
         glBegin(GL_TRIANGLES);
@@ -87,54 +90,63 @@ void GLWidget::paintGL() {
                         {
                                 if(cellenabled[x][y][z])
                                 {
-                                        glColor3f(colors[x][y][z].x, colors[x][y][z].y, colors[x][y][z].z);
-                                        glVertex3f( 0 + x,  1 + y,  0 + z);
-                                        glVertex3f( 0 + x,  0 + y,  1 + z);
-                                        glVertex3f( 0 + x,  0 + y,  0 + z);
-
-                                        glVertex3f( 0 + x,  0 + y,  1 + z);
-                                        glVertex3f( 0 + x,  1 + y,  0 + z);
-                                        glVertex3f( 0 + x,  1 + y,  1 + z);
-
-                                        glVertex3f( 0 + x,  1 + y,  1 + z);
-                                        glVertex3f( 1 + x,  0 + y,  1 + z);
-                                        glVertex3f( 0 + x,  0 + y,  1 + z);
-
-                                        glVertex3f( 1 + x,  0 + y,  1 + z);
-                                        glVertex3f( 0 + x,  1 + y,  1 + z);
-                                        glVertex3f( 1 + x,  1 + y,  1 + z);
-
-                                        glVertex3f( 1 + x,  0 + y,  1 + z);
-                                        glVertex3f( 1 + x,  1 + y,  0 + z);
-                                        glVertex3f( 1 + x,  0 + y,  0 + z);
-
-                                        glVertex3f( 1 + x,  1 + y,  0 + z);
-                                        glVertex3f( 1 + x,  0 + y,  1 + z);
-                                        glVertex3f( 1 + x,  1 + y,  1 + z);
-
-                                        glVertex3f( 1 + x,  1 + y,  0 + z);
-                                        glVertex3f( 0 + x,  0 + y,  0 + z);
-                                        glVertex3f( 1 + x,  0 + y,  0 + z);
-
-                                        glVertex3f( 0 + x,  0 + y,  0 + z);
-                                        glVertex3f( 1 + x,  1 + y,  0 + z);
-                                        glVertex3f( 0 + x,  1 + y,  0 + z);
-
-                                        glVertex3f( 0 + x,  1 + y,  0 + z);
-                                        glVertex3f( 1 + x,  1 + y,  1 + z);
-                                        glVertex3f( 0 + x,  1 + y,  1 + z);
-
-                                        glVertex3f( 1 + x,  1 + y,  1 + z);
-                                        glVertex3f( 0 + x,  1 + y,  0 + z);
-                                        glVertex3f( 1 + x,  1 + y,  0 + z);
-
-                                        glVertex3f( 1 + x,  0 + y,  0 + z);
-                                        glVertex3f( 0 + x,  0 + y,  1 + z);
-                                        glVertex3f( 1 + x,  0 + y,  1 + z);
-
-                                        glVertex3f( 0 + x,  0 + y,  1 + z);
-                                        glVertex3f( 1 + x,  0 + y,  0 + z);
-                                        glVertex3f( 0 + x,  0 + y,  0 + z);
+                                        if(selected[x][y][z])
+                                        {
+                                                drawCube(x, y, z, glm::vec3(1.0f, 0.0f, 0.0f));
+                                        }
+                                        else
+                                        {
+                                                drawCube(x, y, z, colors[x][y][z]);
+                                        }
+                                }
+                        }
+                }
+        }
+        for(size_t z = 0; z < size; z++)
+        {
+                for(size_t y = 0; y < size; y++)
+                {
+                        for(size_t x = 0; x < size; x++)
+                        {
+                                if(selected[x][y][z])
+                                {
+                                        int begin = 0;
+                                        int end = extrudesize;
+                                        if(begin > end)
+                                        {
+                                                begin = extrudesize;
+                                                end = 0;
+                                        }
+                                        for(int offset = begin; offset <= end; offset++)
+                                        {
+                                                switch (extrudedirection)
+                                                {
+                                                        //x-1 case;
+                                                        case 0:
+                                                                drawCube(x - offset, y, z, glm::vec3(1.0f, 0.0f, 0.0f));
+                                                        break;
+                                                        //z+1 case;
+                                                        case 1:
+                                                                drawCube(x, y, z + offset, glm::vec3(1.0f, 0.0f, 0.0f));
+                                                        break;
+                                                        //x+1 case;
+                                                        case 2:
+                                                                drawCube(x + offset, y, z, glm::vec3(1.0f, 0.0f, 0.0f));
+                                                        break;
+                                                        //z-1 case;
+                                                        case 3:
+                                                                drawCube(x, y, z - offset, glm::vec3(1.0f, 0.0f, 0.0f));
+                                                        break;
+                                                        //y+1 case;
+                                                        case 4:
+                                                                drawCube(x, y + offset, z, glm::vec3(1.0f, 0.0f, 0.0f));
+                                                        break;
+                                                        //y-1 case;
+                                                        case 5:
+                                                                drawCube(x, y - offset, z, glm::vec3(1.0f, 0.0f, 0.0f));
+                                                        break;
+                                                };
+                                        }
                                 }
                         }
                 }
@@ -221,6 +233,65 @@ void GLWidget::selectionRender(bool sides)
         glEnd();
 }
 
+void GLWidget::drawCube(size_t x, size_t y, size_t z, glm::vec3 color)
+{
+        if(x < 0 || x >= size || y < 0 || y >= size || z < 0 || z >= size) return;
+        glColor3f(color.x, color.y, color.z);
+        glNormal3f(-1, 0, 0);
+        glVertex3f( 0 + x,  1 + y,  0 + z);
+        glVertex3f( 0 + x,  0 + y,  1 + z);
+        glVertex3f( 0 + x,  0 + y,  0 + z);
+
+        glVertex3f( 0 + x,  0 + y,  1 + z);
+        glVertex3f( 0 + x,  1 + y,  0 + z);
+        glVertex3f( 0 + x,  1 + y,  1 + z);
+
+        glNormal3f(0, 0, 1);
+        glVertex3f( 0 + x,  1 + y,  1 + z);
+        glVertex3f( 1 + x,  0 + y,  1 + z);
+        glVertex3f( 0 + x,  0 + y,  1 + z);
+
+        glVertex3f( 1 + x,  0 + y,  1 + z);
+        glVertex3f( 0 + x,  1 + y,  1 + z);
+        glVertex3f( 1 + x,  1 + y,  1 + z);
+
+        glNormal3f(1, 0, 0);
+        glVertex3f( 1 + x,  0 + y,  1 + z);
+        glVertex3f( 1 + x,  1 + y,  0 + z);
+        glVertex3f( 1 + x,  0 + y,  0 + z);
+
+        glVertex3f( 1 + x,  1 + y,  0 + z);
+        glVertex3f( 1 + x,  0 + y,  1 + z);
+        glVertex3f( 1 + x,  1 + y,  1 + z);
+
+        glNormal3f(0, 0, -1);
+        glVertex3f( 1 + x,  1 + y,  0 + z);
+        glVertex3f( 0 + x,  0 + y,  0 + z);
+        glVertex3f( 1 + x,  0 + y,  0 + z);
+
+        glVertex3f( 0 + x,  0 + y,  0 + z);
+        glVertex3f( 1 + x,  1 + y,  0 + z);
+        glVertex3f( 0 + x,  1 + y,  0 + z);
+
+        glNormal3f(0, 1, 0);
+        glVertex3f( 0 + x,  1 + y,  0 + z);
+        glVertex3f( 1 + x,  1 + y,  1 + z);
+        glVertex3f( 0 + x,  1 + y,  1 + z);
+
+        glVertex3f( 1 + x,  1 + y,  1 + z);
+        glVertex3f( 0 + x,  1 + y,  0 + z);
+        glVertex3f( 1 + x,  1 + y,  0 + z);
+
+        glNormal3f(0, -1, 0);
+        glVertex3f( 1 + x,  0 + y,  0 + z);
+        glVertex3f( 0 + x,  0 + y,  1 + z);
+        glVertex3f( 1 + x,  0 + y,  1 + z);
+
+        glVertex3f( 0 + x,  0 + y,  1 + z);
+        glVertex3f( 1 + x,  0 + y,  0 + z);
+        glVertex3f( 0 + x,  0 + y,  0 + z);
+}
+
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
         if(event->buttons() & Qt::RightButton)
@@ -278,6 +349,14 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
                         {
                                 if( x < size && y < size && z << size) colors[x][y][z] = selectedcolor;
                         }
+                        else if(selecting)
+                        {
+                                if( x < size && y < size && z << size && extrudedirection == 0)
+                                {
+                                        extrudedirection = side;
+                                }
+                                selected[x][y][z] = !selected[x][y][z];
+                        }
                         qDebug() << x << ", " << y << ", " << z << ", " << side;
                 }
         }
@@ -303,7 +382,14 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 
 void GLWidget::wheelEvent(QWheelEvent *event)
 {
-        zoom -= event->delta() / (float)512;
+        if(!selecting)
+        {
+                zoom -= event->delta() / (float)512;
+        }
+        if(selecting)
+        {
+                extrudesize -= (int)(event->delta() / 120);
+        }
         updateGL();
 }
 
@@ -312,6 +398,10 @@ void GLWidget::keyPressEvent (QKeyEvent *event)
         if(event->key() == Qt::Key_A) add = true;
         if(event->key() == Qt::Key_S) color = true;
         if(event->key() == Qt::Key_D) del = true;
+        if(event->key() == Qt::Key_Control)
+        {
+                selecting = true;
+        }
 }
 
 void GLWidget::keyReleaseEvent(QKeyEvent *event)
@@ -319,5 +409,68 @@ void GLWidget::keyReleaseEvent(QKeyEvent *event)
         if(event->key() == Qt::Key_A) add = false;
         if(event->key() == Qt::Key_S) color = false;
         if(event->key() == Qt::Key_D) del = false;
+        if(event->key() == Qt::Key_Control)
+        {
+                for(size_t z = 0; z < size; z++)
+                {
+                        for(size_t y = 0; y < size; y++)
+                        {
+                                for(size_t x = 0; x < size; x++)
+                                {
+                                        if(selected[x][y][z])
+                                        {
+                                                int begin = 0;
+                                                int end = extrudesize;
+                                                if(begin > end)
+                                                {
+                                                        begin = extrudesize;
+                                                        end = 0;
+                                                }
+                                                for(int offset = begin; offset <= end; offset++)
+                                                {
+                                                        switch (extrudedirection)
+                                                        {
+                                                                //x-1 case;
+                                                                case 0:
+                                                                        cellenabled[x - offset][y][z] = true;
+                                                                        colors[x - offset][y][z] = colors[x][y][z];
+                                                                break;
+                                                                //z+1 case;
+                                                                case 1:
+                                                                        cellenabled[x][y][z + offset] = true;
+                                                                        colors[x][y][z + offset] = colors[x][y][z];
+                                                                break;
+                                                                //x+1 case;
+                                                                case 2:
+                                                                        cellenabled[x + offset][y][z] = true;
+                                                                        colors[x + offset][y][z] = colors[x][y][z];
+                                                                break;
+                                                                //z-1 case;
+                                                                case 3:
+                                                                        cellenabled[x][y][z - offset] = true;
+                                                                        colors[x][y][z - offset] = colors[x][y][z];
+                                                                break;
+                                                                //y+1 case;
+                                                                case 4:
+                                                                        cellenabled[x][y + offset][z] = true;
+                                                                        colors[x][y + offset][z] = colors[x][y][z];
+                                                                break;
+                                                                //y-1 case;
+                                                                case 5:
+                                                                        cellenabled[x][y - offset][z] = true;
+                                                                        colors[x][y - offset][z] = colors[x][y][z];
+                                                                break;
+                                                        };
+                                                }
+                                        }
+                                        selected[x][y][z] = false;
+                                }
+                        }
+                }
+                extrudedirection = 0;
+                extrudesize = 0;
+                selecting = false;
+        }
+        updateGL();
 }
 

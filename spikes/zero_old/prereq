@@ -1,0 +1,4 @@
+opengl 3.2
+freeglut3-dev
+libxmu-dev
+libxi-dev

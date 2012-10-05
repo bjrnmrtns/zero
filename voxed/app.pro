@@ -1,5 +1,5 @@
 TEMPLATE += app
-QT += gui declarative opengl thread
+QT += gui declarative opengl thread webkit
 SOURCES += main.cpp \
     glwidget.cpp \
     window.cpp

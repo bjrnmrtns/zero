@@ -1,0 +1,32 @@
+[Location based game]
+- Maffia style or warfare style.
+- Single player mode with bots (maybe only for testing without phone uplink)
+- No map needed I think.
+- Setup game at home. This means place <items> in world using google maps or something similar. These items have lon/lat location.
+- Items can be things like guns, grenades, health, tactical information.
+- Walking through the real world shows information on enemies location.
+- Idea for weapon good be freeze enemy. Which means enemy may not move anymore (can not be implemented using gps location).
+- Capture the flag could be coole.
+- Pulse means send pulse around. For scanning 30 meters around for enemy (could be done when hearing enemy in real world).
+
+*Combat mode
+- After pulse one detects enemy. You have a advantage.
+- Heaving minigun instead of pistol is advantage.
+- Armor is advantage.
+- Health is advantage.
+
+*items/scenery
+- weapons
+- weaponshop
+- health
+- foodshop
+- tactical information
+- pulse ability
+- armor
+
+*Styles
+- This location only, not deployable. Don't know if it is a good idea.
+- Predefined levels with story-line, items are predefined and can be deployed in real world using google maps or similar.
+
+*Links
+http://en.wikipedia.org/wiki/Geographical_distance

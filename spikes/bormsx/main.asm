@@ -1,0 +1,5 @@
+LD A, 23
+LD B, 100
+LD C, 53
+ADD A,B
+SUB C
