@@ -2,9 +2,12 @@
 #define SHADERPROGRAM__
 
 #include <string>
-#include "File.hpp"
 #include <GL/gl.h>
 #include <memory>
+#include <vector>
+
+#include "File.hpp"
+#include "Inotify.hpp"
 
 class Shader
 {
@@ -36,7 +39,7 @@ private:
 	unsigned int id;
 };
 
-class ReloadableShader
+class ReloadableShader : public Reloadable
 {
 private:
 	int type;
@@ -59,9 +62,7 @@ public:
 	}
 };
 
-
-
-class ShaderProgram
+class ShaderProgram : public Reloadable
 {
 	ReloadableShader vs;
 	ReloadableShader fs;
@@ -70,6 +71,8 @@ public:
 	: vs(vsfilename, GL_VERTEX_SHADER)
 	, fs(fsfilename, GL_FRAGMENT_SHADER)
 	{
+		Inotify::instance.Register(vsfilename, this);
+		Inotify::instance.Register(fsfilename, this);
 	}
 	void reload()
 	{

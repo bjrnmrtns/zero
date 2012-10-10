@@ -1,6 +1,5 @@
 #include <SFML/Window.hpp>
 #include <GL/glew.h>
-#include <SFML/OpenGL.hpp>
 #include "ShaderProgram.hpp"
 
 int main()
@@ -12,6 +11,9 @@ int main()
 	window.setVerticalSyncEnabled(true);
 	glewExperimental = GL_TRUE;
 	if(glewInit() != GLEW_OK) throw new GeneralException("glewInit failed");
+
+	ShaderProgram program("null.vs", "null.fs");
+
 	bool running = true;
 	while (running)
 	{
