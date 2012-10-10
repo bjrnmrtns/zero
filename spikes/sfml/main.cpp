@@ -1,6 +1,7 @@
 #include <SFML/Window.hpp>
 #include <GL/glew.h>
 #include "ShaderProgram.hpp"
+#include "Inotify.hpp"
 
 int main()
 {
@@ -17,6 +18,7 @@ int main()
 	bool running = true;
 	while (running)
 	{
+		Inotify::instance.Poll();
 		sf::Event event;
 		while (window.pollEvent(event))
 		{

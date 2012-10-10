@@ -9,6 +9,8 @@
 #include "File.hpp"
 #include "Inotify.hpp"
 
+#include <iostream>
+
 class Shader
 {
 public:
@@ -76,6 +78,7 @@ public:
 	}
 	void reload()
 	{
+		std::cout << "Reloading" << std::endl;
 		vs.reload();
 		fs.reload();
 	}
