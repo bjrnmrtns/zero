@@ -54,10 +54,11 @@ public:
 	, res(new Shader(filename, type))
 	{
 	}
-	void reload()
+	unsigned int reload()
 	{
-		std::cout << "Reloading shader" << std::endl;
+		unsigned int oldid = res->GetId();
 		res.reset(new Shader(filename, type));
+		return oldid;
 	}
 	unsigned int GetId()
 	{
@@ -133,10 +134,10 @@ public:
 		error = glGetError(); if (error) { printf("%d\n", error); abort(); }
 		return true;
 	}
-	void reload()
+	unsigned int reload()
 	{
-		vs.reload();
-		fs.reload();
+		glDetachShader(id, vs.reload());
+		glDetachShader(id, fs.reload());
 		Link();
 	}
 };

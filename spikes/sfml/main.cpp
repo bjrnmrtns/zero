@@ -6,6 +6,7 @@
 #include "VertexBuffer.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <SFML/Window/Mouse.hpp>
 	
 struct Vertex
 {
@@ -99,14 +100,11 @@ int main()
 	glm::mat4 world = glm::mat4(1.0f);
 
 	const InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3), GL_FLOAT },
-                                                                  { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT },
-                                                                  { "in_color",    3, sizeof(glm::vec3), GL_FLOAT },
-                                                                  { "", 0, 0, 0 } };
+                                                      { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT },
+                                                      { "in_color",    3, sizeof(glm::vec3), GL_FLOAT },
+                                                      { "", 0, 0, 0 } };
 
 	ShaderProgram program("null.vs", "null.fs", description);
-	program.Set("projection", &projection[0][0]);
-	program.Set("view", &view[0][0]);
-	program.Set("world", &world[0][0]);
 
 	bool running = true;
 	while (running)
@@ -123,8 +121,15 @@ int main()
 			{
 				glViewport(0, 0, event.size.width, event.size.height);
 			}
+			else if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			{
+				Inotify::NotifyAll();
+			}
 		}
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		program.Set("projection", &projection[0][0]);
+		program.Set("view", &view[0][0]);
+		program.Set("world", &world[0][0]);
 		program.Use();
 		cube().Draw();
 		window.display();

@@ -12,7 +12,7 @@
 class Reloadable
 {
 public:
-	virtual void reload() = 0;
+	virtual unsigned int reload() = 0;
 };
 
 class Inotify
@@ -33,10 +33,19 @@ public:
 	static Inotify &instance() { static Inotify inst; return inst; }
 	static void Register(std::string filename, Reloadable* reloadable)
 	{
+
+		instance().regs.push_back(std::make_pair(1, reloadable));
 /*		int wd = inotify_add_watch(instance().fd, filename.c_str(), IN_MODIFY);
 		std::cout << "wd added: " << wd << std::endl;
 		instance().regs.push_back(std::make_pair(wd, reloadable));
 		assert(wd != -1);*/
+	}
+	static void NotifyAll()
+	{
+		for(auto it = instance().regs.begin(); it != instance().regs.end(); ++it)
+		{
+			it->second->reload();
+		}
 	}
 	static void Poll()
 	{
