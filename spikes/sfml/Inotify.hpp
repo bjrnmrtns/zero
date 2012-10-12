@@ -6,59 +6,53 @@
 #include <sys/inotify.h>
 #include <cassert>
 #include <iostream>
-
-#define EVENT_SIZE  ( sizeof (struct inotify_event) )
-#define EVENT_BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
+#include <string.h>
+#include <fcntl.h>
 
 class Reloadable
 {
+public:
 	virtual void reload() = 0;
 };
 
 class Inotify
 {
 private:
-	std::map<std::string, Reloadable*> regs;
+	std::vector<std::pair<int, Reloadable*>> regs;
 	int fd;
-	fd_set fds;
-public:
 	Inotify()
-	: fd(inotify_init())
+	: fd(inotify_init1(IN_NONBLOCK))
 	{
-		assert(fd >= 0);
-		FD_ZERO(&fds);
-		FD_SET(fd, &fds);
+		assert(fd != -1);
 	}
-	static Inotify instance;
-	void Register(std::string filename, Reloadable* reloadable)
+	~Inotify()
 	{
-		regs.insert(std::make_pair(filename, reloadable));
-		int wd = inotify_add_watch(fd, filename.c_str(), IN_MODIFY);
-		assert(wd >= 0);
+		close(fd);
 	}
-	void Poll()
+public:
+	static Inotify &instance() { static Inotify inst; return inst; }
+	static void Register(std::string filename, Reloadable* reloadable)
 	{
-		struct timeval tv;
-		tv.tv_sec = 0;
-		tv.tv_usec = 100;
-//		int rc = select(fd + 1, &fds, 0, 0, &tv);
-			char buffer[EVENT_BUF_LEN];
-			int length = read( fd, buffer, EVENT_BUF_LEN );
-		assert(length != -1);
-		if(length > 0)
+/*		int wd = inotify_add_watch(instance().fd, filename.c_str(), IN_MODIFY);
+		std::cout << "wd added: " << wd << std::endl;
+		instance().regs.push_back(std::make_pair(wd, reloadable));
+		assert(wd != -1);*/
+	}
+	static void Poll()
+	{
+/*		static struct inotify_event ev;
+		static int ready = 0;
+		ready = read(instance().fd, (char *)&ev + ready, sizeof(ev) - ready);
+		while (ready == sizeof(ev))
 		{
-			std::cout << " yes " << std::endl;
-			int i = 0;
-			while ( i < length )
+			std::cout << "event: " << ev.wd << std::endl;
+			for(auto it = instance().regs.begin(); it != instance().regs.end(); ++it)
 			{
-				struct inotify_event *event = ( struct inotify_event * ) &buffer[ i ];
-				printf(event->name);
-				fflush(stdout);
-				i += EVENT_SIZE + event->len;
+				if(ev.wd == it->first) it->second->reload();
 			}
-		}
+			ready = read(instance().fd, (char *)&ev, sizeof(ev));
+		}*/
 	}
 };
-Inotify Inotify::instance;
 
 #endif
