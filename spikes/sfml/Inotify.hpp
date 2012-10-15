@@ -12,7 +12,7 @@
 class Reloadable
 {
 public:
-	virtual unsigned int reload() = 0;
+	virtual void reload() = 0;
 };
 
 class Inotify

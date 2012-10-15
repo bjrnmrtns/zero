@@ -41,41 +41,20 @@ private:
 	unsigned int id;
 };
 
-class ReloadableShader : public Reloadable
-{
-private:
-	int type;
-	std::string filename;
-	std::unique_ptr<Shader> res;
-public:
-	ReloadableShader(const std::string filename, int type)
-	: type(type)
-	, filename(filename)
-	, res(new Shader(filename, type))
-	{
-	}
-	unsigned int reload()
-	{
-		unsigned int oldid = res->GetId();
-		res.reset(new Shader(filename, type));
-		return oldid;
-	}
-	unsigned int GetId()
-	{
-		return res->GetId();
-	}
-};
-
 class ShaderProgram : public Reloadable
 {
 private:
-	ReloadableShader vs;
-	ReloadableShader fs;
+	std::string vsfilename;
+	std::string fsfilename;
+	std::unique_ptr<Shader> vs;
+	std::unique_ptr<Shader> fs;
 	unsigned int id;
 public:
 	ShaderProgram(std::string vsfilename, std::string fsfilename, const InputElementDescription description[])
-	: vs(vsfilename, GL_VERTEX_SHADER)
-	, fs(fsfilename, GL_FRAGMENT_SHADER)
+	: vsfilename(vsfilename)
+	, fsfilename(fsfilename)
+	, vs(new Shader(vsfilename, GL_VERTEX_SHADER))
+	, fs(new Shader(fsfilename, GL_FRAGMENT_SHADER))
 	{
 		id = glCreateProgram();
 		if(id == 0) throw GeneralException("glCreateProgram of shader failed");
@@ -89,8 +68,8 @@ public:
 	}
 	~ShaderProgram()
 	{
-		glDetachShader(id, fs.GetId());
-		glDetachShader(id, vs.GetId());
+		glDetachShader(id, fs->GetId());
+		glDetachShader(id, vs->GetId());
 		glDeleteProgram(id);
 	}
 	void Use()
@@ -99,8 +78,8 @@ public:
 	}
 	void Link()
 	{
-		glAttachShader(id, vs.GetId());
-		glAttachShader(id, fs.GetId());
+		glAttachShader(id, vs->GetId());
+		glAttachShader(id, fs->GetId());
 		glLinkProgram(id);
 
 		int ok = true;
@@ -134,10 +113,14 @@ public:
 		error = glGetError(); if (error) { printf("%d\n", error); abort(); }
 		return true;
 	}
-	unsigned int reload()
+	void reload()
 	{
-		glDetachShader(id, vs.reload());
-		glDetachShader(id, fs.reload());
+		unsigned int oldvsid = vs->GetId();
+		unsigned int oldfsid = fs->GetId();
+		vs.reset(new Shader(vsfilename, GL_VERTEX_SHADER));
+		fs.reset(new Shader(fsfilename, GL_FRAGMENT_SHADER));
+		glDetachShader(id, oldvsid);
+		glDetachShader(id, oldfsid);
 		Link();
 	}
 };
