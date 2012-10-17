@@ -5,10 +5,9 @@
 #include <string>
 #include <sys/inotify.h>
 #include <cassert>
-#include <iostream>
 #include <string.h>
-#include <fcntl.h>
 #include <tuple>
+#include <vector>
 
 class Reloadable
 {
@@ -37,7 +36,6 @@ public:
 
 //		instance().regs.push_back(std::make_pair(1, reloadable));
 		int wd = inotify_add_watch(instance().fd, filename.c_str(), IN_MODIFY | IN_DELETE_SELF);
-		std::cout << "wd added: " << wd << std::endl;
 		instance().regs.push_back(std::make_tuple(wd, filename, reloadable));
 		assert(wd != -1);
 	}
