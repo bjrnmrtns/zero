@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <SFML/Window/Mouse.hpp>
+#include "UI.hpp"
 	
 struct Vertex
 {
@@ -120,10 +121,6 @@ int main()
 			else if (event.type == sf::Event::Resized)
 			{
 				glViewport(0, 0, event.size.width, event.size.height);
-			}
-			else if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-			{
-				Inotify::NotifyAll();
 			}
 		}
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
