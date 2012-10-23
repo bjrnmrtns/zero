@@ -8,8 +8,10 @@
 #include <SFML/System/Clock.hpp>
 #include <map>
 #include <memory>
+#include <glm/gtc/matrix_transform.hpp>
 #include "ShaderProgram.hpp"
 #include "InputElementDescription.hpp"
+#include <iostream>
 
 class UISystemInterface : public Rocket::Core::SystemInterface
 {
@@ -32,9 +34,9 @@ public:
 	}
 	Rocket::Core::FileHandle Open(const Rocket::Core::String& path)
 	{
-		FILE* fp = fopen((root + path).CString(), "rb");
+		FILE* fp = fopen((root + "/" + path).CString(), "rb");
 		if (fp != NULL) return (Rocket::Core::FileHandle) fp;
-		throw GeneralException((root + path).CString());
+		throw GeneralException((root + "/"  + path).CString());
 	}
 	void Close(Rocket::Core::FileHandle file)
 	{
@@ -55,7 +57,7 @@ public:
 };
 
 const InputElementDescription uidescription[] { { "in_position", 2, sizeof(glm::vec2), GL_FLOAT },
-                                              { "in_color",    4, sizeof(glm::vec4), GL_UNSIGNED_BYTE },
+                                              { "in_color",    4, sizeof(unsigned char) * 4, GL_UNSIGNED_BYTE },
                                               { "in_texcoord",    2, sizeof(glm::vec2), GL_FLOAT },
                                               { "", 0, 0, 0 } };
 class UIRenderer : public Rocket::Core::RenderInterface
@@ -67,16 +69,26 @@ public:
 	UIRenderer()
 	: sp("ui.vs", "ui.fs", uidescription)
 	{
+		sp.Use();
+		sp.SetTexture("uitexture", 0);
 	}
 	void RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, const Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f& translation)
 	{
+		sp.Set("projection", &glm::ortho<float>(0.0f, 800, 600, 0, -1.0f, 1.0f)[0][0]);
+		glm::mat4 trans= glm::translate(glm::mat4(1.0f), glm::vec3(translation.x, translation.y, 0.0f));
+		sp.Set("model", &trans[0][0]);
+		VertexBuffer vb(uidescription, vertices, num_vertices);
+		glActiveTexture(GL_TEXTURE0);
+		textures.find(texture)->second->bind();
+		vb.DrawIndexed(*indices, num_indices);
 	}
 	bool LoadTexture(Rocket::Core::TextureHandle& texture_handle,
 	                 Rocket::Core::Vector2i& texture_dimensions,
 	                 const Rocket::Core::String& source)
 	{
 		sf::Texture* texture = new sf::Texture();
-		bool ret = texture->loadFromFile(source.CString());
+		Rocket::Core::String img("ui/" + source);
+		bool ret = texture->loadFromFile(img.CString());
 		textures.insert(std::make_pair(texture_handle, texture));
 		return ret;
 	}
@@ -86,7 +98,8 @@ public:
 	                     const Rocket::Core::Vector2i& source_dimensions)
 	{
 		sf::Texture* texture = new sf::Texture();
-		bool ret = texture->loadFromMemory(source, source_dimensions.x * source_dimensions.y * 4);
+		bool ret = texture->create(source_dimensions.x, source_dimensions.y);
+		texture->update(source);
 		textures.insert(std::make_pair(texture_handle, texture));
 		return ret;
 	}
@@ -98,6 +111,21 @@ public:
 			delete it->second;
 			textures.erase(it);
 		}
+	}
+	void EnableScissorRegion(bool enable)
+	{
+		if(enable)
+		{
+			glEnable(GL_SCISSOR_TEST);
+		}
+		else
+		{
+			glDisable(GL_SCISSOR_TEST);
+		}
+	}
+	void SetScissorRegion(int x, int y, int width, int height)
+	{
+		glScissor(x, y, width, height);
 	}
 	~UIRenderer()
 	{

@@ -75,6 +75,7 @@ static VertexBuffer& cube()
 	return model;
 }
 
+#include <Rocket/Core.h>
 int main()
 {
 	sf::ContextSettings settings;
@@ -89,11 +90,13 @@ int main()
 
 
 	/////////////
-	glCullFace(GL_BACK);
+/*	glCullFace(GL_BACK);
 	glFrontFace(GL_CW);
 	glEnable(GL_CULL_FACE);
 	glClearDepth(1.0f);
-	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);*/
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthFunc(GL_LEQUAL);
 	glViewport(0, 0, width, height);
 	glm::mat4 projection = glm::perspective(60.0f, width / (float)height, 1.0f, 1000.0f);
@@ -106,6 +109,33 @@ int main()
                                                       { "", 0, 0, 0 } };
 
 	ShaderProgram program("null.vs", "null.fs", description);
+
+	///UI
+	UIRenderer renderer;
+	UIFileInterface fileinterface("ui");
+	UISystemInterface systeminterface;
+	Rocket::Core::Context* Context;
+	Rocket::Core::SetSystemInterface(&systeminterface);
+	Rocket::Core::SetFileInterface(&fileinterface);
+	Rocket::Core::SetRenderInterface(&renderer);
+
+	if(!Rocket::Core::Initialise())
+		throw new std::exception();
+
+	Rocket::Core::FontDatabase::LoadFontFace("Delicious-Bold.otf");
+	Rocket::Core::FontDatabase::LoadFontFace("Delicious-BoldItalic.otf");
+	Rocket::Core::FontDatabase::LoadFontFace("Delicious-Italic.otf");
+	Rocket::Core::FontDatabase::LoadFontFace("Delicious-Roman.otf");
+
+	Context = Rocket::Core::CreateContext("default", Rocket::Core::Vector2i(width, height));
+
+//		Rocket::Debugger::Initialise(Context);
+
+	Rocket::Core::ElementDocument *Document = Context->LoadDocument("demo.rml");
+	Document->Show();
+	Document->RemoveReference();
+	///UI
+
 
 	bool running = true;
 	while (running)
@@ -124,11 +154,13 @@ int main()
 			}
 		}
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		program.Set("projection", &projection[0][0]);
+/*		program.Set("projection", &projection[0][0]);
 		program.Set("view", &view[0][0]);
 		program.Set("world", &world[0][0]);
 		program.Use();
-		cube().Draw();
+		cube().Draw();*/
+		Context->Update();
+		Context->Render();
 		window.display();
 	}
 	return 0;
