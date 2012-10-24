@@ -8,6 +8,6 @@ out vec4 outColor[1];
 
 void main(void)
 {
-	outColor[0] = texture2D(uitexture, pass_texcoord);
+	outColor[0] = texture2D(uitexture, pass_texcoord) * pass_color;
 }
 

@@ -18,9 +18,9 @@ struct Vertex
 
 static VertexBuffer& cube()
 {
-	const InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3), GL_FLOAT },
-                                                                  { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT },
-                                                                  { "in_color",    3, sizeof(glm::vec3), GL_FLOAT },
+	const InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3), GL_FLOAT, false },
+                                                                  { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT, false },
+                                                                  { "in_color",    3, sizeof(glm::vec3), GL_FLOAT, false },
                                                                   { "", 0, 0, 0 } };
 	glm::vec3 color(0.0f, 0.0f, 1.0f);
 	static Vertex vertices[] = { { glm::vec3( 0,  1,  0), glm::vec3(-1,  0,  0), color },
@@ -90,13 +90,10 @@ int main()
 
 
 	/////////////
-/*	glCullFace(GL_BACK);
-	glFrontFace(GL_CW);
+	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
 	glClearDepth(1.0f);
-	glEnable(GL_DEPTH_TEST);*/
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	glViewport(0, 0, width, height);
 	glm::mat4 projection = glm::perspective(60.0f, width / (float)height, 1.0f, 1000.0f);
@@ -131,7 +128,7 @@ int main()
 
 //		Rocket::Debugger::Initialise(Context);
 
-	Rocket::Core::ElementDocument *Document = Context->LoadDocument("demo.rml");
+	Rocket::Core::ElementDocument *Document = Context->LoadDocument("tutorial.rml");
 	Document->Show();
 	Document->RemoveReference();
 	///UI
@@ -153,12 +150,18 @@ int main()
 				glViewport(0, 0, event.size.width, event.size.height);
 			}
 		}
+		glClearColor(1.0f, 1.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-/*		program.Set("projection", &projection[0][0]);
+		glFrontFace(GL_CW);
+		glDisable(GL_BLEND);
+		program.Set("projection", &projection[0][0]);
 		program.Set("view", &view[0][0]);
 		program.Set("world", &world[0][0]);
 		program.Use();
-		cube().Draw();*/
+		cube().Draw();
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glFrontFace(GL_CCW);
 		Context->Update();
 		Context->Render();
 		window.display();

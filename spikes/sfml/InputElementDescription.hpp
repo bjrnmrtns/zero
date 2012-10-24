@@ -7,6 +7,7 @@ struct InputElementDescription
 	size_t numberofelements;
 	size_t elementsize;
 	int type;
+	bool normalize;
 };
 
 #endif

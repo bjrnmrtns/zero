@@ -56,10 +56,10 @@ public:
 	}
 };
 
-const InputElementDescription uidescription[] { { "in_position", 2, sizeof(glm::vec2), GL_FLOAT },
-                                              { "in_color",    4, sizeof(unsigned char) * 4, GL_UNSIGNED_BYTE },
-                                              { "in_texcoord",    2, sizeof(glm::vec2), GL_FLOAT },
-                                              { "", 0, 0, 0 } };
+const InputElementDescription uidescription[] { { "in_position", 2, sizeof(glm::vec2), GL_FLOAT, false },
+                                              { "in_color", 4, 4 * sizeof(unsigned char), GL_UNSIGNED_BYTE, true },
+                                              { "in_texcoord", 2, sizeof(glm::vec2), GL_FLOAT, false },
+                                              { "", 0, 0, 0, false } };
 class UIRenderer : public Rocket::Core::RenderInterface
 {
 private:
@@ -74,6 +74,19 @@ public:
 	}
 	void RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, const Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f& translation)
 	{
+		// LOG the damn thing
+		for(int i = 0; i < num_indices; i+=3)
+		{
+			Rocket::Core::Vertex* v0 = &vertices[indices[i]];
+			Rocket::Core::Vertex* v1 = &vertices[indices[i+1]];
+			Rocket::Core::Vertex* v2 = &vertices[indices[i+2]];
+	/*		std::cout << "Triangle " << i / 3 << ": " << "( " << "(" << v0->position.x << "," << v0->position.y << ")" << "(" << v1->position.x << "," << v1->position.y << ")" << "(" << v2->position.x << "," << v2->position.y << ")" << " )" << std::endl;
+			std::cout << "Triangle " << i / 3 << ": " << "( " << "(" << v0->tex_coord.x << "," << v0->tex_coord.y << ")" << "(" << v1->tex_coord.x << "," << v1->tex_coord.y << ")" << "(" << v2->tex_coord.x << "," << v2->tex_coord.y << ")" << " )" << std::endl;
+			std::cout << "Triangle " << i / 3 << ": " << "( " << "(" << v0->tex_coord.x << "," << v0->tex_coord.y << ")" << "(" << v1->tex_coord.x << "," << v1->tex_coord.y << ")" << "(" << v2->tex_coord.x << "," << v2->tex_coord.y << ")" << " )" << std::endl;
+	*/	}
+		// End LOG the damn thing
+
+
 		sp.Set("projection", &glm::ortho<float>(0.0f, 800, 600, 0, -1.0f, 1.0f)[0][0]);
 		glm::mat4 trans= glm::translate(glm::mat4(1.0f), glm::vec3(translation.x, translation.y, 0.0f));
 		sp.Set("model", &trans[0][0]);
@@ -89,6 +102,8 @@ public:
 		sf::Texture* texture = new sf::Texture();
 		Rocket::Core::String img("ui/" + source);
 		bool ret = texture->loadFromFile(img.CString());
+		texture_dimensions.x = texture->getSize().x;
+		texture_dimensions.y = texture->getSize().y;
 		textures.insert(std::make_pair(texture_handle, texture));
 		return ret;
 	}

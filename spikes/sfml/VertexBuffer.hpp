@@ -21,7 +21,14 @@ public:
 		for(int i = 0; description[i].elementsize; ++i)
 		{
 			glEnableVertexAttribArray(i);
-			glVertexAttribPointer(i, description[i].numberofelements, description[i].type, GL_FALSE, stride, (void *)offset);
+			if(description[i].normalize)
+			{
+				glVertexAttribPointer(i, description[i].numberofelements, description[i].type, GL_TRUE, stride, (void *)offset);
+			}
+			else
+			{
+				glVertexAttribPointer(i, description[i].numberofelements, description[i].type, GL_FALSE, stride, (void *)offset);
+			}
 			offset += description[i].elementsize;
 		}
 		glBufferData(GL_ARRAY_BUFFER, stride * count, vertexData, GL_DYNAMIC_DRAW);
