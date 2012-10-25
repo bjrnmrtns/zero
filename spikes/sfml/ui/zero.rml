@@ -1,0 +1,9 @@
+<rml>
+<head>
+	<link type="text/css" href="zero.rcss"/>
+	<title>Zero</title>
+</head>
+<body id="fps">
+0
+</body>
+</rml>

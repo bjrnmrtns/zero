@@ -7,7 +7,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <SFML/Window/Mouse.hpp>
+#include "FPSCounter.hpp"
 #include "UI.hpp"
+#include <sstream>
 	
 struct Vertex
 {
@@ -128,15 +130,19 @@ int main()
 
 //		Rocket::Debugger::Initialise(Context);
 
-	Rocket::Core::ElementDocument *Document = Context->LoadDocument("tutorial.rml");
+	Rocket::Core::ElementDocument *Document = Context->LoadDocument("zero.rml");
 	Document->Show();
 	Document->RemoveReference();
 	///UI
 
 
+	FPSCounter fpscounter;
 	bool running = true;
 	while (running)
 	{
+		std::ostringstream convert;
+		convert << fpscounter.Update();
+		Document->GetElementById("fps")->SetInnerRML(convert.str().c_str());
 		Inotify::Poll();
 		sf::Event event;
 		while (window.pollEvent(event))
@@ -150,7 +156,7 @@ int main()
 				glViewport(0, 0, event.size.width, event.size.height);
 			}
 		}
-		glClearColor(1.0f, 1.0f, 0.0f, 0.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glFrontFace(GL_CW);
 		glDisable(GL_BLEND);

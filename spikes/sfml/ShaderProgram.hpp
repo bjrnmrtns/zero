@@ -2,7 +2,7 @@
 #define SHADERPROGRAM__
 
 #include <string>
-#include <GL/gl.h>
+#include <GL/glew.h>
 #include <memory>
 #include <vector>
 

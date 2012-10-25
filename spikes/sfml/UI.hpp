@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "ShaderProgram.hpp"
 #include "InputElementDescription.hpp"
+#include "VertexBuffer.hpp"
 #include <iostream>
 
 class UISystemInterface : public Rocket::Core::SystemInterface
