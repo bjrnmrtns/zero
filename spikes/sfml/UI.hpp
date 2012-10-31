@@ -75,19 +75,6 @@ public:
 	}
 	void RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, const Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f& translation)
 	{
-		// LOG the damn thing
-		for(int i = 0; i < num_indices; i+=3)
-		{
-			Rocket::Core::Vertex* v0 = &vertices[indices[i]];
-			Rocket::Core::Vertex* v1 = &vertices[indices[i+1]];
-			Rocket::Core::Vertex* v2 = &vertices[indices[i+2]];
-	/*		std::cout << "Triangle " << i / 3 << ": " << "( " << "(" << v0->position.x << "," << v0->position.y << ")" << "(" << v1->position.x << "," << v1->position.y << ")" << "(" << v2->position.x << "," << v2->position.y << ")" << " )" << std::endl;
-			std::cout << "Triangle " << i / 3 << ": " << "( " << "(" << v0->tex_coord.x << "," << v0->tex_coord.y << ")" << "(" << v1->tex_coord.x << "," << v1->tex_coord.y << ")" << "(" << v2->tex_coord.x << "," << v2->tex_coord.y << ")" << " )" << std::endl;
-			std::cout << "Triangle " << i / 3 << ": " << "( " << "(" << v0->tex_coord.x << "," << v0->tex_coord.y << ")" << "(" << v1->tex_coord.x << "," << v1->tex_coord.y << ")" << "(" << v2->tex_coord.x << "," << v2->tex_coord.y << ")" << " )" << std::endl;
-	*/	}
-		// End LOG the damn thing
-
-
 		sp.Set("projection", &glm::ortho<float>(0.0f, 800, 600, 0, -1.0f, 1.0f)[0][0]);
 		glm::mat4 trans= glm::translate(glm::mat4(1.0f), glm::vec3(translation.x, translation.y, 0.0f));
 		sp.Set("model", &trans[0][0]);

@@ -35,3 +35,9 @@ cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX:PATH=${ZERO_EXTERNAL_DIR}
 make
 make install
 
+# Get boost
+cd ${BOOTSTRAP_DIR}
+wget http://sourceforge.net/projects/boost/files/boost/1.51.0/boost_1_51_0.tar.gz
+tar xf boost_1_51_0.tar.gz
+cd boost_1_51_0
+mv boost ${ZERO_EXTERNAL_DIR}/include

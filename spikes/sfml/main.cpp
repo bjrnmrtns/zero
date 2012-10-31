@@ -10,6 +10,7 @@
 #include "FPSCounter.hpp"
 #include "UI.hpp"
 #include <sstream>
+#include "GameState.hpp"
 	
 struct Vertex
 {
@@ -86,7 +87,7 @@ int main()
 	const size_t width = 800;
 	const size_t height = 600;
 	sf::Window window(sf::VideoMode(width, height), "OpenGL", sf::Style::Default, sf::ContextSettings(32));
-	window.setVerticalSyncEnabled(true);
+	window.setVerticalSyncEnabled(false);
 	glewExperimental = GL_TRUE;
 	if(glewInit() != GLEW_OK) throw new GeneralException("glewInit failed");
 
@@ -121,10 +122,7 @@ int main()
 	if(!Rocket::Core::Initialise())
 		throw new std::exception();
 
-	Rocket::Core::FontDatabase::LoadFontFace("Delicious-Bold.otf");
-	Rocket::Core::FontDatabase::LoadFontFace("Delicious-BoldItalic.otf");
-	Rocket::Core::FontDatabase::LoadFontFace("Delicious-Italic.otf");
-	Rocket::Core::FontDatabase::LoadFontFace("Delicious-Roman.otf");
+	Rocket::Core::FontDatabase::LoadFontFace("PressStart2P.ttf");
 
 	Context = Rocket::Core::CreateContext("default", Rocket::Core::Vector2i(width, height));
 
@@ -134,6 +132,10 @@ int main()
 	Document->Show();
 	Document->RemoveReference();
 	///UI
+	GameState gameState;
+	gameState.initiate();
+	gameState.process_event(EvToGame(0));
+	gameState.process_event(EvToMenu(1));
 
 
 	FPSCounter fpscounter;
