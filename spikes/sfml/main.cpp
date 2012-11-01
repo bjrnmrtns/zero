@@ -157,6 +157,21 @@ int main()
 			{
 				glViewport(0, 0, event.size.width, event.size.height);
 			}
+			else if (event.type == sf::Event::KeyPressed)
+			{
+				if (event.key.code == sf::Keyboard::Escape)
+				{
+					running = false;
+				}
+				else if(event.key.code == sf::Keyboard::Quote)
+				{
+					running = false;
+				}
+			}
+			else if(event.type == sf::Event::TextEntered)
+			{
+				std::cout << static_cast<char>(event.text.unicode) << std::endl;
+			}
 		}
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

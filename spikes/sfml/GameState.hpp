@@ -30,13 +30,15 @@ struct EvToGame : sc::event<EvToGame>
 
 struct InMenu;
 struct InGame;
-struct GameState : sc::state_machine<GameState, InMenu> {};
+struct GameState : sc::state_machine<GameState, InMenu>
+{
+};
 struct InGame : sc::simple_state<InGame, GameState>
 {
 	typedef sc::transition<EvToMenu, InMenu> reactions;
 	InGame()
 	{
-		std::cout << "InGame State Hello" << std::endl;
+		std::cout << "InGame State Hello"  << std::endl;
 	}
 	~InGame()
 	{
