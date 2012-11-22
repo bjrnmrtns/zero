@@ -11,74 +11,8 @@
 #include "UI.hpp"
 #include <sstream>
 #include "GameState.hpp"
+#include "models.hpp"
 	
-struct Vertex
-{
-	glm::vec3 pos;
-	glm::vec3 normal;
-	glm::vec3 color;
-};
-
-static VertexBuffer& cube()
-{
-	const InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3), GL_FLOAT, false },
-                                                                  { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT, false },
-                                                                  { "in_color",    3, sizeof(glm::vec3), GL_FLOAT, false },
-                                                                  { "", 0, 0, 0 } };
-	glm::vec3 color(0.0f, 0.0f, 1.0f);
-	static Vertex vertices[] = { { glm::vec3( 0,  1,  0), glm::vec3(-1,  0,  0), color },
-				     { glm::vec3( 0,  0,  1), glm::vec3(-1,  0,  0), color },
-				     { glm::vec3( 0,  0,  0), glm::vec3(-1,  0,  0), color }, 
-
-				     { glm::vec3( 0,  0,  1), glm::vec3(-1,  0,  0), color },
-				     { glm::vec3( 0,  1,  0), glm::vec3(-1,  0,  0), color },
-				     { glm::vec3( 0,  1,  1), glm::vec3(-1,  0,  0), color },
-
-				     { glm::vec3( 0,  1,  1), glm::vec3( 0,  0,  1), color },
-				     { glm::vec3( 1,  0,  1), glm::vec3( 0,  0,  1), color },
-				     { glm::vec3( 0,  0,  1), glm::vec3( 0,  0,  1), color },
-
-				     { glm::vec3( 1,  0,  1), glm::vec3( 0,  0,  1), color },
-				     { glm::vec3( 0,  1,  1), glm::vec3( 0,  0,  1), color },
-				     { glm::vec3( 1,  1,  1), glm::vec3( 0,  0,  1), color },
-
-				     { glm::vec3( 1,  0,  1), glm::vec3( 1,  0,  0), color },
-				     { glm::vec3( 1,  1,  0), glm::vec3( 1,  0,  0), color },
-				     { glm::vec3( 1,  0,  0), glm::vec3( 1,  0,  0), color },
-
-				     { glm::vec3( 1,  1,  0), glm::vec3( 1,  0,  0), color },
-				     { glm::vec3( 1,  0,  1), glm::vec3( 1,  0,  0), color },
-				     { glm::vec3( 1,  1,  1), glm::vec3( 1,  0,  0), color },
-
-				     { glm::vec3( 1,  1,  0), glm::vec3( 0,  0, -1), color },
-				     { glm::vec3( 0,  0,  0), glm::vec3( 0,  0, -1), color },
-				     { glm::vec3( 1,  0,  0), glm::vec3( 0,  0, -1), color },
-
-				     { glm::vec3( 0,  0,  0), glm::vec3( 0,  0, -1), color },
-				     { glm::vec3( 1,  1,  0), glm::vec3( 0,  0, -1), color },
-				     { glm::vec3( 0,  1,  0), glm::vec3( 0,  0, -1), color },
-
-				     { glm::vec3( 0,  1,  0), glm::vec3( 0,  1,  0), color },
-				     { glm::vec3( 1,  1,  1), glm::vec3( 0,  1,  0), color },
-				     { glm::vec3( 0,  1,  1), glm::vec3( 0,  1,  0), color },
-
-				     { glm::vec3( 1,  1,  1), glm::vec3( 0,  1,  0), color },
-				     { glm::vec3( 0,  1,  0), glm::vec3( 0,  1,  0), color },
-				     { glm::vec3( 1,  1,  0), glm::vec3( 0,  1,  0), color },
-
-				     { glm::vec3( 1,  0,  0), glm::vec3( 0, -1,  0), color },
-				     { glm::vec3( 0,  0,  1), glm::vec3( 0, -1,  0), color },
-				     { glm::vec3( 1,  0,  1), glm::vec3( 0, -1,  0), color },
-
-				     { glm::vec3( 0,  0,  1), glm::vec3( 0, -1,  0), color },
-				     { glm::vec3( 1,  0,  0), glm::vec3( 0, -1,  0), color },
-				     { glm::vec3( 0,  0,  0), glm::vec3( 0, -1,  0), color }
-		};
-	static VertexBuffer model(description, vertices, sizeof(vertices)/sizeof(Vertex));
-	return model;
-}
-
-#include <Rocket/Core.h>
 int main()
 {
 	sf::ContextSettings settings;
@@ -91,8 +25,6 @@ int main()
 	glewExperimental = GL_TRUE;
 	if(glewInit() != GLEW_OK) throw new GeneralException("glewInit failed");
 
-
-	/////////////
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
 	glClearDepth(1.0f);
@@ -109,42 +41,16 @@ int main()
                                                       { "", 0, 0, 0 } };
 
 	ShaderProgram program("null.vs", "null.fs", description);
-
-	///UI
-	UIRenderer renderer;
-	UIFileInterface fileinterface("ui");
-	UISystemInterface systeminterface;
-	Rocket::Core::Context* Context;
-	Rocket::Core::SetSystemInterface(&systeminterface);
-	Rocket::Core::SetFileInterface(&fileinterface);
-	Rocket::Core::SetRenderInterface(&renderer);
-
-	if(!Rocket::Core::Initialise())
-		throw new std::exception();
-
-	Rocket::Core::FontDatabase::LoadFontFace("PressStart2P.ttf");
-
-	Context = Rocket::Core::CreateContext("default", Rocket::Core::Vector2i(width, height));
-
-//		Rocket::Debugger::Initialise(Context);
-
-	Rocket::Core::ElementDocument *Document = Context->LoadDocument("zero.rml");
-	Document->Show();
-	Document->RemoveReference();
-	///UI
-	GameState gameState;
-	gameState.initiate();
-	gameState.process_event(EvToGame(0));
-	gameState.process_event(EvToMenu(1));
-
-
+	RocketUI rocketui(width, height);
 	FPSCounter fpscounter;
 	bool running = true;
+	std::string currentline;
+	VertexBuffer& worldblocks = blocks();
 	while (running)
 	{
 		std::ostringstream convert;
 		convert << fpscounter.Update();
-		Document->GetElementById("fps")->SetInnerRML(convert.str().c_str());
+		rocketui.setFPS(convert.str());
 		Inotify::Poll();
 		sf::Event event;
 		while (window.pollEvent(event))
@@ -168,10 +74,6 @@ int main()
 					running = false;
 				}
 			}
-			else if(event.type == sf::Event::TextEntered)
-			{
-				std::cout << static_cast<char>(event.text.unicode) << std::endl;
-			}
 		}
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -181,12 +83,12 @@ int main()
 		program.Set("view", &view[0][0]);
 		program.Set("world", &world[0][0]);
 		program.Use();
-		cube().Draw();
+		//cube().Draw();
+		worldblocks.Draw();
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glFrontFace(GL_CCW);
-		Context->Update();
-		Context->Render();
+		rocketui.UpdateAndRender();
 		window.display();
 	}
 	return 0;

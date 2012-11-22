@@ -1,9 +1,11 @@
 <rml>
 <head>
+	<link type="text/css" href="rkt.rcss"/>
 	<link type="text/css" href="zero.rcss"/>
 	<title>Zero</title>
 </head>
 <body>
-<div id="fps">0</div>
+<div id="fps">0</div><br/>
+<div id="console"></div>
 </body>
 </rml>

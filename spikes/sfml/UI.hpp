@@ -4,6 +4,7 @@
 #include <Rocket/Core/FileInterface.h>
 #include <Rocket/Core/RenderInterface.h>
 #include <Rocket/Core/SystemInterface.h>
+#include <Rocket/Core.h>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Clock.hpp>
 #include <map>
@@ -139,5 +140,46 @@ public:
 	}
 
 };
+
+class RocketUI
+{
+private:
+	UIRenderer renderer;
+	UIFileInterface fileinterface;
+	UISystemInterface systeminterface;
+	Rocket::Core::Context* Context;
+	Rocket::Core::ElementDocument *Document;
+public:
+	RocketUI(size_t width, size_t height)
+	: fileinterface("ui")
+	{
+		Rocket::Core::SetSystemInterface(&systeminterface);
+		Rocket::Core::SetFileInterface(&fileinterface);
+		Rocket::Core::SetRenderInterface(&renderer);
+		if(!Rocket::Core::Initialise())
+			throw new std::exception();
+
+		Rocket::Core::FontDatabase::LoadFontFace("PressStart2P.ttf");
+
+		Context = Rocket::Core::CreateContext("default", Rocket::Core::Vector2i(width, height));
+		Document = Context->LoadDocument("zero.rml");
+		Document->Show();
+		Document->RemoveReference();
+	}
+	void UpdateAndRender()
+	{
+		Context->Update();
+		Context->Render();
+	}
+	void setFPS(std::string fps)
+	{
+		Document->GetElementById("fps")->SetInnerRML(fps.c_str());
+	}
+	void setConsole(std::string console)
+	{
+		Document->GetElementById("console")->SetInnerRML(console.c_str());
+	}
+};
+
 
 #endif

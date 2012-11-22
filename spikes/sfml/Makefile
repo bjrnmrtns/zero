@@ -1,6 +1,6 @@
 all: main
 
-main.o: main.cpp GeneralException.hpp File.hpp ShaderProgram.hpp Inotify.hpp UI.hpp VertexBuffer.hpp FPSCounter.hpp GameState.hpp
+main.o: main.cpp GeneralException.hpp File.hpp ShaderProgram.hpp Inotify.hpp UI.hpp VertexBuffer.hpp FPSCounter.hpp GameState.hpp models.hpp
 	g++ -ggdb -std=c++0x -Wall -Wextra -pedantic -c main.cpp  -Iexternal/include 
 
 main: main.o

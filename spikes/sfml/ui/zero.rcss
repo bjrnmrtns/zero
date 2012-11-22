@@ -1,9 +1,19 @@
-body
+div#fps
 {
 	font-family: Press Start 2P;
 	font-weight: normal;
 	font-style: normal;
 	font-size: 16;
 	color: white;
+}
+div#console
+{
+	width: 100;
+	height: 100;
+	font-family: Press Start 2P;
+	font-weight: normal;
+	font-style: normal;
+	font-size: 8;
+	color: blue;
 }
 
