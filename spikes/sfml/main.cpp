@@ -83,8 +83,9 @@ int main()
 		program.Set("view", &view[0][0]);
 		program.Set("world", &world[0][0]);
 		program.Use();
-		//cube().Draw();
-		worldblocks.Draw();
+		cube().Draw();
+//		worldblocks.Draw();
+		// Using the mouse sf::Mouse::getPosition();
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glFrontFace(GL_CCW);

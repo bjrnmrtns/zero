@@ -1,4 +1,5 @@
 #!/bin/sh
+# pre: install libxmu-dev libxi-dev libfreetype6-dev libjpeg62-dev
 
 BOOTSTRAP_DIR=`mktemp -d`
 ZERO_EXTERNAL_DIR=`pwd`/external
