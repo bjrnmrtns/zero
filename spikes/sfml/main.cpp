@@ -1,12 +1,12 @@
 #include <SFML/Window.hpp>
+#include "Camera.hpp"
 #include <GL/glew.h>
 #include "ShaderProgram.hpp"
 #include "Inotify.hpp"
 #include "InputElementDescription.hpp"
 #include "VertexBuffer.hpp"
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <SFML/Window/Mouse.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include "FPSCounter.hpp"
 #include "UI.hpp"
 #include <sstream>
@@ -32,7 +32,6 @@ int main()
 	glDepthFunc(GL_LEQUAL);
 	glViewport(0, 0, width, height);
 	glm::mat4 projection = glm::perspective(60.0f, width / (float)height, 1.0f, 1000.0f);
-	glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f));
 	glm::mat4 world = glm::mat4(1.0f);
 
 	const InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3), GL_FLOAT },
@@ -46,8 +45,10 @@ int main()
 	bool running = true;
 	std::string currentline;
 	VertexBuffer& worldblocks = blocks();
+	FreeLookCamera camera(0.0f, 0.0f, glm::vec3(-1.0f, 1.0f, 4.0f), width, height);
 	while (running)
 	{
+		camera.Update();
 		std::ostringstream convert;
 		convert << fpscounter.Update();
 		rocketui.setFPS(convert.str());
@@ -80,7 +81,7 @@ int main()
 		glFrontFace(GL_CW);
 		glDisable(GL_BLEND);
 		program.Set("projection", &projection[0][0]);
-		program.Set("view", &view[0][0]);
+		program.Set("view", &camera.GetViewMatrix()[0][0]);
 		program.Set("world", &world[0][0]);
 		program.Use();
 		cube().Draw();
