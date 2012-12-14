@@ -52,9 +52,9 @@ public:
 		sf::Mouse::setPosition(sf::Vector2i(width/2, height/2));
 	}
 private:
-	glm::vec3 location;
 	glm::quat orientation;
 	float left, up;
+	glm::vec3 location;
 	size_t width, height;
 };
 

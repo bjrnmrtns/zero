@@ -12,13 +12,19 @@ struct Vertex
 	glm::vec3 normal;
 	glm::vec3 color;
 };
+
+bool noise(int x, int y, int z)
+{
+	return x > y;
+}
+
 static int theworld[16][16][16];
 static VertexBuffer& blocks()
 {
 	const InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3), GL_FLOAT, false },
                                                                   { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT, false },
                                                                   { "in_color",    3, sizeof(glm::vec3), GL_FLOAT, false },
-                                                                  { "", 0, 0, 0 } };
+                                                                  { "", 0, 0, 0, false } };
 	glm::vec3 colors[] { glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 1.0f) };
 	size_t N = 0;
 	for(size_t z = 0; z < 16; z++)
@@ -27,7 +33,7 @@ static VertexBuffer& blocks()
 		{
 			for(size_t x = 0; x < 16; x++)
 			{
-				if((y == 0) || ((y == 1) && x == 3))
+				if(noise(x, y, z))
 				{
 					theworld[x][y][z] = 1;
 					N++;
@@ -108,7 +114,7 @@ static VertexBuffer& cube()
 	const InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3), GL_FLOAT, false },
                                                                   { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT, false },
                                                                   { "in_color",    3, sizeof(glm::vec3), GL_FLOAT, false },
-                                                                  { "", 0, 0, 0 } };
+                                                                  { "", 0, 0, 0, false } };
 	glm::vec3 color(0.0f, 0.0f, 1.0f);
 	static Vertex vertices[] = { { glm::vec3( 0,  1,  0), glm::vec3(-1,  0,  0), color },
 				     { glm::vec3( 0,  0,  1), glm::vec3(-1,  0,  0), color },

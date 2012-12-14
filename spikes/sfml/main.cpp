@@ -25,8 +25,8 @@ int main()
 	glewExperimental = GL_TRUE;
 	if(glewInit() != GLEW_OK) throw new GeneralException("glewInit failed");
 
-	//glCullFace(GL_BACK);
-	//glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE);
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
@@ -34,10 +34,10 @@ int main()
 	glm::mat4 projection = glm::perspective(60.0f, width / (float)height, 1.0f, 1000.0f);
 	glm::mat4 world = glm::mat4(1.0f);
 
-	const InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3), GL_FLOAT },
-                                                      { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT },
-                                                      { "in_color",    3, sizeof(glm::vec3), GL_FLOAT },
-                                                      { "", 0, 0, 0 } };
+	const InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3), GL_FLOAT, false },
+                                                      { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT, false },
+                                                      { "in_color",    3, sizeof(glm::vec3), GL_FLOAT, false },
+                                                      { "", 0, 0, 0, false } };
 
 	ShaderProgram program("null.vs", "null.fs", description);
 	RocketUI rocketui(width, height);
