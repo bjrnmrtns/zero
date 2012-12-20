@@ -40,10 +40,10 @@ public:
 	{
 		float keyboardx = 0.0f;
 		float keyboardy = 0.0f;
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)) keyboardy -= 0.02f;
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::A)) keyboardx -= 0.02f;
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::S)) keyboardy += 0.02f;
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::D)) keyboardx += 0.02f;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)) keyboardy -= 0.2f;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::A)) keyboardx -= 0.2f;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::S)) keyboardy += 0.2f;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::D)) keyboardx += 0.2f;
 		sf::Vector2i mousepos = sf::Mouse::getPosition();
 		int mousex = (width/2) - mousepos.x;
 		int mousey = (height/2) - mousepos.y;
