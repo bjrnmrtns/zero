@@ -29,15 +29,16 @@ static float noise2d(float x, float y, int octaves, float persistence) {
 }
 
 
-static const size_t size_x = 192;
+static const size_t size_x = 256;
 static const size_t size_y = 32;
-static const size_t size_z = 192;
+static const size_t size_z = 256;
+static const size_t water_height = 3;
 static int theworld[size_x][size_y][size_z];
 bool noise(int x, int y, int z)
 {
 	float n = noise2d(x / ((float)size_x / 2), z / ((float)size_z / 2), 5, 0.3) * 4;
 	int h = n * 3;
-	return y < h;
+	return y < h + 9;
 }
 static VertexBuffer& blocks()
 {
@@ -58,6 +59,10 @@ static VertexBuffer& blocks()
 					theworld[x][y][z] = 1;
 					N++;
 				}
+				if(y <= water_height)
+				{
+					theworld[x][y][z] = 2;
+				}
 			}
 		}
 	}
@@ -72,7 +77,8 @@ static VertexBuffer& blocks()
 			for(size_t x = 0; x < size_x; x++)
 			{
 				glm::vec3 color = colors[std::rand() % (sizeof(colors)/sizeof(glm::vec3))];
-				if(theworld[x][y][z] == 1)
+				if(theworld[x][y][z] == 2) color = glm::vec3(0.0f, 0.0f, 1.0f);
+				if(theworld[x][y][z] == 1 || theworld[x][y][z] == 2)
 				{
 					if (x == 0 || !theworld[x-1][y][z])
 					{
