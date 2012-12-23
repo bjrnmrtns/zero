@@ -7,6 +7,15 @@
 #include "InputElementDescription.hpp"
 #include <glm/gtx/noise.hpp>
 
+enum blocktypes
+{
+	Air,
+	Sand,
+	Grass,
+	Water,
+	Size
+};
+
 struct Vertex
 {
 	glm::vec3 pos;
@@ -28,17 +37,42 @@ static float noise2d(float x, float y, int octaves, float persistence) {
 	return sum;
 }
 
+static float noise3d(float x, float y, float z, int octaves, float persistence)
+{
+	float sum = 0;
+	float strength = 1.0;
+	float scale = 1.0;
+
+	for(int i = 0; i < octaves; i++) {
+		sum += strength * fabs(glm::simplex(glm::vec3(x, y, z) * scale));
+		scale *= 2.0;
+		strength *= persistence;
+	}
+
+	return sum;
+}
+
 
 static const size_t size_x = 256;
 static const size_t size_y = 32;
 static const size_t size_z = 256;
-static const size_t water_height = 3;
-static int theworld[size_x][size_y][size_z];
-bool noise(int x, int y, int z)
+static const int water_height = 3;
+static uint8_t theworld[size_x][size_y][size_z];
+uint8_t noise(int x, int y, int z)
 {
+	if(y <= water_height) return Water;
 	float n = noise2d(x / ((float)size_x / 2), z / ((float)size_z / 2), 5, 0.3) * 4;
 	int h = n * 3;
-	return y < h + 9;
+	if(y < h + 9)
+	{
+		float r = noise3d(x / ((float)size_x / 2), y / ((float)size_y / 2), z / ((float)size_z / 2), 2, 1);
+		if(n + r * 4 < 3) return Sand;
+		return Grass;
+	}
+	else
+	{
+		return Air;
+	}
 }
 static VertexBuffer& blocks()
 {
@@ -46,7 +80,10 @@ static VertexBuffer& blocks()
                                                       { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT, false },
                                                       { "in_color",    3, sizeof(glm::vec3), GL_FLOAT, false },
                                                       { "", 0, 0, 0, false } };
-	glm::vec3 colors[] { glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 1.0f) };
+	glm::vec3 colors[Size];
+	colors[Sand] = glm::vec3(1.0f, 1.0f, 0.0f);
+	colors[Grass] = glm::vec3(0.0f, 1.0f, 0.0f);
+	colors[Water] = glm::vec3(0.0f, 0.0f, 1.0f);
 	size_t N = 0;
 	for(size_t z = 0; z < size_z; z++)
 	{
@@ -54,15 +91,8 @@ static VertexBuffer& blocks()
 		{
 			for(size_t x = 0; x < size_x; x++)
 			{
-				if(noise(x, y, z))
-				{
-					theworld[x][y][z] = 1;
-					N++;
-				}
-				if(y <= water_height)
-				{
-					theworld[x][y][z] = 2;
-				}
+				theworld[x][y][z] = noise(x, y, z);
+				N++;
 			}
 		}
 	}
@@ -76,9 +106,9 @@ static VertexBuffer& blocks()
 		{
 			for(size_t x = 0; x < size_x; x++)
 			{
-				glm::vec3 color = colors[std::rand() % (sizeof(colors)/sizeof(glm::vec3))];
-				if(theworld[x][y][z] == 2) color = glm::vec3(0.0f, 0.0f, 1.0f);
-				if(theworld[x][y][z] == 1 || theworld[x][y][z] == 2)
+				//glm::vec3 color = colors[std::rand() % (sizeof(colors)/sizeof(glm::vec3))];
+				glm::vec3 color = colors[theworld[x][y][z]];
+				if(theworld[x][y][z] > 0)
 				{
 					if (x == 0 || !theworld[x-1][y][z])
 					{
