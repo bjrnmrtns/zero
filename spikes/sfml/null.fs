@@ -6,7 +6,7 @@ in vec3 pass_normal;
 in vec3 pass_color;
 out vec3 outColor;
 
-const vec3 light_position = vec3(60, 40, 5);
+const vec3 light_position = vec3(60, 30, 5);
 
 void main(void)
 {

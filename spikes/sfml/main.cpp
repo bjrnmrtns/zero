@@ -12,6 +12,19 @@
 #include <sstream>
 #include "GameState.hpp"
 #include "models.hpp"
+#include "TimeStepper.hpp"
+
+class Player
+{
+public:
+	Player()
+	: movingforward(false)
+	, movingbackward(false)
+	{
+	}
+	bool movingforward;
+	bool movingbackward;
+};
 	
 int main()
 {
@@ -43,12 +56,15 @@ int main()
 	RocketUI rocketui(width, height);
 	FPSCounter fpscounter;
 	bool running = true;
+	bool input = true;
 	std::string currentline;
 	VertexBuffer& worldblocks = blocks();
 	FreeLookCamera camera(0.0f, 0.0f, glm::vec3(-1.0f, 1.0f, 4.0f), width, height);
+	Player player;
+	TimeStepper timestepper(60);
 	while (running)
 	{
-		camera.Update();
+		if(input) camera.Update();
 		std::ostringstream convert;
 		convert << fpscounter.Update();
 		rocketui.setFPS(convert.str());
@@ -74,6 +90,29 @@ int main()
 				{
 					running = false;
 				}
+				else if(event.key.code == sf::Keyboard::I)
+				{
+					input = !input;
+				}
+				else if(event.key.code == sf::Keyboard::Up)
+				{
+					player.movingforward = true;
+				}
+				else if(event.key.code == sf::Keyboard::Down)
+				{
+					player.movingbackward = true;
+				}
+			}
+			else if (event.type == sf::Event::KeyReleased)
+			{
+				if(event.key.code == sf::Keyboard::Up)
+				{
+					player.movingforward = false;
+				}
+				else if(event.key.code == sf::Keyboard::Down)
+				{
+					player.movingbackward = false;
+				}
 			}
 		}
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -84,8 +123,17 @@ int main()
 		program.Set("view", &camera.GetViewMatrix()[0][0]);
 		program.Set("world", &world[0][0]);
 		program.Use();
-		cube().Draw();
 		worldblocks.Draw();
+		static glm::vec3 playerpos(0.25f, 20.0f, 0.25f);
+		size_t steps = timestepper.steps();
+		for(size_t i = 0; i < steps; i++)
+		{
+			if(player.movingforward) playerpos.x += 0.05f;
+			if(player.movingbackward) playerpos.x -= 0.05f;
+		}
+		glm::mat4 playerworld = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(0.5f)), playerpos);
+		program.Set("world", &playerworld[0][0]);
+		cube().Draw();
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glFrontFace(GL_CCW);
