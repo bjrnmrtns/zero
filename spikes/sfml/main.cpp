@@ -13,6 +13,7 @@
 #include "GameState.hpp"
 #include "models.hpp"
 #include "TimeStepper.hpp"
+#include "Input.hpp"
 
 class Player
 {
@@ -56,15 +57,19 @@ int main()
 	RocketUI rocketui(width, height);
 	FPSCounter fpscounter;
 	bool running = true;
-	bool input = true;
 	std::string currentline;
 	VertexBuffer& worldblocks = blocks();
 	FreeLookCamera camera(0.0f, 0.0f, glm::vec3(-1.0f, 1.0f, 4.0f), width, height);
+	NoInput noinput;
+	std::vector<Input*> inputs;
+	inputs.push_back(&camera);
+	inputs.push_back(&noinput);
+	auto curinput = inputs.begin();
 	Player player;
 	TimeStepper timestepper(60);
 	while (running)
 	{
-		if(input) camera.Update();
+		(*curinput)->Update();
 		std::ostringstream convert;
 		convert << fpscounter.Update();
 		rocketui.setFPS(convert.str());
@@ -90,9 +95,9 @@ int main()
 				{
 					running = false;
 				}
-				else if(event.key.code == sf::Keyboard::I)
+				else if(event.key.code == sf::Keyboard::C)
 				{
-					input = !input;
+					if(++curinput == inputs.end()) curinput = inputs.begin();
 				}
 				else if(event.key.code == sf::Keyboard::Up)
 				{
@@ -124,14 +129,81 @@ int main()
 		program.Set("world", &world[0][0]);
 		program.Use();
 		worldblocks.Draw();
-		static glm::vec3 playerpos(0.25f, 20.0f, 0.25f);
+
+
+		static glm::vec3 pos(0.25f, 20.0f, 0.25f);
+		static const float eps = 0.000001f;
+		glm::vec3 old = pos;
 		size_t steps = timestepper.steps();
 		for(size_t i = 0; i < steps; i++)
 		{
-			if(player.movingforward) playerpos.x += 0.05f;
-			if(player.movingbackward) playerpos.x -= 0.05f;
+			if(player.movingforward) pos.z += 0.05f;
+			if(player.movingbackward) pos.z -= 0.05f;
 		}
-		glm::mat4 playerworld = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(0.5f)), playerpos);
+		glm::vec3 diff = pos - old;
+		if(diff.y > eps)
+		{
+			if(theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0
+			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0)
+			{
+				pos.y = old.y;
+			}
+		}
+		if(diff.y < -eps)
+		{
+			if(theworld[(int)(pos.x)][(int)(pos.y)][(int)(pos.z)] > 0
+			|| theworld[(int)(pos.x)][(int)(pos.y)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y)][(int)(pos.z)] > 0)
+			{
+				pos.y = old.y;
+			}
+		}
+		if(diff.x > eps)
+		{
+			if(theworld[(int)(pos.x + 0.8)][(int)(pos.y)][(int)(pos.z)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0)
+			{
+				pos.x = old.x;
+			}
+		}
+		if(diff.z > eps)
+		{
+			if(theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0)
+			{
+				pos.z = old.z;
+			}
+		}
+		if(diff.x < -eps)
+		{
+			if(theworld[(int)(pos.x)][(int)(pos.y)][(int)(pos.z)] > 0
+			|| theworld[(int)(pos.x)][(int)(pos.y)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0)
+			{
+				pos.x = old.x;
+			}
+		}
+		if(diff.z < -eps)
+		{
+			if(theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0
+			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0)
+			{
+				pos.z = old.z;
+			}
+		}
+
+
+		glm::mat4 playerworld = glm::translate(glm::mat4(1.0f), pos);
 		program.Set("world", &playerworld[0][0]);
 		cube().Draw();
 		glEnable(GL_BLEND);

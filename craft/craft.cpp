@@ -562,7 +562,7 @@ public:
 		if(player.position.z > 127.0) player.position.z = 127;
 
 		glm::vec3 diff = player.position - old;
-		static const int eps = 0.000001;
+		static const float eps = 0.000001;
 		lastFrameWasStanding = false;
 		if(diff.y > eps)
 		{
@@ -747,7 +747,7 @@ public:
 		if(player.position.z > 127.0) player.position.z = 127;
 
 		glm::vec3 diff = player.position - old;
-		static const int eps = 0.000001;
+		static const int eps = 0.000001f;
 		lastFrameWasStanding = false;
 		if(diff.y > eps)
 		{

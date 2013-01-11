@@ -5,8 +5,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "Input.hpp"
 
-class FreeLookCamera
+class FreeLookCamera : public Input
 {
 public:
 	FreeLookCamera(float left, float up, glm::vec3 location, size_t width, size_t height)
