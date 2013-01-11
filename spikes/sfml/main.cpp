@@ -15,16 +15,28 @@
 #include "TimeStepper.hpp"
 #include "Input.hpp"
 
-class Player
+class Player : public Input
 {
 public:
-	Player()
+	Player(glm::vec3 pos)
 	: movingforward(false)
 	, movingbackward(false)
+	, pos(pos)
 	{
+	}
+	void Update(size_t nrofsteps, float stepsize)
+	{
+		old = pos;
+		for(size_t i = 0; i < nrofsteps; i++)
+		{
+			if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)) pos.z += 0.05f;
+			if(sf::Keyboard::isKeyPressed(sf::Keyboard::S)) pos.z -= 0.05f;
+		}
 	}
 	bool movingforward;
 	bool movingbackward;
+	glm::vec3 pos;
+	glm::vec3 old;
 };
 	
 int main()
@@ -62,14 +74,16 @@ int main()
 	FreeLookCamera camera(0.0f, 0.0f, glm::vec3(-1.0f, 1.0f, 4.0f), width, height);
 	NoInput noinput;
 	std::vector<Input*> inputs;
+	Player player(glm::vec3(0.25f, 20.0f, 0.25f));
 	inputs.push_back(&camera);
+	inputs.push_back(&player);
 	inputs.push_back(&noinput);
 	auto curinput = inputs.begin();
-	Player player;
 	TimeStepper timestepper(60);
 	while (running)
 	{
-		(*curinput)->Update();
+		static const float physics_frame_rate = 60;
+		(*curinput)->Update(timestepper.steps(), 1 / (float)physics_frame_rate);
 		std::ostringstream convert;
 		convert << fpscounter.Update();
 		rocketui.setFPS(convert.str());
@@ -88,10 +102,6 @@ int main()
 			else if (event.type == sf::Event::KeyPressed)
 			{
 				if (event.key.code == sf::Keyboard::Escape)
-				{
-					running = false;
-				}
-				else if(event.key.code == sf::Keyboard::Quote)
 				{
 					running = false;
 				}
@@ -130,80 +140,71 @@ int main()
 		program.Use();
 		worldblocks.Draw();
 
-
-		static glm::vec3 pos(0.25f, 20.0f, 0.25f);
 		static const float eps = 0.000001f;
-		glm::vec3 old = pos;
-		size_t steps = timestepper.steps();
-		for(size_t i = 0; i < steps; i++)
-		{
-			if(player.movingforward) pos.z += 0.05f;
-			if(player.movingbackward) pos.z -= 0.05f;
-		}
-		glm::vec3 diff = pos - old;
+		glm::vec3 diff = player.pos - player.old;
 		if(diff.y > eps)
 		{
-			if(theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0
-			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
-			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
-			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0)
+			if(theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0
+			|| theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0
+			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0
+			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0)
 			{
-				pos.y = old.y;
+				player.pos.y = player.old.y;
 			}
 		}
 		if(diff.y < -eps)
 		{
-			if(theworld[(int)(pos.x)][(int)(pos.y)][(int)(pos.z)] > 0
-			|| theworld[(int)(pos.x)][(int)(pos.y)][(int)(pos.z + 0.8)] > 0
-			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y)][(int)(pos.z + 0.8)] > 0
-			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y)][(int)(pos.z)] > 0)
+			if(theworld[(int)(player.pos.x)][(int)(player.pos.y)][(int)(player.pos.z)] > 0
+			|| theworld[(int)(player.pos.x)][(int)(player.pos.y)][(int)(player.pos.z + 0.8)] > 0
+			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y)][(int)(player.pos.z + 0.8)] > 0
+			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y)][(int)(player.pos.z)] > 0)
 			{
-				pos.y = old.y;
+				player.pos.y = player.old.y;
 			}
 		}
 		if(diff.x > eps)
 		{
-			if(theworld[(int)(pos.x + 0.8)][(int)(pos.y)][(int)(pos.z)] > 0
-			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y)][(int)(pos.z + 0.8)] > 0
-			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
-			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0)
+			if(theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y)][(int)(player.pos.z)] > 0
+			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y)][(int)(player.pos.z + 0.8)] > 0
+			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0
+			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0)
 			{
-				pos.x = old.x;
+				player.pos.x = player.old.x;
 			}
 		}
 		if(diff.z > eps)
 		{
-			if(theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
-			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
-			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
-			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0)
+			if(theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0
+			|| theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0
+			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0
+			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0)
 			{
-				pos.z = old.z;
+				player.pos.z = player.old.z;
 			}
 		}
 		if(diff.x < -eps)
 		{
-			if(theworld[(int)(pos.x)][(int)(pos.y)][(int)(pos.z)] > 0
-			|| theworld[(int)(pos.x)][(int)(pos.y)][(int)(pos.z + 0.8)] > 0
-			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
-			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0)
+			if(theworld[(int)(player.pos.x)][(int)(player.pos.y)][(int)(player.pos.z)] > 0
+			|| theworld[(int)(player.pos.x)][(int)(player.pos.y)][(int)(player.pos.z + 0.8)] > 0
+			|| theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0
+			|| theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0)
 			{
-				pos.x = old.x;
+				player.pos.x = player.old.x;
 			}
 		}
 		if(diff.z < -eps)
 		{
-			if(theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0
-			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0
-			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0
-			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0)
+			if(theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0
+			|| theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0
+			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0
+			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0)
 			{
-				pos.z = old.z;
+				player.pos.z = player.old.z;
 			}
 		}
 
 
-		glm::mat4 playerworld = glm::translate(glm::mat4(1.0f), pos);
+		glm::mat4 playerworld = glm::translate(glm::mat4(1.0f), player.pos);
 		program.Set("world", &playerworld[0][0]);
 		cube().Draw();
 		glEnable(GL_BLEND);

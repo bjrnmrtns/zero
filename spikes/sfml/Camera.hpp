@@ -37,7 +37,7 @@ public:
 		left += x * 0.001f;
 		orientation = glm::quat(glm::vec3(up, 0, 0)) * glm::quat(glm::vec3(0, left, 0));
 	}
-	void Update()
+	void Update(size_t nfofsteps, float stepsize)
 	{
 		float keyboardx = 0.0f;
 		float keyboardy = 0.0f;
