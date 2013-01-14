@@ -19,22 +19,19 @@ class Player : public Input
 {
 public:
 	Player(glm::vec3 pos)
-	: movingforward(false)
-	, movingbackward(false)
-	, pos(pos)
+	: pos(pos)
 	{
 	}
-	void Update(size_t nrofsteps, float stepsize)
+	void Update(float timepassed)
 	{
+		static const float playerspeed = 10.0f; // km/h
+		float meters_traveled = (playerspeed * timepassed) / (float)3.6;
 		old = pos;
-		for(size_t i = 0; i < nrofsteps; i++)
-		{
-			if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)) pos.z += 0.05f;
-			if(sf::Keyboard::isKeyPressed(sf::Keyboard::S)) pos.z -= 0.05f;
-		}
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)) pos.z += meters_traveled;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::S)) pos.z -= meters_traveled;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::A)) pos.x += meters_traveled;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::D)) pos.x -= meters_traveled;
 	}
-	bool movingforward;
-	bool movingbackward;
 	glm::vec3 pos;
 	glm::vec3 old;
 };
@@ -79,11 +76,15 @@ int main()
 	inputs.push_back(&player);
 	inputs.push_back(&noinput);
 	auto curinput = inputs.begin();
-	TimeStepper timestepper(60);
+	static const float physics_frame_rate = 60;
+	TimeStepper timestepper(physics_frame_rate);
 	while (running)
 	{
-		static const float physics_frame_rate = 60;
-		(*curinput)->Update(timestepper.steps(), 1 / (float)physics_frame_rate);
+		size_t nrofsteps = timestepper.steps();
+		for(size_t i = 0; i < nrofsteps; i++)
+		{
+			(*curinput)->Update(1 / (float)physics_frame_rate);
+		}
 		std::ostringstream convert;
 		convert << fpscounter.Update();
 		rocketui.setFPS(convert.str());
@@ -108,25 +109,6 @@ int main()
 				else if(event.key.code == sf::Keyboard::C)
 				{
 					if(++curinput == inputs.end()) curinput = inputs.begin();
-				}
-				else if(event.key.code == sf::Keyboard::Up)
-				{
-					player.movingforward = true;
-				}
-				else if(event.key.code == sf::Keyboard::Down)
-				{
-					player.movingbackward = true;
-				}
-			}
-			else if (event.type == sf::Event::KeyReleased)
-			{
-				if(event.key.code == sf::Keyboard::Up)
-				{
-					player.movingforward = false;
-				}
-				else if(event.key.code == sf::Keyboard::Down)
-				{
-					player.movingbackward = false;
 				}
 			}
 		}

@@ -4,14 +4,15 @@
 class Input
 {
 public:
-	virtual void Update(size_t nrofsteps, float stepsize) = 0;
+	virtual void Update(float timepassed) = 0;
 };
 
 class NoInput : public Input
 {
 public:
-	void Update(size_t nrofsteps, float stepsize)
+	void Update(float timepassed)
 	{
+		timepassed = timepassed;
 	}
 };
 

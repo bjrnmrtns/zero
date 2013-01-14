@@ -37,14 +37,16 @@ public:
 		left += x * 0.001f;
 		orientation = glm::quat(glm::vec3(up, 0, 0)) * glm::quat(glm::vec3(0, left, 0));
 	}
-	void Update(size_t nfofsteps, float stepsize)
+	void Update(float timepassed)
 	{
+		static const float cameraspeed = 30.0f; // km/h
+		float meters_traveled = (cameraspeed * timepassed) / (float)3.6;
 		float keyboardx = 0.0f;
 		float keyboardy = 0.0f;
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)) keyboardy -= 0.2f;
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::A)) keyboardx -= 0.2f;
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::S)) keyboardy += 0.2f;
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::D)) keyboardx += 0.2f;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)) keyboardy -= meters_traveled;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::A)) keyboardx -= meters_traveled;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::S)) keyboardy += meters_traveled;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::D)) keyboardx += meters_traveled;
 		sf::Vector2i mousepos = sf::Mouse::getPosition();
 		int mousex = (width/2) - mousepos.x;
 		int mousey = (height/2) - mousepos.y;
