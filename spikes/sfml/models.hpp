@@ -58,6 +58,20 @@ static const size_t size_y = 32;
 static const size_t size_z = 256;
 static const int water_height = 3;
 static uint8_t theworld[size_x][size_y][size_z];
+void clearworld()
+{
+	for(size_t x = 0; x < size_x; x++)
+	{
+		for(size_t y = 0; y < size_y; y++)
+		{
+			for(size_t z = 0; z < size_z; z++)
+			{
+				theworld[x][y][z] = 0;
+			}
+		}
+	}
+}
+
 uint8_t noise(int x, int y, int z)
 {
 	if(y <= water_height) return Water;
@@ -178,6 +192,115 @@ static VertexBuffer& blocks()
 	static VertexBuffer world(description, vertices, i);
 	delete [] vertices;
 	return world;
+}
+
+static VertexBuffer& pupke()
+{
+	const InputElementDescription description[] { { "in_position", 3, sizeof(glm::vec3), GL_FLOAT, false },
+                                                                  { "in_normal",   3, sizeof(glm::vec3), GL_FLOAT, false },
+                                                                  { "in_color",    3, sizeof(glm::vec3), GL_FLOAT, false },
+                                                                  { "", 0, 0, 0, false } };
+	glm::vec3 color(0.0f, 1.0f, 0.0f);
+	static Vertex vertices[] = { { glm::vec3( 0,  1,  0), glm::vec3(-1,  0,  0), color },
+				     { glm::vec3( 0,  0,  1), glm::vec3(-1,  0,  0), color },
+				     { glm::vec3( 0,  0,  0), glm::vec3(-1,  0,  0), color }, 
+
+				     { glm::vec3( 0,  0,  1), glm::vec3(-1,  0,  0), color },
+				     { glm::vec3( 0,  1,  0), glm::vec3(-1,  0,  0), color },
+				     { glm::vec3( 0,  1,  1), glm::vec3(-1,  0,  0), color },
+
+				     { glm::vec3( 0,  1,  1), glm::vec3( 0,  0,  1), color },
+				     { glm::vec3( 1,  0,  1), glm::vec3( 0,  0,  1), color },
+				     { glm::vec3( 0,  0,  1), glm::vec3( 0,  0,  1), color },
+
+				     { glm::vec3( 1,  0,  1), glm::vec3( 0,  0,  1), color },
+				     { glm::vec3( 0,  1,  1), glm::vec3( 0,  0,  1), color },
+				     { glm::vec3( 1,  1,  1), glm::vec3( 0,  0,  1), color },
+
+				     { glm::vec3( 1,  0,  1), glm::vec3( 1,  0,  0), color },
+				     { glm::vec3( 1,  1,  0), glm::vec3( 1,  0,  0), color },
+				     { glm::vec3( 1,  0,  0), glm::vec3( 1,  0,  0), color },
+
+				     { glm::vec3( 1,  1,  0), glm::vec3( 1,  0,  0), color },
+				     { glm::vec3( 1,  0,  1), glm::vec3( 1,  0,  0), color },
+				     { glm::vec3( 1,  1,  1), glm::vec3( 1,  0,  0), color },
+
+				     { glm::vec3( 1,  1,  0), glm::vec3( 0,  0, -1), color },
+				     { glm::vec3( 0,  0,  0), glm::vec3( 0,  0, -1), color },
+				     { glm::vec3( 1,  0,  0), glm::vec3( 0,  0, -1), color },
+
+				     { glm::vec3( 0,  0,  0), glm::vec3( 0,  0, -1), color },
+				     { glm::vec3( 1,  1,  0), glm::vec3( 0,  0, -1), color },
+				     { glm::vec3( 0,  1,  0), glm::vec3( 0,  0, -1), color },
+
+				     { glm::vec3( 0,  1,  0), glm::vec3( 0,  1,  0), color },
+				     { glm::vec3( 1,  1,  1), glm::vec3( 0,  1,  0), color },
+				     { glm::vec3( 0,  1,  1), glm::vec3( 0,  1,  0), color },
+
+				     { glm::vec3( 1,  1,  1), glm::vec3( 0,  1,  0), color },
+				     { glm::vec3( 0,  1,  0), glm::vec3( 0,  1,  0), color },
+				     { glm::vec3( 1,  1,  0), glm::vec3( 0,  1,  0), color },
+
+				     { glm::vec3( 1,  0,  0), glm::vec3( 0, -1,  0), color },
+				     { glm::vec3( 0,  0,  1), glm::vec3( 0, -1,  0), color },
+				     { glm::vec3( 1,  0,  1), glm::vec3( 0, -1,  0), color },
+
+				     { glm::vec3( 0,  0,  1), glm::vec3( 0, -1,  0), color },
+				     { glm::vec3( 1,  0,  0), glm::vec3( 0, -1,  0), color },
+				     { glm::vec3( 0,  0,  0), glm::vec3( 0, -1,  0), color },
+
+	                             // direction box
+	                             { glm::vec3( 0.25,  0.75, -1), glm::vec3(-1,  0,  0), color },
+				     { glm::vec3( 0.25,  0.25,  0), glm::vec3(-1,  0,  0), color },
+				     { glm::vec3( 0.25,  0.25, -1), glm::vec3(-1,  0,  0), color }, 
+
+				     { glm::vec3( 0.25,  0.25,  0), glm::vec3(-1,  0,  0), color },
+				     { glm::vec3( 0.25,  0.75, -1), glm::vec3(-1,  0,  0), color },
+				     { glm::vec3( 0.25,  0.75,  0), glm::vec3(-1,  0,  0), color },
+
+				     { glm::vec3( 0.25,  0.75,  0), glm::vec3( 0,  0,  1), color },
+				     { glm::vec3( 0.75,  0.25,  0), glm::vec3( 0,  0,  1), color },
+				     { glm::vec3( 0.25,  0.25,  0), glm::vec3( 0,  0,  1), color },
+
+				     { glm::vec3( 0.75,  0.25,  0), glm::vec3( 0,  0,  1), color },
+				     { glm::vec3( 0.25,  0.75,  0), glm::vec3( 0,  0,  1), color },
+				     { glm::vec3( 0.75,  0.75,  0), glm::vec3( 0,  0,  1), color },
+
+				     { glm::vec3( 0.75,  0.25,  0), glm::vec3( 1,  0,  0), color },
+				     { glm::vec3( 0.75,  0.75, -1), glm::vec3( 1,  0,  0), color },
+				     { glm::vec3( 0.75,  0.25, -1), glm::vec3( 1,  0,  0), color },
+
+				     { glm::vec3( 0.75,  0.75, -1), glm::vec3( 1,  0,  0), color },
+				     { glm::vec3( 0.75,  0.25,  0), glm::vec3( 1,  0,  0), color },
+				     { glm::vec3( 0.75,  0.75,  0), glm::vec3( 1,  0,  0), color },
+
+				     { glm::vec3( 0.75,  0.75, -1), glm::vec3( 0,  0, -1), color },
+				     { glm::vec3( 0.25,  0.25, -1), glm::vec3( 0,  0, -1), color },
+				     { glm::vec3( 0.75,  0.25, -1), glm::vec3( 0,  0, -1), color },
+
+				     { glm::vec3( 0.25,  0.25, -1), glm::vec3( 0,  0, -1), color },
+				     { glm::vec3( 0.75,  0.75, -1), glm::vec3( 0,  0, -1), color },
+				     { glm::vec3( 0.25,  0.75, -1), glm::vec3( 0,  0, -1), color },
+
+				     { glm::vec3( 0.25,  0.75, -1), glm::vec3( 0,  1,  0), color },
+				     { glm::vec3( 0.75,  0.75,  0), glm::vec3( 0,  1,  0), color },
+				     { glm::vec3( 0.25,  0.75,  0), glm::vec3( 0,  1,  0), color },
+
+				     { glm::vec3( 0.75,  0.75,  0), glm::vec3( 0,  1,  0), color },
+				     { glm::vec3( 0.25,  0.75, -1), glm::vec3( 0,  1,  0), color },
+				     { glm::vec3( 0.75,  0.75, -1), glm::vec3( 0,  1,  0), color },
+
+				     { glm::vec3( 0.75,  0.25, -1), glm::vec3( 0, -1,  0), color },
+				     { glm::vec3( 0.25,  0.25,  0), glm::vec3( 0, -1,  0), color },
+				     { glm::vec3( 0.75,  0.25,  0), glm::vec3( 0, -1,  0), color },
+
+				     { glm::vec3( 0.25,  0.25,  0), glm::vec3( 0, -1,  0), color },
+				     { glm::vec3( 0.75,  0.25, -1), glm::vec3( 0, -1,  0), color },
+				     { glm::vec3( 0.25,  0.25, -1), glm::vec3( 0, -1,  0), color }
+
+		};
+	static VertexBuffer model(description, vertices, sizeof(vertices)/sizeof(Vertex));
+	return model;
 }
 
 static VertexBuffer& cube()

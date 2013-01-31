@@ -18,22 +18,123 @@
 class Player : public Input
 {
 public:
-	Player(glm::vec3 pos)
-	: pos(pos)
+	Player(float right, float up, glm::vec3 pos, size_t width, size_t height)
+	: right(right)
+	, up(up)
+	, width(width)
+	, height(height)
+	, pos(pos)
 	{
+		sf::Mouse::setPosition(sf::Vector2i(width/2, height/2));
+		orientation = glm::quat(glm::vec3(up, right, 0.0f));
+	}
+	glm::mat4 GetViewMatrix() const
+	{
+		return glm::mat4(1.0f);
+	}
+	void keyboard(float strafe, float forward)
+	{
+		glm::vec4 translated = glm::toMat4(orientation) * glm::vec4(strafe, 0.0f, -forward, 0.0f);
+		pos += glm::vec3(translated.x, translated.y, translated.z);
+	}
+	void mouse(float pitch, float yaw) 
+	{
+		up += yaw * 0.001f;
+		if (up > 1.5) up = 1.5;
+		if (up < -1.5) up = -1.5;
+		right -= pitch * 0.001f;
+		orientation = glm::quat(glm::vec3(up, right, 0));
 	}
 	void Update(float timepassed)
 	{
-		static const float playerspeed = 10.0f; // km/h
-		float meters_traveled = (playerspeed * timepassed) / (float)3.6;
+		static const float cameraspeed = 10.0f; // km/h
+		float meters_traveled = (cameraspeed * timepassed) / (float)3.6;
+		float keyboardx = 0.0f;
+		float keyboardz = 0.0f;
+		float dy = 9.81;
 		old = pos;
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)) pos.z += meters_traveled;
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::S)) pos.z -= meters_traveled;
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::A)) pos.x += meters_traveled;
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::D)) pos.x -= meters_traveled;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)) keyboardz += meters_traveled;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::A)) keyboardx -= meters_traveled;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::S)) keyboardz -= meters_traveled;
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::D)) keyboardx += meters_traveled;
+		sf::Vector2i mousepos = sf::Mouse::getPosition();
+		int mousex = mousepos.x - (width/2);
+		int mousey = (height/2) - mousepos.y;
+		mouse(mousex, mousey);
+		keyboard(keyboardx, keyboardz);
+		sf::Mouse::setPosition(sf::Vector2i(width/2, height/2));
+		pos.y -= dy * timepassed;
+
+		static const float eps = 0.000001f;
+		glm::vec3 diff = pos - old;
+		if(diff.y > eps)
+		{
+			if(theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0
+			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0)
+			{
+				pos.y = old.y;
+			}
+		}
+		if(diff.y < -eps)
+		{
+			if(theworld[(int)(pos.x)][(int)(pos.y)][(int)(pos.z)] > 0
+			|| theworld[(int)(pos.x)][(int)(pos.y)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y)][(int)(pos.z)] > 0)
+			{
+				pos.y = old.y;
+			}
+		}
+		if(diff.x > eps)
+		{
+			if(theworld[(int)(pos.x + 0.8)][(int)(pos.y)][(int)(pos.z)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0)
+			{
+				pos.x = old.x;
+			}
+		}
+		if(diff.z > eps)
+		{
+			if(theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0)
+			{
+				pos.z = old.z;
+			}
+		}
+		if(diff.x < -eps)
+		{
+			if(theworld[(int)(pos.x)][(int)(pos.y)][(int)(pos.z)] > 0
+			|| theworld[(int)(pos.x)][(int)(pos.y)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z + 0.8)] > 0
+			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0)
+			{
+				pos.x = old.x;
+			}
+		}
+		if(diff.z < -eps)
+		{
+			if(theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0
+			|| theworld[(int)(pos.x)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0
+			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y + 0.8)][(int)(pos.z)] > 0)
+			{
+				pos.z = old.z;
+			}
+		}
 	}
-	glm::vec3 pos;
+private:
+	float right, up;
 	glm::vec3 old;
+	size_t width, height;
+public:
+	glm::quat orientation;
+	glm::vec3 pos;
 };
 	
 int main()
@@ -67,11 +168,12 @@ int main()
 	FPSCounter fpscounter;
 	bool running = true;
 	std::string currentline;
+	clearworld();
 	VertexBuffer& worldblocks = blocks();
 	FreeLookCamera camera(0.0f, 0.0f, glm::vec3(-1.0f, 1.0f, 4.0f), width, height);
 	NoInput noinput;
 	std::vector<Input*> inputs;
-	Player player(glm::vec3(0.25f, 20.0f, 0.25f));
+	Player player(0.0f, 0.0f, glm::vec3(0.25f, 20.0f, 0.25f), width, height);
 	inputs.push_back(&camera);
 	inputs.push_back(&player);
 	inputs.push_back(&noinput);
@@ -122,73 +224,9 @@ int main()
 		program.Use();
 		worldblocks.Draw();
 
-		static const float eps = 0.000001f;
-		glm::vec3 diff = player.pos - player.old;
-		if(diff.y > eps)
-		{
-			if(theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0
-			|| theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0
-			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0
-			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0)
-			{
-				player.pos.y = player.old.y;
-			}
-		}
-		if(diff.y < -eps)
-		{
-			if(theworld[(int)(player.pos.x)][(int)(player.pos.y)][(int)(player.pos.z)] > 0
-			|| theworld[(int)(player.pos.x)][(int)(player.pos.y)][(int)(player.pos.z + 0.8)] > 0
-			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y)][(int)(player.pos.z + 0.8)] > 0
-			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y)][(int)(player.pos.z)] > 0)
-			{
-				player.pos.y = player.old.y;
-			}
-		}
-		if(diff.x > eps)
-		{
-			if(theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y)][(int)(player.pos.z)] > 0
-			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y)][(int)(player.pos.z + 0.8)] > 0
-			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0
-			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0)
-			{
-				player.pos.x = player.old.x;
-			}
-		}
-		if(diff.z > eps)
-		{
-			if(theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0
-			|| theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0
-			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0
-			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0)
-			{
-				player.pos.z = player.old.z;
-			}
-		}
-		if(diff.x < -eps)
-		{
-			if(theworld[(int)(player.pos.x)][(int)(player.pos.y)][(int)(player.pos.z)] > 0
-			|| theworld[(int)(player.pos.x)][(int)(player.pos.y)][(int)(player.pos.z + 0.8)] > 0
-			|| theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z + 0.8)] > 0
-			|| theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0)
-			{
-				player.pos.x = player.old.x;
-			}
-		}
-		if(diff.z < -eps)
-		{
-			if(theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0
-			|| theworld[(int)(player.pos.x)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0
-			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0
-			|| theworld[(int)(player.pos.x + 0.8)][(int)(player.pos.y + 0.8)][(int)(player.pos.z)] > 0)
-			{
-				player.pos.z = player.old.z;
-			}
-		}
-
-
-		glm::mat4 playerworld = glm::translate(glm::mat4(1.0f), player.pos);
+		glm::mat4 playerworld = glm::translate(glm::mat4(1.0f), player.pos) * glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f)) * glm::toMat4(player.orientation) * glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, -0.5f, -0.5f)); 
 		program.Set("world", &playerworld[0][0]);
-		cube().Draw();
+		pupke().Draw();
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glFrontFace(GL_CCW);
