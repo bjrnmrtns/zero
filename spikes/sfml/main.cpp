@@ -51,12 +51,20 @@ public:
 		float meters_traveled = (cameraspeed * timepassed) / (float)3.6;
 		float keyboardx = 0.0f;
 		float keyboardz = 0.0f;
-		float dy = 9.81;
+		static float dy = 9.81;
 		old = pos;
+		static bool jumping = false;
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)) keyboardz += meters_traveled;
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::A)) keyboardx -= meters_traveled;
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::S)) keyboardz -= meters_traveled;
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::D)) keyboardx += meters_traveled;
+		if(!jumping && sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
+		{
+			jumping = true;
+			dy = -10;
+		}
+		dy += timepassed * 20;
+		if(dy > 9.81) dy = 9.81;
 		sf::Vector2i mousepos = sf::Mouse::getPosition();
 		int mousex = mousepos.x - (width/2);
 		int mousey = (height/2) - mousepos.y;
@@ -85,6 +93,7 @@ public:
 			|| theworld[(int)(pos.x + 0.8)][(int)(pos.y)][(int)(pos.z)] > 0)
 			{
 				pos.y = old.y;
+				jumping = false;
 			}
 		}
 		if(diff.x > eps)
